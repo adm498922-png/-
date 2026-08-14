@@ -62,7 +62,7 @@ export async function searchProducts(params: {
   keyword: string;
   limit?: number;
 }): Promise<ProductSearchResult[]> {
-  const query = `keyword=${encodeURIComponent(params.keyword)}&limit=${params.limit ?? 20}`;
+  const query = `keyword=${encodeURIComponent(params.keyword)}&limit=${params.limit ?? 10}`;
   const authorization = buildAuthorizationHeader({
     method: "GET",
     path: SEARCH_PATH,
