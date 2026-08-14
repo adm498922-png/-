@@ -1,0 +1,111 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+// 앱 전역 설정: 쿠팡파트너스 / Threads 개발자 앱 키 (값은 암호화되어 저장됨)
+model Settings {
+  id                  String   @id @default("singleton")
+  coupangAccessKeyEnc String?
+  coupangSecretKeyEnc String?
+  threadsAppId        String?
+  threadsAppSecretEnc String?
+  threadsRedirectUri  String?
+  updatedAt           DateTime @updatedAt
+}
+
+model ThreadsAccount {
+  id               String   @id @default(cuid())
+  label            String // 예: "1번 계정"
+  threadsUserId    String   @unique
+  username         String?
+  accessTokenEnc   String
+  tokenExpiresAt   DateTime?
+  connectedAt      DateTime @default(now())
+  isActive         Boolean  @default(true)
+
+  postTargets      PostTarget[]
+}
+
+model CoupangLink {
+  id            String   @id @default(cuid())
+  productName   String?
+  originalUrl   String
+  shortUrl      String
+  createdAt     DateTime @default(now())
+
+  posts         Post[]
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+model Post {
+  id            String     @id @default(cuid())
+  body          String
+  commentBody   String?
+  coupangLinkId String?
+  coupangLink   CoupangLink? @relation(fields: [coupangLinkId], references: [id])
+  status        PostStatus @default(DRAFT)
+  scheduledAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  targets       PostTarget[]
+}
+
+enum PostTargetStatus {
+  PENDING
+  PUBLISHING
+  PUBLISHED
+  COMMENTING
+  DONE
+  FAILED
+}
+
+model PostTarget {
+  id                String            @id @default(cuid())
+  postId            String
+  post              Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  threadsAccountId  String
+  threadsAccount    ThreadsAccount    @relation(fields: [threadsAccountId], references: [id], onDelete: Cascade)
+  status            PostTargetStatus  @default(PENDING)
+  threadsMediaId    String?
+  threadsPermalink  String?
+  commentMediaId    String?
+  errorMessage      String?
+  publishedAt       DateTime?
+
+  stats             PostStat[]
+
+  @@unique([postId, threadsAccountId])
+}
+
+model PostStat {
+  id           String   @id @default(cuid())
+  postTargetId String
+  postTarget   PostTarget @relation(fields: [postTargetId], references: [id], onDelete: Cascade)
+  views        Int      @default(0)
+  likes        Int      @default(0)
+  replies      Int      @default(0)
+  reposts      Int      @default(0)
+  quotes       Int      @default(0)
+  capturedAt   DateTime @default(now())
+
+  @@index([postTargetId, capturedAt])
+}

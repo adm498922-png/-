@@ -1,0 +1,20 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSettingsStatus, updateSettings } from "@/lib/settings";
+
+export async function GET() {
+  const status = await getSettingsStatus();
+  return NextResponse.json(status);
+}
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  await updateSettings({
+    coupangAccessKey: body.coupangAccessKey || undefined,
+    coupangSecretKey: body.coupangSecretKey || undefined,
+    threadsAppId: body.threadsAppId,
+    threadsAppSecret: body.threadsAppSecret || undefined,
+    threadsRedirectUri: body.threadsRedirectUri,
+  });
+  const status = await getSettingsStatus();
+  return NextResponse.json(status);
+}

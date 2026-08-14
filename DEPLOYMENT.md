@@ -1,0 +1,135 @@
+# Threads Hub 배포 가이드
+
+비개발자도 따라 할 수 있도록 순서대로 정리했습니다. 막히는 단계가 있으면 그 화면을 그대로 알려주세요.
+
+## 전체 그림
+
+1. 코드를 GitHub에 올린다
+2. Railway에서 그 GitHub 저장소를 연결해 웹사이트로 띄운다 (월 약 $5~)
+3. Railway에 "영구 저장 공간(볼륨)"을 하나 붙인다 — 여기에 데이터베이스 파일이 저장됩니다
+4. 필요한 비밀키(환경변수)를 입력한다
+5. 배포된 주소로 접속해서 관리자 계정을 만들고, 설정에서 쿠팡파트너스/Threads API 키를 입력한다
+6. Meta 개발자 앱을 만들어 내 스레드 계정들을 연결한다
+
+---
+
+## 필요한 것 목록
+
+| 항목 | 용도 | 비용 |
+|---|---|---|
+| GitHub 계정 | 코드 저장소 | 무료 |
+| Railway 계정 | 웹사이트 호스팅 | 월 약 $5 (Hobby 플랜) + 저장공간 약간 |
+| Meta 개발자 계정 | Threads API 앱 등록 | 무료 |
+| 쿠팡Wing 계정 | 파트너스 Open API 키 발급 | 무료 (쿠팡파트너스 가입 필요) |
+
+---
+
+## 1단계. GitHub에 코드 올리기
+
+1. [github.com](https://github.com) 에서 계정을 만들고, 새 저장소(Repository)를 하나 만듭니다. (Private로 만드는 것을 추천합니다 — 코드에 실제 비밀키는 들어있지 않지만 습관적으로 private 권장)
+2. 이 프로젝트 폴더(`threads-hub`)에서 아래 명령을 순서대로 실행합니다. (제가 대신 실행해드릴 수도 있으니, 원하시면 말씀해주세요.)
+
+```bash
+git add -A
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/사용자명/저장소이름.git
+git push -u origin main
+```
+
+> `.env` 파일은 `.gitignore`에 이미 등록되어 있어서 자동으로 제외됩니다. 실수로 비밀키가 깃허브에 올라갈 걱정은 하지 않으셔도 됩니다.
+
+## 2단계. Railway에 배포하기
+
+1. [railway.com](https://railway.com) 에서 GitHub 계정으로 가입합니다.
+2. **New Project → Deploy from GitHub repo** 선택 → 방금 올린 저장소 선택
+3. Railway가 Next.js 프로젝트임을 자동으로 인식하고 빌드를 시작합니다. (Build Command: `npm run build`, Start Command: `npm run start` 로 자동 설정되면 그대로 두면 됩니다)
+
+## 3단계. 영구 저장 공간(Volume) 연결하기
+
+이 앱은 데이터(계정 정보, 글, 설정)를 SQLite라는 파일 데이터베이스에 저장합니다. Railway 컨테이너 자체는 재배포되면 파일이 초기화되므로, **Volume**을 붙여서 그 파일만 영구히 보존해야 합니다.
+
+1. Railway 프로젝트에서 방금 만든 서비스 선택 → **Settings → Volumes**
+2. **New Volume** 클릭 → Mount Path를 `/data` 로 지정
+3. 이후 4단계의 `DATABASE_URL` 환경변수를 `file:/data/prod.db` 로 설정합니다 (아래 표 참고)
+
+## 4단계. 환경변수 설정하기
+
+서비스의 **Variables** 탭에서 아래 값들을 추가합니다.
+
+| 변수명 | 값 | 설명 |
+|---|---|---|
+| `DATABASE_URL` | `file:/data/prod.db` | 3단계에서 만든 볼륨 경로 |
+| `APP_SECRET` | (무작위 문자열) | 저장된 API 키 암호화용 |
+| `SESSION_SECRET` | (무작위 문자열) | 로그인 세션 서명용 |
+| `CRON_SECRET` | (무작위 문자열) | 사용하지 않아도 되지만 넣어두는 것을 권장 |
+
+무작위 문자열은 아래처럼 만들 수 있습니다 (터미널이 있다면):
+
+```bash
+openssl rand -base64 32
+```
+
+터미널을 쓰기 어려우시면 말씀해주세요 — 제가 안전한 무작위 값을 생성해서 알려드릴 수 있습니다. (단, 생성 즉시 본인만 아는 곳에 저장하고 화면 공유 등으로 노출되지 않게 주의해주세요.)
+
+> **참고 — 예약 발행 스케줄러**: Railway처럼 서버가 항상 켜져 있는 환경에서는 이 앱에 내장된 스케줄러(`instrumentation.ts`)가 자동으로 1분마다 예약 발행을, 10분마다 조회수 수집을 실행합니다. 별도의 Cron 설정이 필요 없습니다. (`vercel.json`과 `/api/cron/*` 라우트는 나중에 Vercel 등 서버리스 환경으로 옮길 경우를 위해 남겨둔 것입니다.)
+
+배포가 끝나면 Railway가 `https://your-app.up.railway.app` 같은 주소를 줍니다. **Settings → Networking** 에서 커스텀 도메인을 연결할 수도 있습니다.
+
+## 5단계. 첫 실행 — 관리자 계정 만들기
+
+1. 배포된 주소로 접속하면 "관리자 계정 만들기" 화면이 나옵니다. 이메일/비밀번호를 입력해 첫 관리자 계정을 만드세요. (이 사이트 전체를 보호하는 로그인이므로 신중하게 정하세요)
+2. 로그인 후 왼쪽 메뉴의 **설정**으로 이동합니다.
+
+## 6단계. Meta 개발자 앱 만들기 (Threads API)
+
+1. [developers.facebook.com](https://developers.facebook.com) 에서 로그인 후 **My Apps → Create App**
+2. 앱 종류는 "Other" 또는 "Business" 선택 (Threads API 사용 목적)
+3. 앱 대시보드에서 **Threads** 제품을 추가합니다
+4. **App Settings → Basic** 에서 App ID / App Secret을 확인합니다
+5. Threads 제품 설정에서 **Redirect URI**를 등록해야 하는데, 값은 이 앱의 설정 화면(`/settings`)에서 자동으로 제안해줍니다. 형식은 다음과 같습니다:
+
+   ```
+   https://your-app.up.railway.app/api/threads/oauth/callback
+   ```
+
+6. **App roles → Roles (또는 Testers)** 에서, 연결하려는 각 스레드 계정의 소유자를 "Tester"로 추가합니다. 본인이 소유한 여러 계정이라면 앱을 "Development" 모드로 둔 채 각 계정을 테스터로 등록하는 것만으로 충분한 경우가 많고, 별도의 심사(App Review) 없이 바로 연결해 쓸 수 있습니다.
+   - 만약 나중에 내 소유가 아닌 제3자의 스레드 계정도 연결해야 한다면, 그때는 Meta의 앱 심사(App Review)와 Tech Provider Verification 절차가 추가로 필요합니다. Meta 정책은 종종 바뀌므로, 개발자 대시보드에 뜨는 안내를 최종 기준으로 확인해주세요.
+
+## 7단계. 쿠팡파트너스 API 키 발급
+
+1. [쿠팡Wing](https://wing.coupang.com) 로그인 → **판매자정보 → 추가판매자정보 → OpenAPI 키 발급**
+2. Access Key / Secret Key 발급 (발급 후 반영까지 최대 24시간 소요될 수 있습니다)
+
+## 8단계. 이 앱의 설정 화면에서 키 입력하기
+
+1. `/settings` 페이지에서 쿠팡파트너스 Access Key/Secret Key, Threads App ID/App Secret/Redirect URI를 입력하고 저장합니다.
+2. `/accounts` 페이지에서 **계정 연결하기** 버튼으로 스레드 계정을 하나씩 연결합니다. (6단계에서 테스터로 등록한 계정으로 로그인해서 승인해야 합니다)
+3. `/links` 페이지에서 쿠팡 상품 URL을 넣어 링크를 생성해봅니다.
+4. `/compose` 페이지에서 계정을 선택하고 글을 작성해 테스트로 발행해봅니다.
+
+---
+
+## 꼭 알아두어야 할 것들
+
+### 쿠팡파트너스 고지 문구 (법적 의무)
+
+쿠팡파트너스 링크를 본문에 삽입하면 다음 문구가 자동으로 함께 들어갑니다. 이는 국내 표시·광고법상 의무 사항이므로 임의로 지우지 않는 것을 권장합니다.
+
+> 이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+
+### 다중 계정 자동 게시와 플랫폼 정책
+
+여러 스레드 계정에 자동으로 유사하거나 동일한 광고성 글을 반복 게시하는 것은 Meta의 스팸/authentic behavior 정책과 충돌할 수 있습니다. 본인이 실제로 운영하는 계정에서, 과도한 반복 게시나 봇처럼 보이는 패턴을 피하고, 계정마다 내용을 다양화하는 것을 권장합니다. 정책 위반으로 판단되면 계정 제재나 앱 접근 제한이 발생할 수 있습니다.
+
+### 백업
+
+`DATABASE_URL`이 가리키는 SQLite 파일(`/data/prod.db`)이 유일한 데이터 저장소입니다. Railway 볼륨은 기본적으로 안정적이지만, 중요한 데이터인 만큼 주기적으로 다운로드해 백업해두는 것을 권장합니다.
+
+---
+
+## 문제 해결
+
+- **"계정 연결에 실패했습니다"** — 설정의 Threads Redirect URI가 Meta 개발자 콘솔에 등록한 값과 정확히 일치하는지 확인하세요.
+- **쿠팡 링크 생성이 401 오류** — Access Key/Secret Key를 다시 확인하고, 발급 후 24시간이 지났는지 확인하세요.
+- **예약한 글이 발행되지 않음** — Railway 로그에서 `[threads-hub] 로컬 스케줄러가 시작되었습니다` 메시지가 보이는지 확인하세요. 보이지 않으면 서비스가 재시작 중이거나 크래시했을 수 있습니다.
