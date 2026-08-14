@@ -257,9 +257,9 @@ export default function ComposeForm({
               {searchResults.length}개 상품 찾음 · 원하는 상품을 선택하세요
             </p>
             <div className="space-y-2">
-              {searchResults.map((product) => (
+              {searchResults.map((product, i) => (
                 <div
-                  key={product.productId}
+                  key={`${product.productId}-${i}`}
                   className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-3"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
