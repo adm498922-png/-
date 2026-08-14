@@ -21,7 +21,7 @@ model Settings {
   threadsAppId        String?
   threadsAppSecretEnc String?
   threadsRedirectUri  String?
-  anthropicApiKeyEnc  String?
+  openaiApiKeyEnc     String?
   updatedAt           DateTime @updatedAt
 }
 

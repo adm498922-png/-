@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     threadsAppId: body.threadsAppId,
     threadsAppSecret: body.threadsAppSecret || undefined,
     threadsRedirectUri: body.threadsRedirectUri,
-    anthropicApiKey: body.anthropicApiKey || undefined,
+    openaiApiKey: body.openaiApiKey || undefined,
   });
   const status = await getSettingsStatus();
   return NextResponse.json(status);

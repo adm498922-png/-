@@ -7,7 +7,7 @@ export type DecryptedSettings = {
   threadsAppId: string | null;
   threadsAppSecret: string | null;
   threadsRedirectUri: string | null;
-  anthropicApiKey: string | null;
+  openaiApiKey: string | null;
 };
 
 async function getRow() {
@@ -32,9 +32,7 @@ export async function getDecryptedSettings(): Promise<DecryptedSettings> {
       ? decrypt(row.threadsAppSecretEnc)
       : null,
     threadsRedirectUri: row.threadsRedirectUri,
-    anthropicApiKey: row.anthropicApiKeyEnc
-      ? decrypt(row.anthropicApiKeyEnc)
-      : null,
+    openaiApiKey: row.openaiApiKeyEnc ? decrypt(row.openaiApiKeyEnc) : null,
   };
 }
 
@@ -54,7 +52,7 @@ export async function getSettingsStatus(): Promise<SettingsStatus> {
     threadsConfigured: Boolean(
       s.threadsAppId && s.threadsAppSecret && s.threadsRedirectUri
     ),
-    aiConfigured: Boolean(s.anthropicApiKey),
+    aiConfigured: Boolean(s.openaiApiKey),
     threadsAppId: s.threadsAppId,
     threadsRedirectUri: s.threadsRedirectUri,
     coupangAccessKeyPreview: s.coupangAccessKey
@@ -69,7 +67,7 @@ export async function updateSettings(input: {
   threadsAppId?: string;
   threadsAppSecret?: string;
   threadsRedirectUri?: string;
-  anthropicApiKey?: string;
+  openaiApiKey?: string;
 }) {
   const data: Record<string, string> = {};
   if (input.coupangAccessKey) data.coupangAccessKeyEnc = encrypt(input.coupangAccessKey);
@@ -78,7 +76,7 @@ export async function updateSettings(input: {
   if (input.threadsAppSecret) data.threadsAppSecretEnc = encrypt(input.threadsAppSecret);
   if (input.threadsRedirectUri !== undefined)
     data.threadsRedirectUri = input.threadsRedirectUri;
-  if (input.anthropicApiKey) data.anthropicApiKeyEnc = encrypt(input.anthropicApiKey);
+  if (input.openaiApiKey) data.openaiApiKeyEnc = encrypt(input.openaiApiKey);
 
   await prisma.settings.upsert({
     where: { id: "singleton" },

@@ -9,16 +9,16 @@ export async function POST(req: NextRequest) {
   }
 
   const settings = await getDecryptedSettings();
-  if (!settings.anthropicApiKey) {
+  if (!settings.openaiApiKey) {
     return NextResponse.json(
-      { error: "설정 화면에서 Anthropic API 키를 먼저 입력해주세요." },
+      { error: "설정 화면에서 OpenAI API 키를 먼저 입력해주세요." },
       { status: 400 }
     );
   }
 
   try {
     const body = await generateThreadsPost({
-      apiKey: settings.anthropicApiKey,
+      apiKey: settings.openaiApiKey,
       productName: productName.trim(),
       productPrice: typeof productPrice === "number" ? productPrice : undefined,
     });
