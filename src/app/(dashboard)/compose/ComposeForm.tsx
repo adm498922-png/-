@@ -164,6 +164,20 @@ export default function ComposeForm({
   const COUPANG_DISCLOSURE =
     "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.";
 
+  const ENGAGEMENT_PROMPTS = [
+    "써보시고 어떤지 댓글로 알려주시면 다음 글에 반영할게요!",
+    "궁금한 점 있으면 댓글 남겨주세요, 아는 선에서 답해드릴게요.",
+    "다른 분들은 이런 제품 어떻게 쓰시는지 댓글로 궁금하네요.",
+    "비슷한 고민 있으신 분들, 댓글로 이야기 나눠요.",
+  ];
+
+  function insertEngagementPrompt() {
+    const candidates = ENGAGEMENT_PROMPTS.filter((p) => !commentBody.includes(p));
+    const pool = candidates.length > 0 ? candidates : ENGAGEMENT_PROMPTS;
+    const prompt = pool[Math.floor(Math.random() * pool.length)];
+    setCommentBody((prev) => (prev.trim() ? `${prev.trim()}\n${prompt}` : prompt));
+  }
+
   function insertSelectedLink() {
     const link = links_.find((l) => l.id === coupangLinkId);
     if (!link) return;
@@ -375,9 +389,18 @@ export default function ComposeForm({
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">
-            자동 첫 댓글 (선택)
-          </label>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-xs text-neutral-400">
+              자동 첫 댓글 (선택)
+            </label>
+            <button
+              type="button"
+              onClick={insertEngagementPrompt}
+              className="rounded-full bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300 hover:bg-neutral-700"
+            >
+              참여 유도 문구 추가
+            </button>
+          </div>
           <textarea
             rows={2}
             value={commentBody}
