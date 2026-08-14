@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { getSettingsStatus } from "@/lib/settings";
 import Link from "next/link";
 import ComposeForm from "./ComposeForm";
 
 export default async function ComposePage() {
-  const [accounts, links, posts] = await Promise.all([
+  const [accounts, links, posts, settingsStatus] = await Promise.all([
     prisma.threadsAccount.findMany({
       where: { isActive: true },
       orderBy: { connectedAt: "asc" },
@@ -17,6 +18,7 @@ export default async function ComposePage() {
       take: 20,
       include: { targets: { include: { threadsAccount: true } } },
     }),
+    getSettingsStatus(),
   ]);
 
   return (
@@ -36,7 +38,12 @@ export default async function ComposePage() {
           을 연결해주세요.
         </div>
       ) : (
-        <ComposeForm accounts={accounts} links={links} initialPosts={posts} />
+        <ComposeForm
+          accounts={accounts}
+          links={links}
+          initialPosts={posts}
+          aiConfigured={settingsStatus.aiConfigured}
+        />
       )}
     </div>
   );

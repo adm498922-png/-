@@ -9,6 +9,13 @@ type CoupangLink = {
   originalUrl: string;
   shortUrl: string;
 };
+type ProductSearchResult = {
+  productId: number;
+  productName: string;
+  productPrice: number;
+  productImage: string;
+  productUrl: string;
+};
 type PostTarget = {
   id: string;
   status: string;
@@ -53,10 +60,12 @@ export default function ComposeForm({
   accounts,
   links,
   initialPosts,
+  aiConfigured,
 }: {
   accounts: Account[];
   links: CoupangLink[];
   initialPosts: Post[];
+  aiConfigured: boolean;
 }) {
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>(
     accounts.map((a) => a.id)
@@ -70,6 +79,81 @@ export default function ComposeForm({
   const [error, setError] = useState<string | null>(null);
   const [posts, setPosts] = useState(initialPosts);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [links_, setLinks] = useState(links);
+
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<ProductSearchResult[] | null>(null);
+  const [selectingId, setSelectingId] = useState<number | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<{
+    productName: string;
+    productPrice: number;
+  } | null>(null);
+  const [generatingDraft, setGeneratingDraft] = useState(false);
+
+  async function handleProductSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!searchKeyword.trim()) return;
+    setSearching(true);
+    setSearchError(null);
+    const res = await fetch("/api/coupang/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keyword: searchKeyword.trim() }),
+    });
+    setSearching(false);
+    const data = await res.json();
+    if (!res.ok) {
+      setSearchError(data.error ?? "검색에 실패했습니다.");
+      setSearchResults(null);
+      return;
+    }
+    setSearchResults(data.products);
+  }
+
+  async function handleSelectProduct(product: ProductSearchResult) {
+    setSelectingId(product.productId);
+    setSearchError(null);
+    const res = await fetch("/api/coupang/links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: product.productUrl,
+        productName: `${product.productName} (${product.productPrice.toLocaleString("ko-KR")}원)`,
+      }),
+    });
+    setSelectingId(null);
+    const data = await res.json();
+    if (!res.ok) {
+      setSearchError(data.error ?? "링크 생성에 실패했습니다.");
+      return;
+    }
+    setLinks((prev) => [data, ...prev]);
+    setCoupangLinkId(data.id);
+    setSelectedProduct({
+      productName: product.productName,
+      productPrice: product.productPrice,
+    });
+  }
+
+  async function handleGenerateDraft() {
+    if (!selectedProduct) return;
+    setGeneratingDraft(true);
+    setError(null);
+    const res = await fetch("/api/ai/draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(selectedProduct),
+    });
+    setGeneratingDraft(false);
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error ?? "AI 글 생성에 실패했습니다.");
+      return;
+    }
+    setBodyText(data.body);
+  }
 
   function toggleAccount(id: string) {
     setSelectedAccountIds((prev) =>
@@ -81,7 +165,7 @@ export default function ComposeForm({
     "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.";
 
   function insertSelectedLink() {
-    const link = links.find((l) => l.id === coupangLinkId);
+    const link = links_.find((l) => l.id === coupangLinkId);
     if (!link) return;
     setBodyText((prev) => {
       const base = prev.trim() ? `${prev.trim()}\n\n${link.shortUrl}` : link.shortUrl;
@@ -147,6 +231,66 @@ export default function ComposeForm({
 
   return (
     <div className="space-y-8">
+      <div className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+        <h2 className="text-sm font-semibold text-neutral-200">
+          쿠팡파트너스 상품 검색
+        </h2>
+        <form onSubmit={handleProductSearch} className="flex gap-2">
+          <input
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            placeholder="찰옥수수"
+            className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={searching}
+            className="rounded-lg bg-neutral-800 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-700 disabled:opacity-50"
+          >
+            {searching ? "검색 중..." : "검색"}
+          </button>
+        </form>
+        {searchError && <p className="text-sm text-red-400">{searchError}</p>}
+        {searchResults && (
+          <>
+            <p className="text-xs text-neutral-500">
+              {searchResults.length}개 상품 찾음 · 원하는 상품을 선택하세요
+            </p>
+            <div className="space-y-2">
+              {searchResults.map((product) => (
+                <div
+                  key={product.productId}
+                  className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-3"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={product.productImage}
+                    alt={product.productName}
+                    className="h-14 w-14 shrink-0 rounded-md object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-white">
+                      {product.productName}
+                    </p>
+                    <p className="text-xs text-neutral-400">
+                      {product.productPrice.toLocaleString("ko-KR")}원
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectProduct(product)}
+                    disabled={selectingId === product.productId}
+                    className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                  >
+                    {selectingId === product.productId ? "선택 중..." : "이 상품 선택"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
       <form
         onSubmit={handleSubmit}
         className="space-y-4 rounded-xl border border-neutral-800 bg-neutral-900 p-5"
@@ -173,7 +317,7 @@ export default function ComposeForm({
           </div>
         </div>
 
-        {links.length > 0 && (
+        {links_.length > 0 && (
           <div>
             <label className="mb-1 block text-xs text-neutral-400">
               쿠팡 링크 삽입 (선택)
@@ -185,7 +329,7 @@ export default function ComposeForm({
                 className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
               >
                 <option value="">링크 선택 안함</option>
-                {links.map((link) => (
+                {links_.map((link) => (
                   <option key={link.id} value={link.id}>
                     {link.productName || link.originalUrl}
                   </option>
@@ -207,12 +351,25 @@ export default function ComposeForm({
         )}
 
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">본문</label>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-xs text-neutral-400">본문</label>
+            {aiConfigured && selectedProduct && (
+              <button
+                type="button"
+                onClick={handleGenerateDraft}
+                disabled={generatingDraft}
+                className="rounded-full bg-purple-600/20 px-2.5 py-1 text-xs text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
+              >
+                {generatingDraft ? "AI 작성 중..." : "✦ AI 초안 생성"}
+              </button>
+            )}
+          </div>
           <textarea
             required
             rows={5}
             value={bodyText}
             onChange={(e) => setBodyText(e.target.value)}
+            placeholder="글 내용을 입력하세요"
             className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
           />
         </div>

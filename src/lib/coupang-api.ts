@@ -43,6 +43,71 @@ export type DeeplinkResult = {
   landingUrl?: string;
 };
 
+const SEARCH_PATH =
+  "/v2/providers/affiliate_open_api/apis/openapi/products/search";
+
+export type ProductSearchResult = {
+  productId: number;
+  productName: string;
+  productPrice: number;
+  productImage: string;
+  productUrl: string;
+  isRocket: boolean;
+  isFreeShipping: boolean;
+};
+
+export async function searchProducts(params: {
+  accessKey: string;
+  secretKey: string;
+  keyword: string;
+  limit?: number;
+}): Promise<ProductSearchResult[]> {
+  const query = `keyword=${encodeURIComponent(params.keyword)}&limit=${params.limit ?? 20}`;
+  const authorization = buildAuthorizationHeader({
+    method: "GET",
+    path: SEARCH_PATH,
+    query,
+    accessKey: params.accessKey,
+    secretKey: params.secretKey,
+  });
+
+  const res = await fetch(`${DOMAIN}${SEARCH_PATH}?${query}`, {
+    method: "GET",
+    headers: { Authorization: authorization },
+  });
+
+  const text = await res.text();
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = text;
+  }
+
+  if (!res.ok) {
+    throw new CoupangApiError(
+      `쿠팡파트너스 API 오류 (${res.status})`,
+      res.status,
+      json
+    );
+  }
+
+  const parsed = json as {
+    rCode?: string;
+    rMessage?: string;
+    data?: { productData?: ProductSearchResult[] };
+  };
+  if (parsed.rCode && parsed.rCode !== "0") {
+    throw new CoupangApiError(
+      parsed.rMessage || "쿠팡파트너스 API 응답 오류",
+      res.status,
+      json
+    );
+  }
+
+  return parsed.data?.productData ?? [];
+}
+
 export async function createDeeplinks(params: {
   accessKey: string;
   secretKey: string;

@@ -31,6 +31,7 @@ export default function SettingsForm({
   const [threadsRedirectUri, setThreadsRedirectUri] = useState(
     status.threadsRedirectUri ?? suggestedRedirectUri
   );
+  const [anthropicApiKey, setAnthropicApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [current, setCurrent] = useState(status);
@@ -48,6 +49,7 @@ export default function SettingsForm({
         threadsAppId,
         threadsAppSecret,
         threadsRedirectUri,
+        anthropicApiKey,
       }),
     });
     setSaving(false);
@@ -60,6 +62,7 @@ export default function SettingsForm({
     setCoupangAccessKey("");
     setCoupangSecretKey("");
     setThreadsAppSecret("");
+    setAnthropicApiKey("");
     setMessage("저장되었습니다.");
   }
 
@@ -155,6 +158,35 @@ export default function SettingsForm({
               className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
             />
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="font-semibold text-white">AI 글 자동 생성 (Anthropic)</h2>
+          <StatusBadge ok={current.aiConfigured} />
+        </div>
+        <p className="mb-4 text-xs text-neutral-500">
+          선택한 쿠팡 상품 정보를 바탕으로 AI가 스레드 글 초안을 매번 새로
+          써주는 기능에 사용됩니다. console.anthropic.com에서 발급받은 API
+          키를 입력하세요. (선택 사항 — 입력하지 않으면 AI 초안 생성 버튼이
+          비활성화됩니다.)
+        </p>
+        <div>
+          <label className="mb-1 block text-xs text-neutral-400">
+            Anthropic API Key
+          </label>
+          <input
+            type="password"
+            value={anthropicApiKey}
+            onChange={(e) => setAnthropicApiKey(e.target.value)}
+            placeholder={
+              current.aiConfigured
+                ? "저장되어 있음 (변경하려면 입력)"
+                : "sk-ant-..."
+            }
+            className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+          />
         </div>
       </section>
 
