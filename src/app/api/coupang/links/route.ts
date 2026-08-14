@@ -30,6 +30,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // 상품 검색 결과의 링크는 이미 변환된 제휴 추적 링크이므로 그대로 저장한다.
+  if (parsed.hostname === "link.coupang.com") {
+    const saved = await prisma.coupangLink.create({
+      data: {
+        productName: productName || null,
+        originalUrl: parsed.toString(),
+        shortUrl: parsed.toString(),
+      },
+    });
+    return NextResponse.json(saved);
+  }
+
   const settings = await getDecryptedSettings();
   if (!settings.coupangAccessKey || !settings.coupangSecretKey) {
     return NextResponse.json(
