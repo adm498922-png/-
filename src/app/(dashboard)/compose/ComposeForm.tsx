@@ -22,6 +22,7 @@ type PostTarget = {
   errorMessage: string | null;
   threadsPermalink: string | null;
   threadsAccount: Account;
+  body: string | null;
 };
 type Post = {
   id: string;
@@ -91,6 +92,8 @@ export default function ComposeForm({
     productPrice: number;
   } | null>(null);
   const [generatingDraft, setGeneratingDraft] = useState(false);
+  const [perAccountBody, setPerAccountBody] = useState<Record<string, string>>({});
+  const [generatingVariantFor, setGeneratingVariantFor] = useState<string | null>(null);
 
   async function handleProductSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -159,6 +162,32 @@ export default function ComposeForm({
     setSelectedAccountIds((prev) =>
       prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
     );
+    setPerAccountBody((prev) => {
+      if (prev[id] !== undefined) {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      return { ...prev, [id]: bodyText };
+    });
+  }
+
+  async function handleGenerateVariant(accountId: string) {
+    if (!selectedProduct) return;
+    setGeneratingVariantFor(accountId);
+    setError(null);
+    const res = await fetch("/api/ai/draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(selectedProduct),
+    });
+    setGeneratingVariantFor(null);
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error ?? "AI 글 생성에 실패했습니다.");
+      return;
+    }
+    setPerAccountBody((prev) => ({ ...prev, [accountId]: data.body }));
   }
 
   const COUPANG_DISCLOSURE =
@@ -211,6 +240,8 @@ export default function ComposeForm({
         commentBody: commentBody || undefined,
         coupangLinkId: coupangLinkId || undefined,
         accountIds: selectedAccountIds,
+        accountBodies:
+          selectedAccountIds.length > 1 ? perAccountBody : undefined,
         scheduledAt:
           scheduleMode === "later"
             ? new Date(scheduledAt).toISOString()
@@ -229,6 +260,7 @@ export default function ComposeForm({
     setBodyText("");
     setCommentBody("");
     setCoupangLinkId("");
+    setPerAccountBody({});
     setScheduleMode("now");
     setScheduledAt("");
   }
@@ -388,6 +420,52 @@ export default function ComposeForm({
           />
         </div>
 
+        {selectedAccountIds.length > 1 && (
+          <div className="space-y-3 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
+            <p className="text-xs text-neutral-400">
+              계정별 문구 (비워두면 위 본문이 그대로 사용됩니다 — 여러 계정에
+              똑같은 글이 올라가면 반복 게시처럼 보일 수 있어요)
+            </p>
+            {selectedAccountIds.map((accountId) => {
+              const account = accounts.find((a) => a.id === accountId);
+              if (!account) return null;
+              return (
+                <div key={accountId}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label className="text-xs text-neutral-400">
+                      {account.label}
+                    </label>
+                    {aiConfigured && selectedProduct && (
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateVariant(accountId)}
+                        disabled={generatingVariantFor === accountId}
+                        className="rounded-full bg-purple-600/20 px-2.5 py-1 text-xs text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
+                      >
+                        {generatingVariantFor === accountId
+                          ? "AI 작성 중..."
+                          : "✦ AI 변형 생성"}
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={perAccountBody[accountId] ?? ""}
+                    onChange={(e) =>
+                      setPerAccountBody((prev) => ({
+                        ...prev,
+                        [accountId]: e.target.value,
+                      }))
+                    }
+                    placeholder="비워두면 위 본문 사용"
+                    className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <div>
           <div className="mb-1 flex items-center justify-between">
             <label className="block text-xs text-neutral-400">
@@ -493,10 +571,15 @@ export default function ComposeForm({
                   {post.targets.map((t) => (
                     <span
                       key={t.id}
-                      title={t.errorMessage ?? undefined}
-                      className={`rounded-full border border-neutral-700 px-2 py-0.5 text-xs ${statusColor(t.status)}`}
+                      title={
+                        t.errorMessage ?? (t.body ? `이 계정 전용 문구: ${t.body}` : undefined)
+                      }
+                      className={`rounded-full border px-2 py-0.5 text-xs ${statusColor(t.status)} ${
+                        t.body ? "border-purple-700" : "border-neutral-700"
+                      }`}
                     >
-                      {t.threadsAccount.label}: {TARGET_STATUS_LABEL[t.status] ?? t.status}
+                      {t.threadsAccount.label}
+                      {t.body ? " ✦" : ""}: {TARGET_STATUS_LABEL[t.status] ?? t.status}
                     </span>
                   ))}
                 </div>

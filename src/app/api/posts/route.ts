@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { body, commentBody, coupangLinkId, accountIds, scheduledAt } =
+  const { body, commentBody, coupangLinkId, accountIds, accountBodies, scheduledAt } =
     await req.json();
 
   if (typeof body !== "string" || !body.trim()) {
@@ -39,9 +39,18 @@ export async function POST(req: NextRequest) {
       status: "SCHEDULED",
       scheduledAt: isFuture ? scheduledDate : new Date(),
       targets: {
-        create: accountIds.map((threadsAccountId: string) => ({
-          threadsAccountId,
-        })),
+        create: accountIds.map((threadsAccountId: string) => {
+          const perAccountBody =
+            accountBodies && typeof accountBodies === "object"
+              ? accountBodies[threadsAccountId]
+              : undefined;
+          const trimmed =
+            typeof perAccountBody === "string" ? perAccountBody.trim() : "";
+          return {
+            threadsAccountId,
+            body: trimmed && trimmed !== body.trim() ? trimmed : null,
+          };
+        }),
       },
     },
     include: { targets: true },

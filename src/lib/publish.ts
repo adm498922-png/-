@@ -63,7 +63,7 @@ export async function publishTarget(targetId: string) {
     const { mediaId } = await publishWithRetry({
       accessToken,
       threadsUserId: target.threadsAccount.threadsUserId,
-      text: target.post.body,
+      text: target.body || target.post.body,
     });
 
     let permalink: string | undefined;
