@@ -6,6 +6,7 @@ import {
   TONE_OPTIONS,
   ENGAGEMENT_PROMPTS,
   COUPANG_DISCLOSURE,
+  buildCoupangComment,
 } from "@/lib/daily-post-options";
 
 type Account = { id: string; label: string; username: string | null };
@@ -256,12 +257,12 @@ export default function ComposeForm({
   function insertSelectedLink() {
     const link = links_.find((l) => l.id === coupangLinkId);
     if (!link) return;
-    setBodyText((prev) => {
-      const base = prev.trim() ? `${prev.trim()}\n\n${link.shortUrl}` : link.shortUrl;
-      return base.includes(COUPANG_DISCLOSURE)
-        ? base
-        : `${base}\n\n${COUPANG_DISCLOSURE}`;
-    });
+    const current = commentBody.trim();
+    const teaser =
+      current && !current.includes(COUPANG_DISCLOSURE)
+        ? current
+        : ENGAGEMENT_PROMPTS[Math.floor(Math.random() * ENGAGEMENT_PROMPTS.length)];
+    setCommentBody(buildCoupangComment(link.shortUrl, teaser));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -538,11 +539,13 @@ export default function ComposeForm({
                 disabled={!coupangLinkId}
                 className="rounded-lg bg-neutral-800 px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-700 disabled:opacity-40"
               >
-                본문에 삽입
+                댓글에 삽입
               </button>
             </div>
             <p className="mt-1 text-xs text-neutral-500">
-              쿠팡파트너스 링크와 함께 법적으로 필요한 고지 문구가 자동으로 붙습니다.
+              본문이 아니라 <strong className="text-neutral-300">자동 첫 댓글</strong>에
+              법적 고지 문구와 함께 링크가 들어갑니다 (본문에 링크가 있으면
+              노출이 줄어드는 경우가 많아서요).
             </p>
           </div>
         )}

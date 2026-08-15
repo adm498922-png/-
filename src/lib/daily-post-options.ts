@@ -19,4 +19,9 @@ export const ENGAGEMENT_PROMPTS = [
 ];
 
 export const COUPANG_DISCLOSURE =
-  "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.";
+  "[광고] 📢 이 포스팅은 쿠팡 제휴 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.";
+
+/** 쿠팡 링크를 댓글에 달 때 쓰는 형식 (고지문구 + 유도문구 + 링크) */
+export function buildCoupangComment(shortUrl: string, teaser: string): string {
+  return `${COUPANG_DISCLOSURE}\n\n👇👇 ${teaser}\n${shortUrl}`;
+}

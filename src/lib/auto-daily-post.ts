@@ -5,7 +5,7 @@ import {
   TOPIC_CATEGORIES,
   TONE_OPTIONS,
   ENGAGEMENT_PROMPTS,
-  COUPANG_DISCLOSURE,
+  buildCoupangComment,
 } from "./daily-post-options";
 
 const REVIEW_WINDOW_HOURS = 3;
@@ -54,7 +54,6 @@ export async function generateAndScheduleDailyPost(
   }
 
   const scheduledAt = new Date(Date.now() + REVIEW_WINDOW_HOURS * 60 * 60 * 1000);
-  const commentBody = pickRandom(ENGAGEMENT_PROMPTS);
 
   let existingLink = null;
   if (settings.autoDailyPostIncludeProducts && Math.random() < PRODUCT_POST_CHANCE) {
@@ -63,11 +62,14 @@ export async function generateAndScheduleDailyPost(
   }
 
   if (existingLink) {
-    const draft = await generateThreadsPost({
+    const body = await generateThreadsPost({
       apiKey: settings.openaiApiKey,
       productName: existingLink.productName ?? existingLink.originalUrl,
     });
-    const body = `${draft}\n\n${existingLink.shortUrl}\n\n${COUPANG_DISCLOSURE}`;
+    const commentBody = buildCoupangComment(
+      existingLink.shortUrl,
+      pickRandom(ENGAGEMENT_PROMPTS)
+    );
 
     const post = await prisma.post.create({
       data: {
@@ -100,6 +102,7 @@ export async function generateAndScheduleDailyPost(
     count: 1,
   });
   const body = drafts[0];
+  const commentBody = pickRandom(ENGAGEMENT_PROMPTS);
 
   const post = await prisma.post.create({
     data: {
