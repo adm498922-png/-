@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TOPIC_CATEGORIES,
   TONE_OPTIONS,
@@ -16,6 +16,9 @@ type CoupangLink = {
   originalUrl: string;
   shortUrl: string;
   imageUrl?: string | null;
+  videoStatus?: string | null;
+  videoUrl?: string | null;
+  videoError?: string | null;
 };
 type ProductSearchResult = {
   productId: number;
@@ -132,6 +135,38 @@ export default function ComposeForm({
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [requestingVideo, setRequestingVideo] = useState(false);
+  const [videoRequestError, setVideoRequestError] = useState<string | null>(null);
+
+  const selectedLink = links_.find((l) => l.id === coupangLinkId) ?? null;
+
+  useEffect(() => {
+    if (selectedLink?.videoStatus !== "GENERATING") return;
+    const linkId = selectedLink.id;
+    const interval = setInterval(async () => {
+      const res = await fetch(`/api/coupang/links/${linkId}/video`);
+      if (!res.ok) return;
+      const updated = await res.json();
+      setLinks((prev) => prev.map((l) => (l.id === linkId ? updated : l)));
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [selectedLink?.id, selectedLink?.videoStatus]);
+
+  async function handleRequestVideo() {
+    if (!coupangLinkId) return;
+    setRequestingVideo(true);
+    setVideoRequestError(null);
+    const res = await fetch(`/api/coupang/links/${coupangLinkId}/video`, {
+      method: "POST",
+    });
+    const data = await res.json();
+    setRequestingVideo(false);
+    if (!res.ok) {
+      setVideoRequestError(data.error ?? "영상 생성 요청에 실패했습니다.");
+      return;
+    }
+    setLinks((prev) => prev.map((l) => (l.id === coupangLinkId ? data : l)));
+  }
 
   async function handleProductSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -631,16 +666,62 @@ export default function ComposeForm({
         )}
 
         {selectedProduct && (
-          <div className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-950 p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={selectedProduct.imageUrl}
-              alt={selectedProduct.productName}
-              className="h-12 w-12 shrink-0 rounded-md object-cover"
-            />
-            <p className="text-xs text-neutral-400">
-              발행할 때 이 상품 사진이 글에 같이 첨부됩니다.
-            </p>
+          <div className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-950 p-2">
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selectedProduct.imageUrl}
+                alt={selectedProduct.productName}
+                className="h-12 w-12 shrink-0 rounded-md object-cover"
+              />
+              <p className="text-xs text-neutral-400">
+                발행할 때 이 상품 사진이 글에 같이 첨부됩니다.
+              </p>
+            </div>
+
+            {aiConfigured && (
+              <div className="flex items-center gap-2 border-t border-neutral-800 pt-2">
+                {!selectedLink?.videoStatus || selectedLink.videoStatus === "FAILED" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleRequestVideo}
+                      disabled={requestingVideo}
+                      className="rounded-full bg-purple-600/20 px-2.5 py-1 text-xs text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
+                    >
+                      {requestingVideo ? "요청 중..." : "🎬 AI 영상도 만들기"}
+                    </button>
+                    <p className="text-[11px] text-neutral-500">
+                      완성까지 몇 분 걸려요. 완료되면 사진과 함께 자동으로 첨부돼요.
+                      (영상 1개당 OpenAI 요금이 따로 부과돼요)
+                    </p>
+                  </>
+                ) : selectedLink.videoStatus === "GENERATING" ? (
+                  <p className="text-xs text-amber-400">
+                    🎬 영상 생성 중... (완료되면 자동으로 이 상품 글에 첨부돼요)
+                  </p>
+                ) : selectedLink.videoStatus === "READY" && selectedLink.videoUrl ? (
+                  <div className="flex items-center gap-2">
+                    <video
+                      src={selectedLink.videoUrl}
+                      muted
+                      className="h-16 w-9 rounded-md bg-black object-cover"
+                    />
+                    <p className="text-xs text-green-400">
+                      🎬 영상 준비 완료 — 발행 시 사진과 함께 첨부돼요.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            )}
+            {selectedLink?.videoStatus === "FAILED" && selectedLink.videoError && (
+              <p className="text-[11px] text-red-400">
+                영상 생성 실패: {selectedLink.videoError}
+              </p>
+            )}
+            {videoRequestError && (
+              <p className="text-[11px] text-red-400">{videoRequestError}</p>
+            )}
           </div>
         )}
 

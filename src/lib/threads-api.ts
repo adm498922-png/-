@@ -122,6 +122,7 @@ export async function createImageContainer(params: {
   imageUrl: string;
   text?: string;
   replyToId?: string;
+  isCarouselItem?: boolean;
 }): Promise<{ id: string }> {
   const url = new URL(`${GRAPH_BASE}/v1.0/${params.threadsUserId}/threads`);
   url.searchParams.set("media_type", "IMAGE");
@@ -132,9 +133,99 @@ export async function createImageContainer(params: {
   if (params.replyToId) {
     url.searchParams.set("reply_to_id", params.replyToId);
   }
+  if (params.isCarouselItem) {
+    url.searchParams.set("is_carousel_item", "true");
+  }
   url.searchParams.set("access_token", params.accessToken);
   const res = await fetch(url.toString(), { method: "POST" });
   return parseOrThrow(res) as Promise<{ id: string }>;
+}
+
+export async function createVideoContainer(params: {
+  accessToken: string;
+  threadsUserId: string;
+  videoUrl: string;
+  text?: string;
+  replyToId?: string;
+  isCarouselItem?: boolean;
+}): Promise<{ id: string }> {
+  const url = new URL(`${GRAPH_BASE}/v1.0/${params.threadsUserId}/threads`);
+  url.searchParams.set("media_type", "VIDEO");
+  url.searchParams.set("video_url", params.videoUrl);
+  if (params.text) {
+    url.searchParams.set("text", params.text);
+  }
+  if (params.replyToId) {
+    url.searchParams.set("reply_to_id", params.replyToId);
+  }
+  if (params.isCarouselItem) {
+    url.searchParams.set("is_carousel_item", "true");
+  }
+  url.searchParams.set("access_token", params.accessToken);
+  const res = await fetch(url.toString(), { method: "POST" });
+  return parseOrThrow(res) as Promise<{ id: string }>;
+}
+
+export async function createCarouselContainer(params: {
+  accessToken: string;
+  threadsUserId: string;
+  childrenIds: string[];
+  text?: string;
+  replyToId?: string;
+}): Promise<{ id: string }> {
+  const url = new URL(`${GRAPH_BASE}/v1.0/${params.threadsUserId}/threads`);
+  url.searchParams.set("media_type", "CAROUSEL");
+  url.searchParams.set("children", params.childrenIds.join(","));
+  if (params.text) {
+    url.searchParams.set("text", params.text);
+  }
+  if (params.replyToId) {
+    url.searchParams.set("reply_to_id", params.replyToId);
+  }
+  url.searchParams.set("access_token", params.accessToken);
+  const res = await fetch(url.toString(), { method: "POST" });
+  return parseOrThrow(res) as Promise<{ id: string }>;
+}
+
+export async function getContainerStatus(params: {
+  accessToken: string;
+  containerId: string;
+}): Promise<{ status: string; error_message?: string }> {
+  const url = new URL(`${GRAPH_BASE}/v1.0/${params.containerId}`);
+  url.searchParams.set("fields", "status,error_message");
+  url.searchParams.set("access_token", params.accessToken);
+  const res = await fetch(url.toString());
+  return parseOrThrow(res) as Promise<{ status: string; error_message?: string }>;
+}
+
+/** 영상/캐러셀 컨테이너는 처리에 시간이 걸려, FINISHED 상태가 될 때까지 기다렸다가 발행해야 한다. */
+export async function waitUntilContainerReady(params: {
+  accessToken: string;
+  containerId: string;
+  maxAttempts?: number;
+  intervalMs?: number;
+}): Promise<void> {
+  const maxAttempts = params.maxAttempts ?? 30;
+  const intervalMs = params.intervalMs ?? 10_000;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const { status, error_message } = await getContainerStatus({
+      accessToken: params.accessToken,
+      containerId: params.containerId,
+    });
+    if (status === "FINISHED" || status === "PUBLISHED") return;
+    if (status === "ERROR" || status === "EXPIRED") {
+      throw new ThreadsApiError(
+        `미디어 처리 실패: ${error_message ?? status}`,
+        502,
+        { status, error_message }
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new ThreadsApiError("미디어 처리 시간이 초과되었습니다.", 504, {
+    containerId: params.containerId,
+  });
 }
 
 export async function publishContainer(params: {

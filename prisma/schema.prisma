@@ -48,6 +48,12 @@ model CoupangLink {
   imageUrl      String?
   createdAt     DateTime @default(now())
 
+  // AI(Sora) 생성 홍보 영상: 생성 요청 시 GENERATING → 완료되면 READY(videoUrl 채워짐) / 실패 시 FAILED
+  videoStatus   String?
+  videoJobId    String?
+  videoUrl      String?
+  videoError    String?
+
   posts         Post[]
 }
 

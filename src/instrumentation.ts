@@ -14,6 +14,8 @@ export async function register() {
   const { runDueScheduledPosts } = await import("@/lib/scheduler");
   const { collectInsightsForPublishedTargets } = await import("@/lib/insights");
   const { generateAndScheduleDailyPost } = await import("@/lib/auto-daily-post");
+  const { pollPendingVideoJobs } = await import("@/lib/video-gen");
+  const { getDecryptedSettings } = await import("@/lib/settings");
 
   cron.schedule("* * * * *", async () => {
     try {
@@ -41,7 +43,17 @@ export async function register() {
     }
   });
 
+  // AI 상품 홍보 영상(Sora) 생성 진행 상태를 매 분 확인해서 완료되면 저장
+  cron.schedule("* * * * *", async () => {
+    try {
+      const settings = await getDecryptedSettings();
+      await pollPendingVideoJobs(settings.openaiApiKey);
+    } catch (e) {
+      console.error("영상 생성 상태 확인 스케줄러 오류", e);
+    }
+  });
+
   console.log(
-    "[threads-hub] 로컬 스케줄러가 시작되었습니다 (예약 발행 매 1분, 조회수 수집 매 10분, 자동 일상글 생성 2시간마다)."
+    "[threads-hub] 로컬 스케줄러가 시작되었습니다 (예약 발행 매 1분, 조회수 수집 매 10분, 자동 일상글 생성 2시간마다, 영상 생성 확인 매 1분)."
   );
 }

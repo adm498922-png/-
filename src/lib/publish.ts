@@ -1,8 +1,12 @@
 import { prisma } from "./prisma";
 import { getValidAccessToken, markAccountNeedsReconnect } from "./threads-accounts";
+import { getDecryptedSettings } from "./settings";
 import {
   createTextContainer,
   createImageContainer,
+  createVideoContainer,
+  createCarouselContainer,
+  waitUntilContainerReady,
   publishContainer,
   getMediaPermalink,
   ThreadsApiError,
@@ -13,27 +17,80 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** settings.threadsRedirectUri(예: https://.../api/threads/oauth/callback)에서 origin만 추출 */
+function getPublicBaseUrl(redirectUri: string): string {
+  return redirectUri.replace(/\/api\/threads\/oauth\/callback\/?$/, "");
+}
+
 async function publishWithRetry(params: {
   accessToken: string;
   threadsUserId: string;
   text: string;
   imageUrl?: string;
+  videoUrl?: string;
   replyToId?: string;
 }): Promise<{ mediaId: string }> {
-  const container = params.imageUrl
-    ? await createImageContainer({
+  let containerId: string;
+
+  if (params.imageUrl && params.videoUrl) {
+    // 사진 + 영상을 한 게시물에 같이 올리려면 캐러셀로 묶어야 함
+    const [imageChild, videoChild] = await Promise.all([
+      createImageContainer({
         accessToken: params.accessToken,
         threadsUserId: params.threadsUserId,
         imageUrl: params.imageUrl,
-        text: params.text,
-        replyToId: params.replyToId,
-      })
-    : await createTextContainer({
+        isCarouselItem: true,
+      }),
+      createVideoContainer({
         accessToken: params.accessToken,
         threadsUserId: params.threadsUserId,
-        text: params.text,
-        replyToId: params.replyToId,
-      });
+        videoUrl: params.videoUrl,
+        isCarouselItem: true,
+      }),
+    ]);
+    await waitUntilContainerReady({
+      accessToken: params.accessToken,
+      containerId: videoChild.id,
+    });
+    const carousel = await createCarouselContainer({
+      accessToken: params.accessToken,
+      threadsUserId: params.threadsUserId,
+      childrenIds: [imageChild.id, videoChild.id],
+      text: params.text,
+      replyToId: params.replyToId,
+    });
+    containerId = carousel.id;
+  } else if (params.videoUrl) {
+    const video = await createVideoContainer({
+      accessToken: params.accessToken,
+      threadsUserId: params.threadsUserId,
+      videoUrl: params.videoUrl,
+      text: params.text,
+      replyToId: params.replyToId,
+    });
+    await waitUntilContainerReady({
+      accessToken: params.accessToken,
+      containerId: video.id,
+    });
+    containerId = video.id;
+  } else if (params.imageUrl) {
+    const image = await createImageContainer({
+      accessToken: params.accessToken,
+      threadsUserId: params.threadsUserId,
+      imageUrl: params.imageUrl,
+      text: params.text,
+      replyToId: params.replyToId,
+    });
+    containerId = image.id;
+  } else {
+    const text = await createTextContainer({
+      accessToken: params.accessToken,
+      threadsUserId: params.threadsUserId,
+      text: params.text,
+      replyToId: params.replyToId,
+    });
+    containerId = text.id;
+  }
 
   // Threads 컨테이너는 생성 후 처리에 약간의 시간이 걸릴 수 있어 짧게 재시도
   let lastError: unknown;
@@ -43,7 +100,7 @@ async function publishWithRetry(params: {
       const published = await publishContainer({
         accessToken: params.accessToken,
         threadsUserId: params.threadsUserId,
-        creationId: container.id,
+        creationId: containerId,
       });
       return { mediaId: published.id };
     } catch (e) {
@@ -74,11 +131,21 @@ export async function publishTarget(targetId: string) {
     });
 
     const accessToken = await getValidAccessToken(target.threadsAccountId);
+
+    let videoUrl: string | undefined;
+    if (target.post.coupangLink?.videoStatus === "READY" && target.post.coupangLink.videoUrl) {
+      const settings = await getDecryptedSettings();
+      if (settings.threadsRedirectUri) {
+        videoUrl = `${getPublicBaseUrl(settings.threadsRedirectUri)}${target.post.coupangLink.videoUrl}`;
+      }
+    }
+
     const { mediaId } = await publishWithRetry({
       accessToken,
       threadsUserId: target.threadsAccount.threadsUserId,
       text: target.body || target.post.body,
       imageUrl: target.post.coupangLink?.imageUrl ?? undefined,
+      videoUrl,
     });
 
     let permalink: string | undefined;
