@@ -9,13 +9,24 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+export type AutoDailyPostSkipReason =
+  | "disabled"
+  | "no-openai-key"
+  | "no-active-accounts";
+
+export type AutoDailyPostResult =
+  | { skipped: AutoDailyPostSkipReason }
+  | { created: string; category: string; tone: string; scheduledAt: Date };
+
 /**
  * 매일 자동으로 소재·말투를 스스로 골라 일상글 초안을 만들고,
  * 사람이 확인할 수 있도록 몇 시간 뒤로 예약해둔다 (즉시 발행하지 않음).
  */
-export async function generateAndScheduleDailyPost() {
+export async function generateAndScheduleDailyPost(
+  options?: { force?: boolean }
+): Promise<AutoDailyPostResult> {
   const settings = await getDecryptedSettings();
-  if (!settings.autoDailyPostEnabled) {
+  if (!settings.autoDailyPostEnabled && !options?.force) {
     return { skipped: "disabled" as const };
   }
   if (!settings.openaiApiKey) {

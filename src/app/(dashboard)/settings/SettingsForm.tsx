@@ -38,6 +38,24 @@ export default function SettingsForm({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [current, setCurrent] = useState(status);
+  const [runningTest, setRunningTest] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
+
+  async function handleRunTest() {
+    setRunningTest(true);
+    setTestResult(null);
+    const res = await fetch("/api/auto-daily-post/run", { method: "POST" });
+    const data = await res.json();
+    setRunningTest(false);
+    if (!res.ok) {
+      setTestResult(`실패: ${data.error ?? "알 수 없는 오류"}`);
+      return;
+    }
+    const time = new Date(data.scheduledAt).toLocaleString("ko-KR");
+    setTestResult(
+      `생성됨 — 소재: ${data.category} · 말투: ${data.tone} · ${time}에 자동 발행 예정 (글 작성/예약 화면에서 확인하세요)`
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -206,7 +224,7 @@ export default function SettingsForm({
           수정·취소할 수 있고, 아무것도 안 하면 그대로 자동 발행됩니다.
           OpenAI API 키가 설정되어 있어야 동작합니다.
         </p>
-        <label className="flex items-center gap-2 text-sm text-neutral-300">
+        <label className="mb-4 flex items-center gap-2 text-sm text-neutral-300">
           <input
             type="checkbox"
             checked={autoDailyPostEnabled}
@@ -215,6 +233,20 @@ export default function SettingsForm({
           />
           매일 자동 생성 켜기
         </label>
+
+        <div className="border-t border-neutral-800 pt-4">
+          <button
+            type="button"
+            onClick={handleRunTest}
+            disabled={runningTest}
+            className="rounded-lg bg-purple-600/20 px-3 py-1.5 text-xs font-medium text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
+          >
+            {runningTest ? "생성 중..." : "✦ 지금 바로 테스트 실행 (설정과 무관하게 1개 생성)"}
+          </button>
+          {testResult && (
+            <p className="mt-2 text-xs text-neutral-400">{testResult}</p>
+          )}
+        </div>
       </section>
 
       {message && <p className="text-sm text-blue-400">{message}</p>}
