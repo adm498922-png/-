@@ -298,7 +298,7 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                 ))}
               </div>
               {post.targets
-                .filter((t) => t.status === "FAILED" && t.errorMessage)
+                .filter((t) => t.errorMessage)
                 .map((t) => (
                   <p key={t.id} className="mt-1 text-xs text-red-400">
                     {t.threadsAccount.label}: {t.errorMessage}
