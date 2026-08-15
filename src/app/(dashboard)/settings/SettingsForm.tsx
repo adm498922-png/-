@@ -147,6 +147,11 @@ export default function SettingsForm({
         </div>
       </section>
 
+      <details className="group space-y-8 rounded-xl border border-neutral-800 bg-neutral-900/40 p-5 [&_section]:bg-neutral-900">
+        <summary className="cursor-pointer text-sm font-semibold text-neutral-300 group-open:mb-4">
+          고급 설정 (Threads 앱 등록 · AI 키 · 자동화)
+        </summary>
+
       <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
         <div className="mb-4 flex items-center gap-2">
           <h2 className="font-semibold text-white">Threads 개발자 앱</h2>
@@ -323,6 +328,7 @@ export default function SettingsForm({
           )}
         </div>
       </section>
+      </details>
 
       {message && <p className="text-sm text-blue-400">{message}</p>}
 

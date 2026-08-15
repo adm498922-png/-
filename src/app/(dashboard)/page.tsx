@@ -33,7 +33,7 @@ export default async function DashboardHomePage() {
           연결된 스레드 계정이 없습니다.
         </p>
         <Link
-          href="/accounts"
+          href="/settings"
           className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
         >
           스레드 계정 연결하러 가기

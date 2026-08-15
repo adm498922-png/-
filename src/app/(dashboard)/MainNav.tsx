@@ -49,13 +49,7 @@ const NAV_ITEMS = [
   { href: "/settings", label: "연결 설정", Icon: ConnectionsIcon },
 ];
 
-/** 연결 설정 그룹에 속한 하위 페이지들도 "연결 설정" 탭이 활성화된 것처럼 보이게 함 */
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/settings") {
-    return (
-      pathname === "/settings" || pathname === "/accounts" || pathname === "/links"
-    );
-  }
   return pathname === href;
 }
 

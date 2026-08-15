@@ -27,7 +27,7 @@ export default async function ComposePage() {
       {accounts.length === 0 ? (
         <div className="rounded-xl border border-dashed border-neutral-800 p-6 text-sm text-neutral-400">
           먼저{" "}
-          <Link href="/accounts" className="text-blue-400 hover:underline">
+          <Link href="/settings" className="text-blue-400 hover:underline">
             스레드 계정
           </Link>
           을 연결해주세요.

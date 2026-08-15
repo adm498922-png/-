@@ -12,16 +12,16 @@ import { OAUTH_STATE_COOKIE } from "../start/route";
  * Railway 등 리버스 프록시 뒤에서는 req.url이 내부 주소(예: localhost:8080)로
  * 잡힐 수 있어, 실제 공개 접속 주소는 요청 헤더(host)로 직접 구성한다.
  */
-function publicAccountsUrl(req: NextRequest): URL {
+function publicSettingsUrl(req: NextRequest): URL {
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host")!;
   const protocol =
     req.headers.get("x-forwarded-proto") ??
     (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
-  return new URL("/accounts", `${protocol}://${host}`);
+  return new URL("/settings", `${protocol}://${host}`);
 }
 
 function redirectWithError(req: NextRequest, message: string) {
-  const url = publicAccountsUrl(req);
+  const url = publicSettingsUrl(req);
   url.searchParams.set("error", message);
   return NextResponse.redirect(url);
 }
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
     return redirectWithError(req, "계정 연결에 실패했습니다. 앱 설정을 확인해주세요.");
   }
 
-  const url = publicAccountsUrl(req);
+  const url = publicSettingsUrl(req);
   url.searchParams.set("connected", "1");
   const res = NextResponse.redirect(url);
   res.cookies.set(OAUTH_STATE_COOKIE, "", { path: "/", maxAge: 0 });
