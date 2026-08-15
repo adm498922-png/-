@@ -140,13 +140,40 @@ export async function publishTarget(targetId: string) {
       }
     }
 
-    const { mediaId } = await publishWithRetry({
-      accessToken,
-      threadsUserId: target.threadsAccount.threadsUserId,
-      text: target.body || target.post.body,
-      imageUrl: target.post.coupangLink?.imageUrl ?? undefined,
-      videoUrl,
-    });
+    const imageUrl = target.post.coupangLink?.imageUrl ?? undefined;
+    const text = target.body || target.post.body;
+
+    let mediaId: string;
+    try {
+      const published = await publishWithRetry({
+        accessToken,
+        threadsUserId: target.threadsAccount.threadsUserId,
+        text,
+        imageUrl,
+        videoUrl,
+      });
+      mediaId = published.mediaId;
+    } catch (e) {
+      if (!videoUrl) throw e;
+      // 영상 처리 실패는 사진/글 발행까지 막지 않고, 영상만 빼고 재시도
+      console.error("영상 포함 발행 실패, 영상 없이 재시도", describeError(e));
+      if (target.post.coupangLinkId) {
+        await prisma.coupangLink.update({
+          where: { id: target.post.coupangLinkId },
+          data: {
+            videoStatus: "FAILED",
+            videoError: `발행 시 처리 실패로 제외됨: ${describeError(e)}`,
+          },
+        });
+      }
+      const published = await publishWithRetry({
+        accessToken,
+        threadsUserId: target.threadsAccount.threadsUserId,
+        text,
+        imageUrl,
+      });
+      mediaId = published.mediaId;
+    }
 
     let permalink: string | undefined;
     try {
