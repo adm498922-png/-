@@ -97,6 +97,7 @@ export default function ComposeForm({
   const [generatingVariantFor, setGeneratingVariantFor] = useState<string | null>(null);
   const [dailyTopic, setDailyTopic] = useState("");
   const [generatingDaily, setGeneratingDaily] = useState(false);
+  const [dailyDrafts, setDailyDrafts] = useState<string[] | null>(null);
 
   async function handleProductSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -171,6 +172,7 @@ export default function ComposeForm({
     if (!dailyTopic.trim()) return;
     setGeneratingDaily(true);
     setError(null);
+    setDailyDrafts(null);
     const res = await fetch("/api/ai/daily-draft", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -182,9 +184,22 @@ export default function ComposeForm({
       setError(data.error ?? "AI 글 생성에 실패했습니다.");
       return;
     }
-    setBodyText(data.body);
+    setDailyDrafts(data.drafts);
+  }
+
+  function updateDailyDraft(index: number, value: string) {
+    setDailyDrafts((prev) =>
+      prev ? prev.map((d, i) => (i === index ? value : d)) : prev
+    );
+  }
+
+  function handleUseDailyDraft(index: number) {
+    const draft = dailyDrafts?.[index];
+    if (draft === undefined) return;
+    setBodyText(draft);
     setSelectedProduct(null);
     setCoupangLinkId("");
+    setDailyDrafts(null);
   }
 
   function toggleAccount(id: string) {
@@ -312,15 +327,16 @@ export default function ComposeForm({
             AI로 일상글 쓰기 (쿠팡 상품 없이)
           </h2>
           <p className="text-xs text-neutral-500">
-            주제나 키워드만 입력하면 AI가 반말 일상글 초안을 써줘요. 쿠팡
-            링크 홍보 글만 반복되면 부자연스러워 보일 수 있어, 계정을
-            자연스럽게 보이려면 일상글도 섞는 걸 추천해요.
+            주제나 키워드만 입력하면 AI가 (필요하면 오늘 실제 날씨·이슈를
+            검색해서 반영한) 반말 일상글 초안을 3개 만들어줘요. 쿠팡 링크
+            홍보 글만 반복되면 부자연스러워 보일 수 있어, 계정을 자연스럽게
+            보이려면 일상글도 섞는 걸 추천해요.
           </p>
           <form onSubmit={handleGenerateDaily} className="flex gap-2">
             <input
               value={dailyTopic}
               onChange={(e) => setDailyTopic(e.target.value)}
-              placeholder="예: 육아템, 오늘 날씨, 아이 어린이집 적응기"
+              placeholder="예: 오늘 날씨, 육아템, 아이 어린이집 적응기"
               className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
             />
             <button
@@ -328,9 +344,37 @@ export default function ComposeForm({
               disabled={generatingDaily}
               className="rounded-lg bg-purple-600/20 px-4 py-2 text-sm text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
             >
-              {generatingDaily ? "AI 작성 중..." : "✦ AI 일상글 생성"}
+              {generatingDaily ? "AI 검색·작성 중..." : "✦ AI 일상글 생성"}
             </button>
           </form>
+          {dailyDrafts && (
+            <div className="space-y-3">
+              <p className="text-xs text-neutral-500">
+                초안 {dailyDrafts.length}개 — 직접 고쳐도 되고, 마음에 드는
+                걸로 &quot;이 초안 사용&quot;을 눌러주세요.
+              </p>
+              {dailyDrafts.map((draft, i) => (
+                <div
+                  key={i}
+                  className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-950 p-3"
+                >
+                  <textarea
+                    rows={4}
+                    value={draft}
+                    onChange={(e) => updateDailyDraft(i, e.target.value)}
+                    className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleUseDailyDraft(i)}
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500"
+                  >
+                    이 초안 사용
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDecryptedSettings } from "@/lib/settings";
-import { generateDailyPost } from "@/lib/ai";
+import { generateDailyPostDrafts } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
   const { topic } = await req.json();
@@ -17,11 +17,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await generateDailyPost({
+    const drafts = await generateDailyPostDrafts({
       apiKey: settings.openaiApiKey,
       topic: topic.trim(),
     });
-    return NextResponse.json({ body });
+    return NextResponse.json({ drafts });
   } catch (e) {
     console.error("일상글 AI 생성 실패", e);
     return NextResponse.json(

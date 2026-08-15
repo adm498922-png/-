@@ -104,13 +104,45 @@ export async function generateThreadsPost(params: {
   });
 }
 
-export async function generateDailyPost(params: {
+const DRAFT_SEPARATOR = "===";
+
+/**
+ * 오늘 실제 날씨/이슈 등을 웹 검색으로 확인해서 반영한 일상글 초안을
+ * 서로 다른 느낌으로 여러 개 생성 (사용자가 고르고 수정할 수 있도록)
+ */
+export async function generateDailyPostDrafts(params: {
   apiKey: string;
   topic: string;
-}): Promise<string> {
-  return generate({
-    apiKey: params.apiKey,
-    systemPrompt: DAILY_SYSTEM_PROMPT,
-    userContent: `다음 주제/키워드로 스레드 일상글을 써줘.\n주제: ${params.topic}`,
+  count?: number;
+}): Promise<string[]> {
+  const client = new OpenAI({ apiKey: params.apiKey });
+  const count = params.count ?? 3;
+
+  const response = await client.responses.create({
+    model: "gpt-4o-mini",
+    instructions:
+      DAILY_SYSTEM_PROMPT +
+      "\n\n주제가 오늘 날씨, 최근 이슈, 시사성 있는 내용과 관련 있으면 웹 검색으로 " +
+      "실제 오늘 정보를 확인하고 글에 자연스럽게 녹여. 관련 없는 주제면 검색하지 않아도 돼.",
+    input:
+      `다음 주제/키워드로 스레드 일상글 초안을 서로 느낌이 다르게 ${count}개 만들어줘.\n` +
+      `주제: ${params.topic}\n\n` +
+      `각 초안 사이에는 다른 텍스트 없이 정확히 이 줄만 넣어서 구분해: ${DRAFT_SEPARATOR}`,
+    tools: [{ type: "web_search" }],
   });
+
+  const text = response.output_text;
+  if (!text) {
+    throw new Error("AI가 글을 생성하지 못했습니다.");
+  }
+
+  const drafts = text
+    .split(DRAFT_SEPARATOR)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (drafts.length === 0) {
+    throw new Error("AI가 글을 생성하지 못했습니다.");
+  }
+  return drafts;
 }
