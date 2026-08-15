@@ -21,6 +21,7 @@ export default function LinkGeneratorForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,6 +47,17 @@ export default function LinkGeneratorForm({
     await navigator.clipboard.writeText(shortUrl);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1500);
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("이 링크를 삭제할까요? (이 링크로 이미 발행된 글은 그대로 남아요)")) {
+      return;
+    }
+    setDeletingId(id);
+    const res = await fetch(`/api/coupang/links/${id}`, { method: "DELETE" });
+    setDeletingId(null);
+    if (!res.ok) return;
+    setLinks((prev) => prev.filter((l) => l.id !== id));
   }
 
   return (
@@ -106,12 +118,21 @@ export default function LinkGeneratorForm({
                   {link.shortUrl}
                 </p>
               </div>
-              <button
-                onClick={() => handleCopy(link.id, link.shortUrl)}
-                className="ml-3 shrink-0 rounded-lg bg-neutral-800 px-3 py-1.5 text-xs text-neutral-200 hover:bg-neutral-700"
-              >
-                {copiedId === link.id ? "복사됨" : "복사"}
-              </button>
+              <div className="ml-3 flex shrink-0 gap-2">
+                <button
+                  onClick={() => handleCopy(link.id, link.shortUrl)}
+                  className="rounded-lg bg-neutral-800 px-3 py-1.5 text-xs text-neutral-200 hover:bg-neutral-700"
+                >
+                  {copiedId === link.id ? "복사됨" : "복사"}
+                </button>
+                <button
+                  onClick={() => handleDelete(link.id)}
+                  disabled={deletingId === link.id}
+                  className="rounded-lg bg-neutral-800 px-3 py-1.5 text-xs text-red-400 hover:bg-neutral-700 disabled:opacity-50"
+                >
+                  {deletingId === link.id ? "삭제 중..." : "삭제"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
