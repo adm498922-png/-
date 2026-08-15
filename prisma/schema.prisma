@@ -22,6 +22,7 @@ model Settings {
   threadsAppSecretEnc String?
   threadsRedirectUri  String?
   openaiApiKeyEnc     String?
+  autoDailyPostEnabled Boolean @default(false)
   updatedAt           DateTime @updatedAt
 }
 

@@ -32,6 +32,9 @@ export default function SettingsForm({
     status.threadsRedirectUri ?? suggestedRedirectUri
   );
   const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [autoDailyPostEnabled, setAutoDailyPostEnabled] = useState(
+    status.autoDailyPostEnabled
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [current, setCurrent] = useState(status);
@@ -50,6 +53,7 @@ export default function SettingsForm({
         threadsAppSecret,
         threadsRedirectUri,
         openaiApiKey,
+        autoDailyPostEnabled,
       }),
     });
     setSaving(false);
@@ -188,6 +192,29 @@ export default function SettingsForm({
             className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
           />
         </div>
+      </section>
+
+      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="font-semibold text-white">매일 자동 일상글 생성</h2>
+          <StatusBadge ok={autoDailyPostEnabled} />
+        </div>
+        <p className="mb-4 text-xs text-neutral-500">
+          켜두면 매일 오전 9시에 AI가 소재·말투를 스스로 골라 일상글 초안을
+          만들고, <strong className="text-neutral-300">3시간 뒤(낮 12시)</strong>로
+          자동 예약해둡니다. 그 사이 &quot;글 작성/예약&quot; 화면에서 확인·
+          수정·취소할 수 있고, 아무것도 안 하면 그대로 자동 발행됩니다.
+          OpenAI API 키가 설정되어 있어야 동작합니다.
+        </p>
+        <label className="flex items-center gap-2 text-sm text-neutral-300">
+          <input
+            type="checkbox"
+            checked={autoDailyPostEnabled}
+            onChange={(e) => setAutoDailyPostEnabled(e.target.checked)}
+            className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+          />
+          매일 자동 생성 켜기
+        </label>
       </section>
 
       {message && <p className="text-sm text-blue-400">{message}</p>}

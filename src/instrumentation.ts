@@ -13,6 +13,7 @@ export async function register() {
   const cron = await import("node-cron");
   const { runDueScheduledPosts } = await import("@/lib/scheduler");
   const { collectInsightsForPublishedTargets } = await import("@/lib/insights");
+  const { generateAndScheduleDailyPost } = await import("@/lib/auto-daily-post");
 
   cron.schedule("* * * * *", async () => {
     try {
@@ -30,7 +31,17 @@ export async function register() {
     }
   });
 
+  // 매일 오전 9시(서버 로컬 시간): 설정에서 켜져 있으면 AI가 소재를 스스로
+  // 골라 일상글을 만들어 3시간 뒤로 예약 (그 사이 검토/취소 가능)
+  cron.schedule("0 9 * * *", async () => {
+    try {
+      await generateAndScheduleDailyPost();
+    } catch (e) {
+      console.error("자동 일상글 생성 스케줄러 오류", e);
+    }
+  });
+
   console.log(
-    "[threads-hub] 로컬 스케줄러가 시작되었습니다 (예약 발행 매 1분, 조회수 수집 매 10분)."
+    "[threads-hub] 로컬 스케줄러가 시작되었습니다 (예약 발행 매 1분, 조회수 수집 매 10분, 자동 일상글 생성 매일 09시)."
   );
 }

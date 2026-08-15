@@ -8,6 +8,7 @@ export type DecryptedSettings = {
   threadsAppSecret: string | null;
   threadsRedirectUri: string | null;
   openaiApiKey: string | null;
+  autoDailyPostEnabled: boolean;
 };
 
 async function getRow() {
@@ -33,6 +34,7 @@ export async function getDecryptedSettings(): Promise<DecryptedSettings> {
       : null,
     threadsRedirectUri: row.threadsRedirectUri,
     openaiApiKey: row.openaiApiKeyEnc ? decrypt(row.openaiApiKeyEnc) : null,
+    autoDailyPostEnabled: row.autoDailyPostEnabled,
   };
 }
 
@@ -43,6 +45,7 @@ export type SettingsStatus = {
   threadsAppId: string | null;
   threadsRedirectUri: string | null;
   coupangAccessKeyPreview: string | null;
+  autoDailyPostEnabled: boolean;
 };
 
 export async function getSettingsStatus(): Promise<SettingsStatus> {
@@ -58,6 +61,7 @@ export async function getSettingsStatus(): Promise<SettingsStatus> {
     coupangAccessKeyPreview: s.coupangAccessKey
       ? `${s.coupangAccessKey.slice(0, 4)}••••`
       : null,
+    autoDailyPostEnabled: s.autoDailyPostEnabled,
   };
 }
 
@@ -68,8 +72,9 @@ export async function updateSettings(input: {
   threadsAppSecret?: string;
   threadsRedirectUri?: string;
   openaiApiKey?: string;
+  autoDailyPostEnabled?: boolean;
 }) {
-  const data: Record<string, string> = {};
+  const data: Record<string, string | boolean> = {};
   if (input.coupangAccessKey) data.coupangAccessKeyEnc = encrypt(input.coupangAccessKey);
   if (input.coupangSecretKey) data.coupangSecretKeyEnc = encrypt(input.coupangSecretKey);
   if (input.threadsAppId !== undefined) data.threadsAppId = input.threadsAppId;
@@ -77,6 +82,8 @@ export async function updateSettings(input: {
   if (input.threadsRedirectUri !== undefined)
     data.threadsRedirectUri = input.threadsRedirectUri;
   if (input.openaiApiKey) data.openaiApiKeyEnc = encrypt(input.openaiApiKey);
+  if (input.autoDailyPostEnabled !== undefined)
+    data.autoDailyPostEnabled = input.autoDailyPostEnabled;
 
   await prisma.settings.upsert({
     where: { id: "singleton" },

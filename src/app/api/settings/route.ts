@@ -15,6 +15,10 @@ export async function POST(req: NextRequest) {
     threadsAppSecret: body.threadsAppSecret || undefined,
     threadsRedirectUri: body.threadsRedirectUri,
     openaiApiKey: body.openaiApiKey || undefined,
+    autoDailyPostEnabled:
+      typeof body.autoDailyPostEnabled === "boolean"
+        ? body.autoDailyPostEnabled
+        : undefined,
   });
   const status = await getSettingsStatus();
   return NextResponse.json(status);
