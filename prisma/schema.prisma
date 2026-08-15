@@ -97,6 +97,7 @@ model PostTarget {
   threadsAccountId  String
   threadsAccount    ThreadsAccount    @relation(fields: [threadsAccountId], references: [id], onDelete: Cascade)
   body              String? // 이 계정에만 적용할 문구 (없으면 Post.body 사용)
+  commentBody       String? // 이 계정에만 적용할 첫 댓글 (없으면 Post.commentBody 사용)
   status            PostTargetStatus  @default(PENDING)
   threadsMediaId    String?
   threadsPermalink  String?

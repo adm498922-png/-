@@ -66,6 +66,7 @@ export async function generateAndScheduleDailyPost(
     return { skipped: "no-active-accounts" as const };
   }
 
+  const openaiApiKey = settings.openaiApiKey;
   const scheduledAt = new Date(Date.now() + REVIEW_WINDOW_MINUTES * 60 * 1000);
 
   // 쿠팡 상품 글도 섞기로 되어 있으면, 사람이 직접 검색하지 않아도 되도록
@@ -96,25 +97,33 @@ export async function generateAndScheduleDailyPost(
   }
 
   if (existingLink) {
-    const body = await generateThreadsPost({
-      apiKey: settings.openaiApiKey,
-      productName: existingLink.productName ?? existingLink.originalUrl,
-    });
-    const teaser = await generateFollowUpTeaser({
-      apiKey: settings.openaiApiKey,
-      postBody: body,
-    }).catch(() => pickRandom(ENGAGEMENT_PROMPTS));
-    const commentBody = buildCoupangComment(existingLink.shortUrl, teaser);
+    const productName = existingLink.productName ?? existingLink.originalUrl;
+
+    // 계정이 여러 개면 계정마다 다른 후기 글+댓글을 각각 새로 써서, 같은 글이
+    // 복사된 것처럼 보이지 않게 한다.
+    const variants: { body: string; commentBody: string }[] = [];
+    for (let i = 0; i < accounts.length; i++) {
+      const body = await generateThreadsPost({ apiKey: openaiApiKey, productName });
+      const teaser = await generateFollowUpTeaser({
+        apiKey: openaiApiKey,
+        postBody: body,
+      }).catch(() => pickRandom(ENGAGEMENT_PROMPTS));
+      variants.push({ body, commentBody: buildCoupangComment(existingLink.shortUrl, teaser) });
+    }
 
     const post = await prisma.post.create({
       data: {
-        body,
-        commentBody,
+        body: variants[0].body,
+        commentBody: variants[0].commentBody,
         coupangLinkId: existingLink.id,
         status: "SCHEDULED",
         scheduledAt,
         targets: {
-          create: accounts.map((a) => ({ threadsAccountId: a.id })),
+          create: accounts.map((a, i) => ({
+            threadsAccountId: a.id,
+            body: variants[i].body,
+            commentBody: variants[i].commentBody,
+          })),
         },
       },
     });
@@ -131,27 +140,36 @@ export async function generateAndScheduleDailyPost(
   const tone = pickRandom(TONE_OPTIONS);
   const timeSlot = getTimeSlot();
 
+  // 계정 수만큼 서로 다른 초안을 한 번에 만들어서, 계정마다 다른 글이 나가게 한다.
   const drafts = await generateDailyPostDrafts({
-    apiKey: settings.openaiApiKey,
+    apiKey: openaiApiKey,
     category,
     tone,
     timeHint: timeSlot.hint,
-    count: 1,
+    count: accounts.length,
   });
-  const body = drafts[0];
-  const commentBody = await generateFollowUpComment({
-    apiKey: settings.openaiApiKey,
-    postBody: body,
-  }).catch(() => pickRandom(ENGAGEMENT_PROMPTS));
+  const bodies = accounts.map((_, i) => drafts[i % drafts.length]);
+  const comments: string[] = [];
+  for (const body of bodies) {
+    const commentBody = await generateFollowUpComment({
+      apiKey: openaiApiKey,
+      postBody: body,
+    }).catch(() => pickRandom(ENGAGEMENT_PROMPTS));
+    comments.push(commentBody);
+  }
 
   const post = await prisma.post.create({
     data: {
-      body,
-      commentBody,
+      body: bodies[0],
+      commentBody: comments[0],
       status: "SCHEDULED",
       scheduledAt,
       targets: {
-        create: accounts.map((a) => ({ threadsAccountId: a.id })),
+        create: accounts.map((a, i) => ({
+          threadsAccountId: a.id,
+          body: bodies[i],
+          commentBody: comments[i],
+        })),
       },
     },
   });

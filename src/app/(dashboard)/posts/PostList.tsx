@@ -10,6 +10,7 @@ type PostTarget = {
   threadsPermalink: string | null;
   threadsAccount: Account;
   body: string | null;
+  commentBody: string | null;
   publishedAt: string | Date | null;
 };
 type Post = {
@@ -286,13 +287,22 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                 {post.targets.map((t) => (
                   <span
                     key={t.id}
-                    title={t.body ? `이 계정 전용 문구: ${t.body}` : undefined}
+                    title={
+                      t.body || t.commentBody
+                        ? [
+                            t.body && `이 계정 전용 문구: ${t.body}`,
+                            t.commentBody && `이 계정 전용 댓글: ${t.commentBody}`,
+                          ]
+                            .filter(Boolean)
+                            .join("\n")
+                        : undefined
+                    }
                     className={`rounded-full border px-2 py-0.5 text-xs ${statusColor(t.status)} ${
-                      t.body ? "border-purple-700" : "border-neutral-700"
+                      t.body || t.commentBody ? "border-purple-700" : "border-neutral-700"
                     }`}
                   >
                     {t.threadsAccount.label}
-                    {t.body ? " ✦" : ""}: {TARGET_STATUS_LABEL[t.status] ?? t.status}
+                    {(t.body || t.commentBody) ? " ✦" : ""}: {TARGET_STATUS_LABEL[t.status] ?? t.status}
                     {t.publishedAt && ` (${formatPublishedTime(t.publishedAt)})`}
                   </span>
                 ))}

@@ -183,22 +183,24 @@ export async function publishTarget(targetId: string) {
       // 퍼머링크 조회 실패는 치명적이지 않음
     }
 
+    const commentText = target.commentBody || target.post.commentBody;
+
     await prisma.postTarget.update({
       where: { id: targetId },
       data: {
-        status: target.post.commentBody ? "COMMENTING" : "DONE",
+        status: commentText ? "COMMENTING" : "DONE",
         threadsMediaId: mediaId,
         threadsPermalink: permalink,
         publishedAt: new Date(),
       },
     });
 
-    if (target.post.commentBody) {
+    if (commentText) {
       try {
         const { mediaId: commentMediaId } = await publishWithRetry({
           accessToken,
           threadsUserId: target.threadsAccount.threadsUserId,
-          text: target.post.commentBody,
+          text: commentText,
           replyToId: mediaId,
         });
         await prisma.postTarget.update({
