@@ -8,7 +8,7 @@ export async function GET(
   const { id } = await params;
   const post = await prisma.post.findUnique({
     where: { id },
-    include: { targets: { include: { threadsAccount: true } } },
+    include: { targets: { include: { threadsAccount: true } }, coupangLink: true },
   });
   if (!post) {
     return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });

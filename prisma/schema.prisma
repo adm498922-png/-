@@ -45,6 +45,7 @@ model CoupangLink {
   productName   String?
   originalUrl   String
   shortUrl      String
+  imageUrl      String?
   createdAt     DateTime @default(now())
 
   posts         Post[]

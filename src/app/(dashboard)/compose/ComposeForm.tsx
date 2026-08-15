@@ -15,6 +15,7 @@ type CoupangLink = {
   productName: string | null;
   originalUrl: string;
   shortUrl: string;
+  imageUrl?: string | null;
 };
 type ProductSearchResult = {
   productId: number;
@@ -40,6 +41,7 @@ type Post = {
   scheduledAt: string | Date | null;
   createdAt: string | Date;
   targets: PostTarget[];
+  coupangLink?: { imageUrl: string | null } | null;
 };
 
 const EDITABLE_STATUSES = new Set(["DRAFT", "SCHEDULED", "FAILED"]);
@@ -111,6 +113,7 @@ export default function ComposeForm({
   const [selectedProduct, setSelectedProduct] = useState<{
     productName: string;
     productPrice: number;
+    imageUrl: string;
   } | null>(null);
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [perAccountBody, setPerAccountBody] = useState<Record<string, string>>({});
@@ -164,6 +167,7 @@ export default function ComposeForm({
       body: JSON.stringify({
         url: product.productUrl,
         productName: `${product.productName} (${product.productPrice.toLocaleString("ko-KR")}원)`,
+        imageUrl: product.productImage,
       }),
     });
     setSelectingId(null);
@@ -177,6 +181,7 @@ export default function ComposeForm({
     setSelectedProduct({
       productName: product.productName,
       productPrice: product.productPrice,
+      imageUrl: product.productImage,
     });
   }
 
@@ -625,6 +630,20 @@ export default function ComposeForm({
           </div>
         )}
 
+        {selectedProduct && (
+          <div className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-950 p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={selectedProduct.imageUrl}
+              alt={selectedProduct.productName}
+              className="h-12 w-12 shrink-0 rounded-md object-cover"
+            />
+            <p className="text-xs text-neutral-400">
+              발행할 때 이 상품 사진이 글에 같이 첨부됩니다.
+            </p>
+          </div>
+        )}
+
         <div>
           <div className="mb-1 flex items-center justify-between">
             <label className="block text-xs text-neutral-400">본문</label>
@@ -852,10 +871,20 @@ export default function ComposeForm({
                   </div>
                 ) : (
                   <>
-                    <div className="mb-2 flex items-center justify-between">
-                      <p className="whitespace-pre-wrap text-sm text-neutral-200">
-                        {post.body}
-                      </p>
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2">
+                        {post.coupangLink?.imageUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={post.coupangLink.imageUrl}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded-md object-cover"
+                          />
+                        )}
+                        <p className="whitespace-pre-wrap text-sm text-neutral-200">
+                          {post.body}
+                        </p>
+                      </div>
                       <span className={`ml-3 shrink-0 text-xs ${statusColor(post.status)}`}>
                         {POST_STATUS_LABEL[post.status] ?? post.status}
                       </span>

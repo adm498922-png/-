@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { getValidAccessToken, markAccountNeedsReconnect } from "./threads-accounts";
 import {
   createTextContainer,
+  createImageContainer,
   publishContainer,
   getMediaPermalink,
   ThreadsApiError,
@@ -16,14 +17,23 @@ async function publishWithRetry(params: {
   accessToken: string;
   threadsUserId: string;
   text: string;
+  imageUrl?: string;
   replyToId?: string;
 }): Promise<{ mediaId: string }> {
-  const container = await createTextContainer({
-    accessToken: params.accessToken,
-    threadsUserId: params.threadsUserId,
-    text: params.text,
-    replyToId: params.replyToId,
-  });
+  const container = params.imageUrl
+    ? await createImageContainer({
+        accessToken: params.accessToken,
+        threadsUserId: params.threadsUserId,
+        imageUrl: params.imageUrl,
+        text: params.text,
+        replyToId: params.replyToId,
+      })
+    : await createTextContainer({
+        accessToken: params.accessToken,
+        threadsUserId: params.threadsUserId,
+        text: params.text,
+        replyToId: params.replyToId,
+      });
 
   // Threads 컨테이너는 생성 후 처리에 약간의 시간이 걸릴 수 있어 짧게 재시도
   let lastError: unknown;
@@ -47,7 +57,10 @@ async function publishWithRetry(params: {
 export async function publishTarget(targetId: string) {
   const target = await prisma.postTarget.findUniqueOrThrow({
     where: { id: targetId },
-    include: { post: true, threadsAccount: true },
+    include: {
+      post: { include: { coupangLink: true } },
+      threadsAccount: true,
+    },
   });
 
   if (target.status === "PUBLISHED" || target.status === "DONE") {
@@ -65,6 +78,7 @@ export async function publishTarget(targetId: string) {
       accessToken,
       threadsUserId: target.threadsAccount.threadsUserId,
       text: target.body || target.post.body,
+      imageUrl: target.post.coupangLink?.imageUrl ?? undefined,
     });
 
     let permalink: string | undefined;

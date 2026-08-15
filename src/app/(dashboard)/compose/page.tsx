@@ -16,7 +16,7 @@ export default async function ComposePage() {
     prisma.post.findMany({
       orderBy: { createdAt: "desc" },
       take: 20,
-      include: { targets: { include: { threadsAccount: true } } },
+      include: { targets: { include: { threadsAccount: true } }, coupangLink: true },
     }),
     getSettingsStatus(),
   ]);

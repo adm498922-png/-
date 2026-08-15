@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   const result = await prisma.post.findUnique({
     where: { id: post.id },
-    include: { targets: { include: { threadsAccount: true } } },
+    include: { targets: { include: { threadsAccount: true } }, coupangLink: true },
   });
 
   return NextResponse.json(result);

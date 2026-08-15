@@ -8,7 +8,7 @@ import {
   buildCoupangComment,
 } from "./daily-post-options";
 
-const REVIEW_WINDOW_HOURS = 3;
+const REVIEW_WINDOW_HOURS = 1;
 const PRODUCT_POST_CHANCE = 0.4; // 켜져 있을 때 상품 글이 나올 확률 (나머지는 일상글)
 
 function pickRandom<T>(arr: T[]): T {

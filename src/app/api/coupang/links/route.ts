@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { url, productName } = await req.json();
+  const { url, productName, imageUrl } = await req.json();
   if (typeof url !== "string" || !url.trim()) {
     return NextResponse.json({ error: "쿠팡 상품 URL을 입력해주세요." }, { status: 400 });
   }
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
         productName: productName || null,
         originalUrl: parsed.toString(),
         shortUrl: parsed.toString(),
+        imageUrl: typeof imageUrl === "string" ? imageUrl : null,
       },
     });
     return NextResponse.json(saved);
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
         productName: productName || null,
         originalUrl: result.originalUrl,
         shortUrl: result.shortenUrl,
+        imageUrl: typeof imageUrl === "string" ? imageUrl : null,
       },
     });
     return NextResponse.json(saved);

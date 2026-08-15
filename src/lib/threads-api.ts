@@ -116,6 +116,27 @@ export async function createTextContainer(params: {
   return parseOrThrow(res) as Promise<{ id: string }>;
 }
 
+export async function createImageContainer(params: {
+  accessToken: string;
+  threadsUserId: string;
+  imageUrl: string;
+  text?: string;
+  replyToId?: string;
+}): Promise<{ id: string }> {
+  const url = new URL(`${GRAPH_BASE}/v1.0/${params.threadsUserId}/threads`);
+  url.searchParams.set("media_type", "IMAGE");
+  url.searchParams.set("image_url", params.imageUrl);
+  if (params.text) {
+    url.searchParams.set("text", params.text);
+  }
+  if (params.replyToId) {
+    url.searchParams.set("reply_to_id", params.replyToId);
+  }
+  url.searchParams.set("access_token", params.accessToken);
+  const res = await fetch(url.toString(), { method: "POST" });
+  return parseOrThrow(res) as Promise<{ id: string }>;
+}
+
 export async function publishContainer(params: {
   accessToken: string;
   threadsUserId: string;
