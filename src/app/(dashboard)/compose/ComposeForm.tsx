@@ -95,6 +95,8 @@ export default function ComposeForm({
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [perAccountBody, setPerAccountBody] = useState<Record<string, string>>({});
   const [generatingVariantFor, setGeneratingVariantFor] = useState<string | null>(null);
+  const [dailyTopic, setDailyTopic] = useState("");
+  const [generatingDaily, setGeneratingDaily] = useState(false);
 
   async function handleProductSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -162,6 +164,27 @@ export default function ComposeForm({
       return;
     }
     setBodyText(data.body);
+  }
+
+  async function handleGenerateDaily(e: React.FormEvent) {
+    e.preventDefault();
+    if (!dailyTopic.trim()) return;
+    setGeneratingDaily(true);
+    setError(null);
+    const res = await fetch("/api/ai/daily-draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: dailyTopic.trim() }),
+    });
+    setGeneratingDaily(false);
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error ?? "AI 글 생성에 실패했습니다.");
+      return;
+    }
+    setBodyText(data.body);
+    setSelectedProduct(null);
+    setCoupangLinkId("");
   }
 
   function toggleAccount(id: string) {
@@ -283,6 +306,34 @@ export default function ComposeForm({
 
   return (
     <div className="space-y-8">
+      {aiConfigured && (
+        <div className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+          <h2 className="text-sm font-semibold text-neutral-200">
+            AI로 일상글 쓰기 (쿠팡 상품 없이)
+          </h2>
+          <p className="text-xs text-neutral-500">
+            주제나 키워드만 입력하면 AI가 반말 일상글 초안을 써줘요. 쿠팡
+            링크 홍보 글만 반복되면 부자연스러워 보일 수 있어, 계정을
+            자연스럽게 보이려면 일상글도 섞는 걸 추천해요.
+          </p>
+          <form onSubmit={handleGenerateDaily} className="flex gap-2">
+            <input
+              value={dailyTopic}
+              onChange={(e) => setDailyTopic(e.target.value)}
+              placeholder="예: 육아템, 오늘 날씨, 아이 어린이집 적응기"
+              className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+            />
+            <button
+              type="submit"
+              disabled={generatingDaily}
+              className="rounded-lg bg-purple-600/20 px-4 py-2 text-sm text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
+            >
+              {generatingDaily ? "AI 작성 중..." : "✦ AI 일상글 생성"}
+            </button>
+          </form>
+        </div>
+      )}
+
       <div className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
         <h2 className="text-sm font-semibold text-neutral-200">
           쿠팡파트너스 상품 검색
