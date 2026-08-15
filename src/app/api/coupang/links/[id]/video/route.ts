@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 import { getDecryptedSettings } from "@/lib/settings";
 import { requestProductVideo } from "@/lib/video-gen";
+
+function describeError(e: unknown): string {
+  if (e instanceof OpenAI.APIError) {
+    return `OpenAI 오류(${e.status ?? "?"}): ${e.message}`;
+  }
+  if (e instanceof Error) return e.message;
+  return String(e);
+}
 
 export async function GET(
   _req: NextRequest,
@@ -52,7 +61,7 @@ export async function POST(
   } catch (e) {
     console.error("영상 생성 요청 실패", e);
     return NextResponse.json(
-      { error: "영상 생성 요청 중 오류가 발생했습니다." },
+      { error: `영상 생성 요청 실패: ${describeError(e)}` },
       { status: 500 }
     );
   }
