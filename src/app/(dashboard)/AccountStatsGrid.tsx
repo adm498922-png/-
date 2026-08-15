@@ -164,6 +164,9 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
                 <p className="text-[11px] font-medium text-white">
                   {h.count > 0 ? h.count : h.scheduledCount > 0 ? h.scheduledCount : "-"}
                 </p>
+                <p className="text-[9px] text-neutral-500">
+                  {h.count > 0 ? h.views.toLocaleString("ko-KR") : ""}
+                </p>
               </div>
             ))}
           </div>
