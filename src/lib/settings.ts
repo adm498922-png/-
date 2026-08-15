@@ -8,6 +8,8 @@ export type DecryptedSettings = {
   threadsAppSecret: string | null;
   threadsRedirectUri: string | null;
   openaiApiKey: string | null;
+  naverClientId: string | null;
+  naverClientSecret: string | null;
   autoDailyPostEnabled: boolean;
   autoDailyPostIncludeProducts: boolean;
 };
@@ -35,6 +37,10 @@ export async function getDecryptedSettings(): Promise<DecryptedSettings> {
       : null,
     threadsRedirectUri: row.threadsRedirectUri,
     openaiApiKey: row.openaiApiKeyEnc ? decrypt(row.openaiApiKeyEnc) : null,
+    naverClientId: row.naverClientId,
+    naverClientSecret: row.naverClientSecretEnc
+      ? decrypt(row.naverClientSecretEnc)
+      : null,
     autoDailyPostEnabled: row.autoDailyPostEnabled,
     autoDailyPostIncludeProducts: row.autoDailyPostIncludeProducts,
   };
@@ -47,6 +53,8 @@ export type SettingsStatus = {
   threadsAppId: string | null;
   threadsRedirectUri: string | null;
   coupangAccessKeyPreview: string | null;
+  naverConfigured: boolean;
+  naverClientId: string | null;
   autoDailyPostEnabled: boolean;
   autoDailyPostIncludeProducts: boolean;
 };
@@ -64,6 +72,8 @@ export async function getSettingsStatus(): Promise<SettingsStatus> {
     coupangAccessKeyPreview: s.coupangAccessKey
       ? `${s.coupangAccessKey.slice(0, 4)}••••`
       : null,
+    naverConfigured: Boolean(s.naverClientId && s.naverClientSecret),
+    naverClientId: s.naverClientId,
     autoDailyPostEnabled: s.autoDailyPostEnabled,
     autoDailyPostIncludeProducts: s.autoDailyPostIncludeProducts,
   };
@@ -76,6 +86,8 @@ export async function updateSettings(input: {
   threadsAppSecret?: string;
   threadsRedirectUri?: string;
   openaiApiKey?: string;
+  naverClientId?: string;
+  naverClientSecret?: string;
   autoDailyPostEnabled?: boolean;
   autoDailyPostIncludeProducts?: boolean;
 }) {
@@ -87,6 +99,8 @@ export async function updateSettings(input: {
   if (input.threadsRedirectUri !== undefined)
     data.threadsRedirectUri = input.threadsRedirectUri;
   if (input.openaiApiKey) data.openaiApiKeyEnc = encrypt(input.openaiApiKey);
+  if (input.naverClientId !== undefined) data.naverClientId = input.naverClientId;
+  if (input.naverClientSecret) data.naverClientSecretEnc = encrypt(input.naverClientSecret);
   if (input.autoDailyPostEnabled !== undefined)
     data.autoDailyPostEnabled = input.autoDailyPostEnabled;
   if (input.autoDailyPostIncludeProducts !== undefined)

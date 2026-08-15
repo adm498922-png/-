@@ -15,9 +15,15 @@ export async function POST(req: NextRequest) {
     threadsAppSecret: body.threadsAppSecret || undefined,
     threadsRedirectUri: body.threadsRedirectUri,
     openaiApiKey: body.openaiApiKey || undefined,
+    naverClientId: body.naverClientId,
+    naverClientSecret: body.naverClientSecret || undefined,
     autoDailyPostEnabled:
       typeof body.autoDailyPostEnabled === "boolean"
         ? body.autoDailyPostEnabled
+        : undefined,
+    autoDailyPostIncludeProducts:
+      typeof body.autoDailyPostIncludeProducts === "boolean"
+        ? body.autoDailyPostIncludeProducts
         : undefined,
   });
   const status = await getSettingsStatus();

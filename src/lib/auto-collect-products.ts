@@ -1,21 +1,64 @@
 import { prisma } from "./prisma";
 import { searchProducts, CoupangApiError } from "./coupang-api";
-import { suggestProductKeyword } from "./ai";
+import { suggestProductKeyword, suggestProductKeywordCandidates } from "./ai";
+import { compareKeywordTrends, NaverDataLabError } from "./naver-datalab";
 
 const MAX_LINK_POOL = 60;
 
 export type CollectResult =
-  | { collected: string; keyword: string; productName: string }
+  | { collected: string; keyword: string; productName: string; trendBased: boolean }
   | { skipped: "pool-full" | "no-new-product" | "coupang-error" | "keyword-error"; detail?: string };
 
 /**
- * 사람이 직접 검색하지 않아도, AI가 고른 인기 상품 키워드로 쿠팡 상품을 검색해
- * 로켓배송 상품 위주로 하나 골라 링크 풀에 자동으로 추가한다.
+ * 검색할 키워드를 정한다. 네이버 데이터랩 키가 있으면 AI가 만든 후보 여러 개를
+ * 실제 최근 7일 검색 트렌드로 비교해서 가장 반응 좋은 걸 고르고, 없으면
+ * 예전처럼 AI가 하나만 추천한 걸 그대로 쓴다.
+ */
+async function pickKeyword(params: {
+  openaiApiKey: string;
+  naverClientId?: string;
+  naverClientSecret?: string;
+  avoid: string[];
+}): Promise<{ keyword: string; trendBased: boolean }> {
+  if (params.naverClientId && params.naverClientSecret) {
+    const candidates = await suggestProductKeywordCandidates({
+      apiKey: params.openaiApiKey,
+      avoid: params.avoid,
+    });
+    try {
+      const trends = await compareKeywordTrends({
+        clientId: params.naverClientId,
+        clientSecret: params.naverClientSecret,
+        keywords: candidates,
+      });
+      const best = [...trends].sort((a, b) => b.score - a.score)[0];
+      if (best) {
+        return { keyword: best.keyword, trendBased: true };
+      }
+    } catch (e) {
+      // 데이터랩 호출이 실패해도 후보 중 하나로 계속 진행 (수집 자체는 멈추지 않음)
+      console.error("네이버 데이터랩 트렌드 비교 실패", e);
+    }
+    return { keyword: candidates[0], trendBased: false };
+  }
+
+  const keyword = await suggestProductKeyword({
+    apiKey: params.openaiApiKey,
+    avoid: params.avoid,
+  });
+  return { keyword, trendBased: false };
+}
+
+/**
+ * 사람이 직접 검색하지 않아도, AI(+네이버 데이터랩)가 고른 인기 상품 키워드로
+ * 쿠팡 상품을 검색해 로켓배송 상품 위주로 하나 골라 링크 풀에 자동으로 추가한다.
  */
 export async function collectTrendingProduct(params: {
   coupangAccessKey: string;
   coupangSecretKey: string;
   openaiApiKey: string;
+  naverClientId?: string;
+  naverClientSecret?: string;
 }): Promise<CollectResult> {
   const poolSize = await prisma.coupangLink.count();
   if (poolSize >= MAX_LINK_POOL) {
@@ -32,15 +75,21 @@ export async function collectTrendingProduct(params: {
     .filter((n): n is string => Boolean(n));
 
   let keyword: string;
+  let trendBased: boolean;
   try {
-    keyword = await suggestProductKeyword({
-      apiKey: params.openaiApiKey,
+    const picked = await pickKeyword({
+      openaiApiKey: params.openaiApiKey,
+      naverClientId: params.naverClientId,
+      naverClientSecret: params.naverClientSecret,
       avoid: recentNames,
     });
+    keyword = picked.keyword;
+    trendBased = picked.trendBased;
   } catch (e) {
     return {
       skipped: "keyword-error",
-      detail: e instanceof Error ? e.message : String(e),
+      detail:
+        e instanceof NaverDataLabError || e instanceof Error ? e.message : String(e),
     };
   }
 
@@ -82,5 +131,5 @@ export async function collectTrendingProduct(params: {
     },
   });
 
-  return { collected: saved.id, keyword, productName };
+  return { collected: saved.id, keyword, productName, trendBased };
 }

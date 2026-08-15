@@ -206,3 +206,51 @@ export async function suggestProductKeyword(params: {
   }
   return text.replace(/^["'“”]+|["'“”]+$/g, "");
 }
+
+/**
+ * 네이버 데이터랩으로 실제 검색 트렌드를 비교할 후보 키워드 여러 개를 추천.
+ * (데이터랩 API는 주어진 키워드끼리만 비교해주므로 후보군이 먼저 필요함)
+ */
+export async function suggestProductKeywordCandidates(params: {
+  apiKey: string;
+  avoid?: string[];
+  count?: number;
+}): Promise<string[]> {
+  const client = new OpenAI({ apiKey: params.apiKey });
+  const count = params.count ?? 6;
+  const avoidText =
+    params.avoid && params.avoid.length > 0
+      ? `다음 상품/키워드는 최근에 이미 다뤘으니 피해줘: ${params.avoid.slice(0, 10).join(", ")}`
+      : "";
+
+  const res = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "너는 쿠팡에서 반응 좋을 만한 생활용품·주방·육아·리빙·뷰티·건강 관련 인기 상품 " +
+          "검색 키워드 후보를 추천하는 역할이야. 특정 브랜드명이 아니라 '실리콘 주걱', " +
+          "'유아 물티슈'처럼 쿠팡 상품 검색창에 그대로 넣을 수 있는 일반적인 상품 키워드를 " +
+          `서로 다른 카테고리로 정확히 ${count}개 추천해. 한 줄에 하나씩, 번호나 설명 없이 ` +
+          "키워드만 출력해.",
+      },
+      { role: "user", content: avoidText || "쿠팡에서 검색할 인기 상품 키워드 후보들을 추천해줘." },
+    ],
+  });
+
+  const text = res.choices[0]?.message?.content?.trim();
+  if (!text) {
+    throw new Error("키워드 후보 추천에 실패했습니다.");
+  }
+  const keywords = text
+    .split("\n")
+    .map((line) => line.replace(/^[\d.\-*)\s]+/, "").trim())
+    .map((line) => line.replace(/^["'“”]+|["'“”]+$/g, ""))
+    .filter(Boolean);
+
+  if (keywords.length === 0) {
+    throw new Error("키워드 후보 추천에 실패했습니다.");
+  }
+  return keywords;
+}

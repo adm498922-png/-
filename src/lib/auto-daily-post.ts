@@ -75,6 +75,8 @@ export async function generateAndScheduleDailyPost(
         coupangAccessKey: settings.coupangAccessKey,
         coupangSecretKey: settings.coupangSecretKey,
         openaiApiKey: settings.openaiApiKey,
+        naverClientId: settings.naverClientId ?? undefined,
+        naverClientSecret: settings.naverClientSecret ?? undefined,
       });
     } catch (e) {
       console.error("상품 자동 수집 실패", e);
