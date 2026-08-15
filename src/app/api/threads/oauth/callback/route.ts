@@ -4,9 +4,18 @@ import {
   exchangeCodeForShortLivedToken,
   exchangeForLongLivedToken,
   getMe,
+  ThreadsApiError,
 } from "@/lib/threads-api";
 import { saveOrUpdateAccount } from "@/lib/threads-accounts";
 import { OAUTH_STATE_COOKIE } from "../start/route";
+
+function describeError(e: unknown): string {
+  if (e instanceof ThreadsApiError) {
+    return `Threads API 오류(${e.status}): ${JSON.stringify(e.body).slice(0, 300)}`;
+  }
+  if (e instanceof Error) return e.message;
+  return String(e);
+}
 
 /**
  * Railway 등 리버스 프록시 뒤에서는 req.url이 내부 주소(예: localhost:8080)로
@@ -71,7 +80,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (e) {
     console.error("Threads OAuth callback failed", e);
-    return redirectWithError(req, "계정 연결에 실패했습니다. 앱 설정을 확인해주세요.");
+    return redirectWithError(req, `계정 연결에 실패했습니다: ${describeError(e)}`);
   }
 
   const url = publicSettingsUrl(req);
