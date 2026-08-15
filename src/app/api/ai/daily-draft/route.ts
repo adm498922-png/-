@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDecryptedSettings } from "@/lib/settings";
 import { generateDailyPostDrafts } from "@/lib/ai";
 
+function optionalString(v: unknown): string | undefined {
+  return typeof v === "string" && v.trim() ? v.trim() : undefined;
+}
+
 export async function POST(req: NextRequest) {
-  const { topic } = await req.json();
-  if (typeof topic !== "string" || !topic.trim()) {
-    return NextResponse.json({ error: "주제를 입력해주세요." }, { status: 400 });
-  }
+  const { topic, category, tone } = await req.json();
 
   const settings = await getDecryptedSettings();
   if (!settings.openaiApiKey) {
@@ -19,7 +20,9 @@ export async function POST(req: NextRequest) {
   try {
     const drafts = await generateDailyPostDrafts({
       apiKey: settings.openaiApiKey,
-      topic: topic.trim(),
+      topic: optionalString(topic),
+      category: optionalString(category),
+      tone: optionalString(tone),
     });
     return NextResponse.json({ drafts });
   } catch (e) {

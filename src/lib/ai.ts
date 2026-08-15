@@ -26,14 +26,19 @@ const PRODUCT_SYSTEM_PROMPT =
   STYLE_RULES +
   "\n- 가격/링크는 절대 포함하지 마 (그건 별도로 붙는다).";
 
-const DAILY_SYSTEM_PROMPT =
-  "너는 스레드(Threads)에 일상 썰을 자주 푸는 사람이야. 팔로워들이 '이 사람 글은 진짜 사람 냄새 난다'고 " +
-  "말할 정도로 자연스러운 말투가 특징이야. 이건 광고 글이 아니라 순수한 일상 공감글이고, " +
-  "완성된 카피처럼 딱 떨어지게 쓰면 절대 안 돼 — 친구한테 카톡으로 썰 풀듯이 편하게 써.\n\n" +
+const DAILY_TONE_INSTRUCTIONS: Record<string, string> = {
+  반말: "무조건 반말로 써 (친구한테 말하듯).",
+  존댓말: "존댓말로 써. 딱딱한 격식체 말고, 편안하고 친근한 존댓말로.",
+  친구처럼: "아주 친한 친구한테 카톡 보내듯 편한 반말로, 줄임말이나 구어체 표현도 자연스럽게 섞어서.",
+  담백하게: "반말로 담백하게 써. 과장이나 꾸밈 없이 있는 그대로, 문장도 짧고 건조하게.",
+  감성: "반말로 쓰되 감정과 분위기를 느낄 수 있게 조금 더 서정적으로. 문장을 짧게 끊어서 여운을 남겨도 좋아.",
+  유쾌: "반말로 유쾌하고 웃기게 써. 위트 있는 드립이나 자기 상황을 웃기게 묘사하는 것도 좋아.",
+};
+
+const DAILY_CORE_RULES =
   "이렇게 써:\n" +
   "- 구조를 딱딱 맞추지 마. '오늘 있었던 일 → 느낀 점' 처럼 뻔한 순서 말고, " +
   "생각나는 대로 흘러가듯이, 중간에 딴 얘기로 살짝 샜다가 다시 돌아와도 좋아\n" +
-  "- '근데', '아 맞다', '진짜', '그니까' 같은 구어체 필러를 자연스럽게 섞어\n" +
   "- 완벽한 문장보다 사람이 실제로 말하듯 약간 흐트러진 리듬이 좋아. " +
   "쉼표나 줄바꿈으로 숨 쉬듯이 끊어 써도 되고, 한 문장이 길어져도 괜찮아\n" +
   "- 뜬구름 잡는 얘기 말고, 시간·장소·구체적인 대사나 행동 같은 디테일을 넣어서 " +
@@ -47,6 +52,17 @@ const DAILY_SYSTEM_PROMPT =
   "- 길이는 자유롭게 (짧아도 되고, 썰이 길어지면 6~8줄까지도 괜찮아 — " +
   "억지로 줄이려고 부자연스럽게 끊지 마)\n" +
   "- 글 내용만 출력하고 설명이나 따옴표는 붙이지 마.";
+
+function buildDailySystemPrompt(tone: string): string {
+  const toneInstruction = DAILY_TONE_INSTRUCTIONS[tone] ?? DAILY_TONE_INSTRUCTIONS["반말"];
+  return (
+    "너는 스레드(Threads)에 일상 썰을 자주 푸는 사람이야. 팔로워들이 '이 사람 글은 진짜 사람 냄새 난다'고 " +
+    "말할 정도로 자연스러운 말투가 특징이야. 이건 광고 글이 아니라 순수한 일상 공감글이고, " +
+    "완성된 카피처럼 딱 떨어지게 쓰면 절대 안 돼.\n\n" +
+    `말투: ${toneInstruction}\n\n` +
+    DAILY_CORE_RULES
+  );
+}
 
 function firstLineLength(text: string): number {
   const firstLine = text.split("\n")[0] ?? "";
@@ -112,21 +128,32 @@ const DRAFT_SEPARATOR = "===";
  */
 export async function generateDailyPostDrafts(params: {
   apiKey: string;
-  topic: string;
+  topic?: string;
+  category?: string;
+  tone?: string;
   count?: number;
 }): Promise<string[]> {
   const client = new OpenAI({ apiKey: params.apiKey });
   const count = params.count ?? 3;
+  const tone = params.tone ?? "반말";
+
+  const hints: string[] = [];
+  if (params.category) hints.push(`소재 카테고리: ${params.category}`);
+  if (params.topic) hints.push(`구체적인 소재/키워드: ${params.topic}`);
+  const hintText =
+    hints.length > 0
+      ? hints.join("\n")
+      : "소재는 네가 자유롭게 정해. 반응 좋을 만한 걸로 골라줘.";
 
   const response = await client.responses.create({
     model: "gpt-4o-mini",
     instructions:
-      DAILY_SYSTEM_PROMPT +
-      "\n\n주제가 오늘 날씨, 최근 이슈, 시사성 있는 내용과 관련 있으면 웹 검색으로 " +
-      "실제 오늘 정보를 확인하고 글에 자연스럽게 녹여. 관련 없는 주제면 검색하지 않아도 돼.",
+      buildDailySystemPrompt(tone) +
+      "\n\n소재가 오늘 날씨, 최근 이슈, 시사성 있는 내용과 관련 있으면 웹 검색으로 " +
+      "실제 오늘 정보를 확인하고 글에 자연스럽게 녹여. 관련 없는 소재면 검색하지 않아도 돼.",
     input:
-      `다음 주제/키워드로 스레드 일상글 초안을 서로 느낌이 다르게 ${count}개 만들어줘.\n` +
-      `주제: ${params.topic}\n\n` +
+      `다음 조건으로 스레드 일상글 초안을 서로 느낌이 다르게 ${count}개 만들어줘.\n` +
+      `${hintText}\n\n` +
       `각 초안 사이에는 다른 텍스트 없이 정확히 이 줄만 넣어서 구분해: ${DRAFT_SEPARATOR}`,
     tools: [{ type: "web_search" }],
   });

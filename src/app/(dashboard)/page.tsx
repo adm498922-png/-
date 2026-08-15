@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getDashboardStats } from "@/lib/dashboard-stats";
 import WeekBarChart from "./WeekBarChart";
 import InsightsRefreshButton from "./InsightsRefreshButton";
+import HourlyStatsPanel from "./HourlyStatsPanel";
 
 function StatTile({
   label,
@@ -61,6 +62,10 @@ export default async function DashboardHomePage() {
           </p>
         </div>
         <WeekBarChart days={stats.last7Days} />
+      </div>
+
+      <div className="mb-6">
+        <HourlyStatsPanel />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

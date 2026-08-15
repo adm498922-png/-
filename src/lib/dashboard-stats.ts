@@ -14,7 +14,7 @@ function endOfDay(d: Date) {
   return copy;
 }
 
-async function latestViewsByTargetId(targetIds: string[]): Promise<Map<string, number>> {
+export async function latestViewsByTargetId(targetIds: string[]): Promise<Map<string, number>> {
   if (targetIds.length === 0) return new Map();
   const stats = await prisma.postStat.findMany({
     where: { postTargetId: { in: targetIds } },
@@ -115,4 +115,61 @@ export async function getDashboardStats() {
     last7DaysTotal,
     perAccount,
   };
+}
+
+export type HourlyStat = {
+  hour: number;
+  count: number;
+  views: number;
+  isBest: boolean;
+};
+
+/** dateStr: "YYYY-MM-DD" (서버 로컬 타임존 기준) */
+export async function getHourlyStats(dateStr: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dayStart = new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0);
+  const dayEnd = endOfDay(dayStart);
+
+  const targets = await prisma.postTarget.findMany({
+    where: {
+      status: "DONE",
+      publishedAt: { gte: dayStart, lte: dayEnd },
+    },
+    select: { id: true, publishedAt: true },
+  });
+
+  const viewsMap = await latestViewsByTargetId(targets.map((t) => t.id));
+
+  const hours: { count: number; views: number }[] = Array.from(
+    { length: 24 },
+    () => ({ count: 0, views: 0 })
+  );
+  for (const t of targets) {
+    if (!t.publishedAt) continue;
+    const hour = t.publishedAt.getHours();
+    hours[hour].count += 1;
+    hours[hour].views += viewsMap.get(t.id) ?? 0;
+  }
+
+  const bestHours = new Set(
+    hours
+      .map((h, hour) => ({ hour, views: h.views }))
+      .filter((h) => h.views > 0)
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 2)
+      .map((h) => h.hour)
+  );
+
+  const hourly: HourlyStat[] = hours.map((h, hour) => ({
+    hour,
+    count: h.count,
+    views: h.views,
+    isBest: bestHours.has(hour),
+  }));
+
+  const totalPosts = targets.length;
+  const totalViews = hours.reduce((sum, h) => sum + h.views, 0);
+  const avgViews = totalPosts > 0 ? Math.round(totalViews / totalPosts) : 0;
+
+  return { date: dateStr, hourly, totalPosts, totalViews, avgViews };
 }

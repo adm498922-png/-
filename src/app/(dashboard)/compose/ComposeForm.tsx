@@ -58,6 +58,19 @@ function statusColor(status: string) {
   return "text-amber-400";
 }
 
+const TOPIC_CATEGORIES = [
+  "일상",
+  "감정·생각",
+  "관계",
+  "알바·직장",
+  "돈·소비",
+  "취미·덕질",
+  "건강·운동",
+  "음식",
+];
+
+const TONE_OPTIONS = ["반말", "존댓말", "친구처럼", "담백하게", "감성", "유쾌"];
+
 export default function ComposeForm({
   accounts,
   links,
@@ -96,6 +109,8 @@ export default function ComposeForm({
   const [perAccountBody, setPerAccountBody] = useState<Record<string, string>>({});
   const [generatingVariantFor, setGeneratingVariantFor] = useState<string | null>(null);
   const [dailyTopic, setDailyTopic] = useState("");
+  const [dailyCategory, setDailyCategory] = useState<string | null>(null);
+  const [dailyTone, setDailyTone] = useState("반말");
   const [generatingDaily, setGeneratingDaily] = useState(false);
   const [dailyDrafts, setDailyDrafts] = useState<string[] | null>(null);
 
@@ -169,14 +184,17 @@ export default function ComposeForm({
 
   async function handleGenerateDaily(e: React.FormEvent) {
     e.preventDefault();
-    if (!dailyTopic.trim()) return;
     setGeneratingDaily(true);
     setError(null);
     setDailyDrafts(null);
     const res = await fetch("/api/ai/daily-draft", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic: dailyTopic.trim() }),
+      body: JSON.stringify({
+        topic: dailyTopic.trim() || undefined,
+        category: dailyCategory || undefined,
+        tone: dailyTone,
+      }),
     });
     setGeneratingDaily(false);
     const data = await res.json();
@@ -327,16 +345,59 @@ export default function ComposeForm({
             AI로 일상글 쓰기 (쿠팡 상품 없이)
           </h2>
           <p className="text-xs text-neutral-500">
-            주제나 키워드만 입력하면 AI가 (필요하면 오늘 실제 날씨·이슈를
-            검색해서 반영한) 반말 일상글 초안을 3개 만들어줘요. 쿠팡 링크
-            홍보 글만 반복되면 부자연스러워 보일 수 있어, 계정을 자연스럽게
-            보이려면 일상글도 섞는 걸 추천해요.
+            소재·말투를 고르고 (비워두면 AI가 알아서 골라요) [AI 일상글 생성]
+            누르면, 필요하면 오늘 실제 날씨·이슈를 검색해서 반영한 초안을 3개
+            만들어줘요. 쿠팡 링크 홍보 글만 반복되면 부자연스러워 보일 수
+            있어, 계정을 자연스럽게 보이려면 일상글도 섞는 걸 추천해요.
           </p>
+
+          <div>
+            <p className="mb-1.5 text-xs text-neutral-400">소재 (선택)</p>
+            <div className="flex flex-wrap gap-1.5">
+              {TOPIC_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() =>
+                    setDailyCategory((prev) => (prev === cat ? null : cat))
+                  }
+                  className={`rounded-full border px-2.5 py-1 text-xs ${
+                    dailyCategory === cat
+                      ? "border-purple-500 bg-purple-500/15 text-purple-300"
+                      : "border-neutral-700 text-neutral-400"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs text-neutral-400">말투</p>
+            <div className="flex flex-wrap gap-1.5">
+              {TONE_OPTIONS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setDailyTone(t)}
+                  className={`rounded-full border px-2.5 py-1 text-xs ${
+                    dailyTone === t
+                      ? "border-purple-500 bg-purple-500/15 text-purple-300"
+                      : "border-neutral-700 text-neutral-400"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <form onSubmit={handleGenerateDaily} className="flex gap-2">
             <input
               value={dailyTopic}
               onChange={(e) => setDailyTopic(e.target.value)}
-              placeholder="예: 오늘 날씨, 육아템, 아이 어린이집 적응기"
+              placeholder="구체적인 소재 직접 입력 (선택, 비워둬도 됨)"
               className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
             />
             <button
