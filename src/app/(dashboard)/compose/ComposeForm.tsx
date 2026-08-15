@@ -35,6 +35,7 @@ type PostTarget = {
   threadsPermalink: string | null;
   threadsAccount: Account;
   body: string | null;
+  publishedAt: string | Date | null;
 };
 type Post = {
   id: string;
@@ -56,6 +57,16 @@ function toDatetimeLocal(value: string | Date | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
     d.getHours()
   )}:${pad(d.getMinutes())}`;
+}
+
+function formatPublishedTime(value: string | Date | null): string {
+  if (!value) return "";
+  return new Date(value).toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Seoul",
+  });
 }
 
 const TARGET_STATUS_LABEL: Record<string, string> = {
@@ -1015,6 +1026,7 @@ export default function ComposeForm({
                         >
                           {t.threadsAccount.label}
                           {t.body ? " ✦" : ""}: {TARGET_STATUS_LABEL[t.status] ?? t.status}
+                          {t.publishedAt && ` (${formatPublishedTime(t.publishedAt)})`}
                         </span>
                       ))}
                     </div>

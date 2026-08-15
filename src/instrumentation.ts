@@ -1,4 +1,9 @@
 export async function register() {
+  // Railway 등 대부분의 배포 환경은 서버 시간대가 UTC라, 별도 설정 없이 두면
+  // 대시보드 시간대별 통계·자동 발행 스케줄이 실제 한국 시간과 9시간 어긋난다.
+  // 서버 전역 시간대를 한국 시간으로 고정해 모든 Date 계산 기준을 통일한다.
+  process.env.TZ = "Asia/Seoul";
+
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   // Vercel 등 서버리스 배포에서는 Vercel Cron이 /api/cron/publish-scheduled 를 호출하므로
   // 이 인메모리 스케줄러는 로컬 개발/자체 호스팅(예: PM2, Docker) 환경에서만 사용합니다.
