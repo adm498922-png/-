@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSettingsStatus } from "@/lib/settings";
 import Link from "next/link";
 import LinkGeneratorForm from "./LinkGeneratorForm";
+import ConnectionSubNav from "../ConnectionSubNav";
 
 export default async function LinksPage() {
   const settings = await getSettingsStatus();
@@ -12,6 +13,7 @@ export default async function LinksPage() {
 
   return (
     <div className="max-w-2xl">
+      <ConnectionSubNav />
       <h1 className="mb-1 text-2xl font-bold text-white">쿠팡 링크</h1>
       <p className="mb-6 text-sm text-neutral-400">
         쿠팡 상품 URL을 붙여넣으면 파트너스 딥링크로 변환합니다.

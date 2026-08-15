@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSettingsStatus } from "@/lib/settings";
 import Link from "next/link";
 import AccountRow from "./AccountRow";
+import ConnectionSubNav from "../ConnectionSubNav";
 
 function getDaysLeft(expiresAt: Date | null): number | null {
   if (!expiresAt) return null;
@@ -21,6 +22,7 @@ export default async function AccountsPage({
 
   return (
     <div className="max-w-3xl">
+      <ConnectionSubNav />
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">스레드 계정</h1>

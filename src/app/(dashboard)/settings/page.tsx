@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { getSettingsStatus } from "@/lib/settings";
 import SettingsForm from "./SettingsForm";
+import ConnectionSubNav from "../ConnectionSubNav";
 
 export default async function SettingsPage() {
   const status = await getSettingsStatus();
@@ -13,6 +14,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-2xl">
+      <ConnectionSubNav />
       <h1 className="mb-1 text-2xl font-bold text-white">설정</h1>
       <p className="mb-6 text-sm text-neutral-400">
         쿠팡파트너스와 Threads 개발자 앱의 API 키를 입력하세요. 저장된 값은
