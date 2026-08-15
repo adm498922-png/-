@@ -18,7 +18,7 @@ export async function register() {
   const cron = await import("node-cron");
   const { runDueScheduledPosts } = await import("@/lib/scheduler");
   const { collectInsightsForPublishedTargets } = await import("@/lib/insights");
-  const { generateAndScheduleDailyPost } = await import("@/lib/auto-daily-post");
+  const { startAutoDailyPostScheduler } = await import("@/lib/auto-daily-post");
   const { pollPendingVideoJobs } = await import("@/lib/video-gen");
   const { getDecryptedSettings } = await import("@/lib/settings");
 
@@ -38,15 +38,11 @@ export async function register() {
     }
   });
 
-  // 2시간마다(서버 로컬 시간, 00/02/04...22시): 설정에서 켜져 있으면 AI가
-  // 소재를 스스로 골라 일상글을 만들어 1시간 뒤로 예약 (그 사이 검토/취소 가능)
-  cron.schedule("0 */2 * * *", async () => {
-    try {
-      await generateAndScheduleDailyPost();
-    } catch (e) {
-      console.error("자동 일상글 생성 스케줄러 오류", e);
-    }
-  });
+  // 약 1시간마다(정각이 아니라 몇 분씩 무작위로 어긋난 시각에): 설정에서
+  // 켜져 있으면 AI가 소재를 스스로 골라 일상글을 만들어 20분 뒤로 예약
+  // (그 사이 검토/취소 가능). 스스로 다음 실행을 다시 예약하는 방식이라
+  // 별도 cron 표현식이 아니라 auto-daily-post.ts 안에서 관리된다.
+  startAutoDailyPostScheduler();
 
   // AI 상품 홍보 영상(Sora) 생성 진행 상태를 매 분 확인해서 완료되면 저장
   cron.schedule("* * * * *", async () => {
@@ -59,6 +55,6 @@ export async function register() {
   });
 
   console.log(
-    "[threads-hub] 로컬 스케줄러가 시작되었습니다 (예약 발행 매 1분, 조회수 수집 매 10분, 자동 일상글 생성 2시간마다, 영상 생성 확인 매 1분)."
+    "[threads-hub] 로컬 스케줄러가 시작되었습니다 (예약 발행 매 1분, 조회수 수집 매 10분, 자동 일상글 생성 약 1시간마다(무작위 오차 포함), 영상 생성 확인 매 1분)."
   );
 }
