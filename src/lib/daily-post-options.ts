@@ -17,3 +17,6 @@ export const ENGAGEMENT_PROMPTS = [
   "나만 이제 알았나 싶어서 올려봄",
   "비슷한 상황이면 진짜 공감될 듯",
 ];
+
+export const COUPANG_DISCLOSURE =
+  "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.";

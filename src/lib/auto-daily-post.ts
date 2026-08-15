@@ -1,9 +1,15 @@
 import { prisma } from "./prisma";
 import { getDecryptedSettings } from "./settings";
-import { generateDailyPostDrafts } from "./ai";
-import { TOPIC_CATEGORIES, TONE_OPTIONS, ENGAGEMENT_PROMPTS } from "./daily-post-options";
+import { generateDailyPostDrafts, generateThreadsPost } from "./ai";
+import {
+  TOPIC_CATEGORIES,
+  TONE_OPTIONS,
+  ENGAGEMENT_PROMPTS,
+  COUPANG_DISCLOSURE,
+} from "./daily-post-options";
 
 const REVIEW_WINDOW_HOURS = 3;
+const PRODUCT_POST_CHANCE = 0.3; // 켜져 있을 때 상품 글이 나올 확률 (나머지는 일상글)
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -16,11 +22,18 @@ export type AutoDailyPostSkipReason =
 
 export type AutoDailyPostResult =
   | { skipped: AutoDailyPostSkipReason }
-  | { created: string; category: string; tone: string; scheduledAt: Date };
+  | {
+      created: string;
+      kind: "daily" | "product";
+      category: string;
+      tone?: string;
+      scheduledAt: Date;
+    };
 
 /**
- * 매일 자동으로 소재·말투를 스스로 골라 일상글 초안을 만들고,
+ * 매일 자동으로 소재·말투를 스스로 골라 글 초안을 만들고,
  * 사람이 확인할 수 있도록 몇 시간 뒤로 예약해둔다 (즉시 발행하지 않음).
+ * 설정에 따라 가끔(기본 30%) 이미 저장된 쿠팡 링크로 상품 소개 글을 섞는다.
  */
 export async function generateAndScheduleDailyPost(
   options?: { force?: boolean }
@@ -40,6 +53,43 @@ export async function generateAndScheduleDailyPost(
     return { skipped: "no-active-accounts" as const };
   }
 
+  const scheduledAt = new Date(Date.now() + REVIEW_WINDOW_HOURS * 60 * 60 * 1000);
+  const commentBody = pickRandom(ENGAGEMENT_PROMPTS);
+
+  let existingLink = null;
+  if (settings.autoDailyPostIncludeProducts && Math.random() < PRODUCT_POST_CHANCE) {
+    const links = await prisma.coupangLink.findMany({ take: 100 });
+    if (links.length > 0) existingLink = pickRandom(links);
+  }
+
+  if (existingLink) {
+    const draft = await generateThreadsPost({
+      apiKey: settings.openaiApiKey,
+      productName: existingLink.productName ?? existingLink.originalUrl,
+    });
+    const body = `${draft}\n\n${existingLink.shortUrl}\n\n${COUPANG_DISCLOSURE}`;
+
+    const post = await prisma.post.create({
+      data: {
+        body,
+        commentBody,
+        coupangLinkId: existingLink.id,
+        status: "SCHEDULED",
+        scheduledAt,
+        targets: {
+          create: accounts.map((a) => ({ threadsAccountId: a.id })),
+        },
+      },
+    });
+
+    return {
+      created: post.id,
+      kind: "product",
+      category: existingLink.productName ?? "쿠팡 상품",
+      scheduledAt,
+    };
+  }
+
   const category = pickRandom(TOPIC_CATEGORIES);
   const tone = pickRandom(TONE_OPTIONS);
 
@@ -50,9 +100,6 @@ export async function generateAndScheduleDailyPost(
     count: 1,
   });
   const body = drafts[0];
-  const commentBody = pickRandom(ENGAGEMENT_PROMPTS);
-
-  const scheduledAt = new Date(Date.now() + REVIEW_WINDOW_HOURS * 60 * 60 * 1000);
 
   const post = await prisma.post.create({
     data: {
@@ -66,5 +113,5 @@ export async function generateAndScheduleDailyPost(
     },
   });
 
-  return { created: post.id, category, tone, scheduledAt };
+  return { created: post.id, kind: "daily", category, tone, scheduledAt };
 }

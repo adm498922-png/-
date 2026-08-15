@@ -35,6 +35,9 @@ export default function SettingsForm({
   const [autoDailyPostEnabled, setAutoDailyPostEnabled] = useState(
     status.autoDailyPostEnabled
   );
+  const [autoDailyPostIncludeProducts, setAutoDailyPostIncludeProducts] = useState(
+    status.autoDailyPostIncludeProducts
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [current, setCurrent] = useState(status);
@@ -52,8 +55,12 @@ export default function SettingsForm({
       return;
     }
     const time = new Date(data.scheduledAt).toLocaleString("ko-KR");
+    const detail =
+      data.kind === "product"
+        ? `쿠팡 상품 소개 글 (${data.category})`
+        : `일상글 — 소재: ${data.category} · 말투: ${data.tone}`;
     setTestResult(
-      `생성됨 — 소재: ${data.category} · 말투: ${data.tone} · ${time}에 자동 발행 예정 (글 작성/예약 화면에서 확인하세요)`
+      `생성됨 — ${detail} · ${time}에 자동 발행 예정 (글 작성/예약 화면에서 확인하세요)`
     );
   }
 
@@ -72,6 +79,7 @@ export default function SettingsForm({
         threadsRedirectUri,
         openaiApiKey,
         autoDailyPostEnabled,
+        autoDailyPostIncludeProducts,
       }),
     });
     setSaving(false);
@@ -224,7 +232,7 @@ export default function SettingsForm({
           수정·취소할 수 있고, 아무것도 안 하면 그대로 자동 발행됩니다.
           OpenAI API 키가 설정되어 있어야 동작합니다.
         </p>
-        <label className="mb-4 flex items-center gap-2 text-sm text-neutral-300">
+        <label className="mb-2 flex items-center gap-2 text-sm text-neutral-300">
           <input
             type="checkbox"
             checked={autoDailyPostEnabled}
@@ -233,6 +241,21 @@ export default function SettingsForm({
           />
           매일 자동 생성 켜기
         </label>
+
+        <label className="mb-4 flex items-center gap-2 text-sm text-neutral-300">
+          <input
+            type="checkbox"
+            checked={autoDailyPostIncludeProducts}
+            onChange={(e) => setAutoDailyPostIncludeProducts(e.target.checked)}
+            className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+          />
+          가끔(약 30%) 쿠팡 상품 소개 글도 섞기
+        </label>
+        <p className="-mt-3 mb-4 text-xs text-neutral-500">
+          이전에 &quot;쿠팡 링크&quot; 화면에서 만들어둔 링크 중 하나를
+          랜덤으로 골라 소개 글을 씁니다. 만들어둔 링크가 하나도 없으면 이
+          옵션을 켜도 일상글만 나옵니다.
+        </p>
 
         <div className="border-t border-neutral-800 pt-4">
           <button

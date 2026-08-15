@@ -23,6 +23,7 @@ model Settings {
   threadsRedirectUri  String?
   openaiApiKeyEnc     String?
   autoDailyPostEnabled Boolean @default(false)
+  autoDailyPostIncludeProducts Boolean @default(false)
   updatedAt           DateTime @updatedAt
 }
 

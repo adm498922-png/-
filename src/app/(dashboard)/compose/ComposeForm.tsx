@@ -5,6 +5,7 @@ import {
   TOPIC_CATEGORIES,
   TONE_OPTIONS,
   ENGAGEMENT_PROMPTS,
+  COUPANG_DISCLOSURE,
 } from "@/lib/daily-post-options";
 
 type Account = { id: string; label: string; username: string | null };
@@ -244,9 +245,6 @@ export default function ComposeForm({
     }
     setPerAccountBody((prev) => ({ ...prev, [accountId]: data.body }));
   }
-
-  const COUPANG_DISCLOSURE =
-    "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.";
 
   function insertEngagementPrompt() {
     const candidates = ENGAGEMENT_PROMPTS.filter((p) => !commentBody.includes(p));
