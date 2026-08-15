@@ -9,15 +9,14 @@ import {
   buildCoupangComment,
 } from "./daily-post-options";
 
-const REVIEW_WINDOW_MINUTES = 20;
+const REVIEW_WINDOW_MINUTES = 1;
 const PRODUCT_POST_CHANCE = 0.4; // 켜져 있을 때 상품 글이 나올 확률 (나머지는 일상글)
 const COLLECT_CHANCE = 0.5; // 상품 링크 풀을 자동으로 채울지 여부 (매 실행마다 시도하진 않음)
 
-// 테스트 기간: 1시간마다. 나중에 실제 운영할 때는 늘려도 됨.
-const AUTO_POST_INTERVAL_HOURS = 1;
-// 매번 정각(0분)에 딱 맞춰 발행되면 기계적으로 보여서, 몇 분씩 무작위로 어긋나게 함.
-const MIN_JITTER_MINUTES = 1;
-const MAX_JITTER_MINUTES = 9;
+// 테스트 기간: 매시 정각을 기준으로, 그 시각의 1~19분 사이에 무조건 하나씩
+// 발행 (하루 24개). 서버 재시작/재배포 시각과 무관하게 항상 실제 시계 기준으로 돈다.
+const MIN_MINUTE_OF_HOUR = 1;
+const MAX_MINUTE_OF_HOUR = 19;
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -146,28 +145,21 @@ export async function generateAndScheduleDailyPost(
   return { created: post.id, kind: "daily", category, tone, scheduledAt };
 }
 
-function randomJitterMs(): number {
-  const minutes =
-    MIN_JITTER_MINUTES +
-    Math.floor(Math.random() * (MAX_JITTER_MINUTES - MIN_JITTER_MINUTES + 1));
-  return minutes * 60 * 1000;
-}
-
 /**
- * 매 시각 정각(0분)에 딱 맞춰 돌지 않도록, 다음 실행까지의 대기 시간에
- * 몇 분씩 무작위 오차를 더해 스스로 다시 예약하는 방식으로 반복 실행한다.
+ * 매시 정각(00분)에 이 함수를 호출하면, 그 시각의 1~19분 사이 무작위
+ * 시점에 딱 한 번 자동 생성을 실행한다 (하루 24회 호출 → 24개 발행).
+ * 실행 시각을 서버 부팅 시점이 아니라 매시 정각(실제 시계)에 맞춰 거는
+ * cron이 이 함수를 매시간 불러주는 구조라, 재배포해도 주기가 흐트러지지 않는다.
  */
-export function startAutoDailyPostScheduler(): void {
-  const scheduleNext = () => {
-    const delayMs = AUTO_POST_INTERVAL_HOURS * 60 * 60 * 1000 + randomJitterMs();
-    setTimeout(async () => {
-      try {
-        await generateAndScheduleDailyPost();
-      } catch (e) {
-        console.error("자동 일상글 생성 스케줄러 오류", e);
-      }
-      scheduleNext();
-    }, delayMs);
-  };
-  scheduleNext();
+export function runDailyPostAtRandomMinute(): void {
+  const minute =
+    MIN_MINUTE_OF_HOUR +
+    Math.floor(Math.random() * (MAX_MINUTE_OF_HOUR - MIN_MINUTE_OF_HOUR + 1));
+  setTimeout(async () => {
+    try {
+      await generateAndScheduleDailyPost();
+    } catch (e) {
+      console.error("자동 일상글 생성 스케줄러 오류", e);
+    }
+  }, minute * 60 * 1000);
 }

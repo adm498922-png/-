@@ -226,11 +226,10 @@ export default function SettingsForm({
           <StatusBadge ok={autoDailyPostEnabled} />
         </div>
         <p className="mb-4 text-xs text-neutral-500">
-          켜두면 <strong className="text-neutral-300">약 1시간마다</strong>{" "}
-          (매번 정각이 아니라 몇 분씩 무작위로 어긋난 시각에) AI가
-          소재·말투를 스스로 골라 일상글 초안을 만들고,{" "}
-          <strong className="text-neutral-300">20분 뒤</strong>로 자동
-          예약해둡니다. 그 사이 &quot;글 작성/예약&quot; 화면에서 확인·
+          켜두면 <strong className="text-neutral-300">매시 1~19분 사이</strong>{" "}
+          (테스트 기간 동안 하루 24개) AI가 소재·말투를 스스로 골라 일상글
+          초안을 만들고, <strong className="text-neutral-300">1분 뒤</strong>로
+          자동 예약해둡니다. 그 사이 &quot;글 작성/예약&quot; 화면에서 확인·
           수정·취소할 수 있고, 아무것도 안 하면 그대로 자동 발행됩니다.
           OpenAI API 키가 설정되어 있어야 동작합니다.
         </p>
