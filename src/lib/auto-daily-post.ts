@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { getDecryptedSettings } from "./settings";
 import { generateDailyPostDrafts, generateThreadsPost } from "./ai";
+import { collectTrendingProduct } from "./auto-collect-products";
 import {
   TOPIC_CATEGORIES,
   TONE_OPTIONS,
@@ -10,6 +11,7 @@ import {
 
 const REVIEW_WINDOW_HOURS = 1;
 const PRODUCT_POST_CHANCE = 0.4; // 켜져 있을 때 상품 글이 나올 확률 (나머지는 일상글)
+const COLLECT_CHANCE = 0.5; // 상품 링크 풀을 자동으로 채울지 여부 (매 실행마다 시도하진 않음)
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -54,6 +56,25 @@ export async function generateAndScheduleDailyPost(
   }
 
   const scheduledAt = new Date(Date.now() + REVIEW_WINDOW_HOURS * 60 * 60 * 1000);
+
+  // 쿠팡 상품 글도 섞기로 되어 있으면, 사람이 직접 검색하지 않아도 되도록
+  // AI가 고른 키워드로 상품을 자동 수집해 링크 풀을 채워둔다 (실패해도 무시).
+  if (
+    settings.autoDailyPostIncludeProducts &&
+    settings.coupangAccessKey &&
+    settings.coupangSecretKey &&
+    Math.random() < COLLECT_CHANCE
+  ) {
+    try {
+      await collectTrendingProduct({
+        coupangAccessKey: settings.coupangAccessKey,
+        coupangSecretKey: settings.coupangSecretKey,
+        openaiApiKey: settings.openaiApiKey,
+      });
+    } catch (e) {
+      console.error("상품 자동 수집 실패", e);
+    }
+  }
 
   let existingLink = null;
   if (settings.autoDailyPostIncludeProducts && Math.random() < PRODUCT_POST_CHANCE) {
