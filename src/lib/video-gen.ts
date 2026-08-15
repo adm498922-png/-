@@ -23,12 +23,13 @@ export async function requestProductVideo(params: {
   imageUrl: string;
 }): Promise<{ jobId: string }> {
   const client = new OpenAI({ apiKey: params.apiKey });
+  // Sora의 input_reference는 이미지 크기가 요청 해상도와 정확히 일치해야 해서
+  // (쿠팡 상품 이미지는 크기가 제각각) 참조 이미지 없이 텍스트 프롬프트만으로 생성한다.
   const video = await client.videos.create({
     model: "sora-2",
     prompt: buildVideoPrompt(params.productName),
     size: "720x1280",
     seconds: "8",
-    input_reference: { image_url: params.imageUrl },
   });
 
   await prisma.coupangLink.update({
