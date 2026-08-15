@@ -51,6 +51,35 @@ function cellStyle(h: HourlyStat) {
   return "border-neutral-800 bg-neutral-950/40";
 }
 
+/** 이 서비스만의 자동 발행 마스코트 "그리" 아이콘 (원본 디자인) */
+function GeuriIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 shrink-0"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="12" cy="5" r="1.4" fill="#60a5fa" />
+      <line x1="12" y1="6.4" x2="12" y2="8.5" stroke="#60a5fa" strokeWidth="1.2" />
+      <rect
+        x="5.5"
+        y="8.5"
+        width="13"
+        height="9.5"
+        rx="3.5"
+        fill="#1e293b"
+        stroke="#60a5fa"
+        strokeWidth="1.2"
+      />
+      <circle cx="9.3" cy="13.2" r="1.5" fill="#60a5fa" />
+      <circle cx="14.7" cy="13.2" r="1.5" fill="#60a5fa" />
+      <rect x="2.5" y="11.5" width="2" height="4" rx="1" fill="#334155" />
+      <rect x="19.5" y="11.5" width="2" height="4" rx="1" fill="#334155" />
+    </svg>
+  );
+}
+
 function AccountStatsCard({ account, date }: { account: Account; date: string }) {
   const [data, setData] = useState<HourlyResponse | null>(null);
   const loading = !data || data.date !== date;
@@ -140,11 +169,9 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
           </div>
 
           <div className="mt-3 flex items-center gap-1.5 border-t border-neutral-800 pt-2 text-[11px] text-neutral-500">
-            <span className="flex h-4 w-4 items-center justify-center rounded bg-neutral-800 text-[9px] font-bold text-neutral-300">
-              ⚙
-            </span>
+            <GeuriIcon />
             <span>
-              <span className="font-semibold text-neutral-300">SCV</span> · 무인 자동 발행중
+              <span className="font-semibold text-neutral-300">그리</span> · 무인 자동 발행중
             </span>
           </div>
         </>
