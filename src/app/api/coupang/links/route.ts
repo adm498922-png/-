@@ -32,15 +32,24 @@ export async function POST(req: NextRequest) {
 
   // 상품 검색 결과의 링크는 이미 변환된 제휴 추적 링크이므로 그대로 저장한다.
   if (parsed.hostname === "link.coupang.com") {
-    const saved = await prisma.coupangLink.create({
-      data: {
-        productName: productName || null,
-        originalUrl: parsed.toString(),
-        shortUrl: parsed.toString(),
-        imageUrl: typeof imageUrl === "string" ? imageUrl : null,
-      },
-    });
-    return NextResponse.json(saved);
+    try {
+      const saved = await prisma.coupangLink.create({
+        data: {
+          productName: productName || null,
+          originalUrl: parsed.toString(),
+          shortUrl: parsed.toString(),
+          imageUrl: typeof imageUrl === "string" ? imageUrl : null,
+        },
+      });
+      return NextResponse.json(saved);
+    } catch (e) {
+      console.error("CoupangLink 저장 실패", e);
+      const message = e instanceof Error ? e.message : String(e);
+      return NextResponse.json(
+        { error: `링크 저장 중 오류가 발생했습니다: ${message}` },
+        { status: 500 }
+      );
+    }
   }
 
   const settings = await getDecryptedSettings();
@@ -83,8 +92,9 @@ export async function POST(req: NextRequest) {
       );
     }
     console.error("Coupang deeplink generation failed", e);
+    const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json(
-      { error: "링크 생성 중 오류가 발생했습니다." },
+      { error: `링크 생성 중 오류가 발생했습니다: ${message}` },
       { status: 500 }
     );
   }
