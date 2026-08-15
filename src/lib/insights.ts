@@ -8,6 +8,7 @@ export async function collectInsightsForPublishedTargets() {
     where: {
       threadsMediaId: { not: null },
       status: "DONE",
+      threadsAccount: { isActive: true },
     },
     orderBy: { publishedAt: "desc" },
     take: 300,
