@@ -1017,9 +1017,7 @@ export default function ComposeForm({
                       {post.targets.map((t) => (
                         <span
                           key={t.id}
-                          title={
-                            t.errorMessage ?? (t.body ? `이 계정 전용 문구: ${t.body}` : undefined)
-                          }
+                          title={t.body ? `이 계정 전용 문구: ${t.body}` : undefined}
                           className={`rounded-full border px-2 py-0.5 text-xs ${statusColor(t.status)} ${
                             t.body ? "border-purple-700" : "border-neutral-700"
                           }`}
@@ -1030,6 +1028,13 @@ export default function ComposeForm({
                         </span>
                       ))}
                     </div>
+                    {post.targets
+                      .filter((t) => t.status === "FAILED" && t.errorMessage)
+                      .map((t) => (
+                        <p key={t.id} className="mt-1 text-xs text-red-400">
+                          {t.threadsAccount.label}: {t.errorMessage}
+                        </p>
+                      ))}
                   </>
                 )}
               </div>
