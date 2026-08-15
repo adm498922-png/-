@@ -124,8 +124,8 @@ export type HourlyStat = {
   isBest: boolean;
 };
 
-/** dateStr: "YYYY-MM-DD" (서버 로컬 타임존 기준) */
-export async function getHourlyStats(dateStr: string) {
+/** dateStr: "YYYY-MM-DD" (서버 로컬 타임존 기준). accountId를 주면 해당 계정만 집계 */
+export async function getHourlyStats(dateStr: string, accountId?: string) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const dayStart = new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0);
   const dayEnd = endOfDay(dayStart);
@@ -134,6 +134,7 @@ export async function getHourlyStats(dateStr: string) {
     where: {
       status: "DONE",
       publishedAt: { gte: dayStart, lte: dayEnd },
+      ...(accountId ? { threadsAccountId: accountId } : {}),
     },
     select: { id: true, publishedAt: true },
   });

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getDashboardStats } from "@/lib/dashboard-stats";
 import WeekBarChart from "./WeekBarChart";
 import InsightsRefreshButton from "./InsightsRefreshButton";
-import HourlyStatsPanel from "./HourlyStatsPanel";
+import AccountStatsGrid from "./AccountStatsGrid";
 
 function StatTile({
   label,
@@ -64,10 +64,6 @@ export default async function DashboardHomePage() {
         <WeekBarChart days={stats.last7Days} />
       </div>
 
-      <div className="mb-6">
-        <HourlyStatsPanel />
-      </div>
-
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile
           label="오늘 발송 예정 글"
@@ -85,43 +81,7 @@ export default async function DashboardHomePage() {
         />
       </div>
 
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-neutral-300">
-          계정별 오늘 현황
-        </h2>
-        <div className="overflow-x-auto rounded-xl border border-neutral-800">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-neutral-800 text-xs text-neutral-500">
-                <th className="px-4 py-2 font-medium">계정</th>
-                <th className="px-4 py-2 font-medium">오늘 포스팅</th>
-                <th className="px-4 py-2 font-medium">오늘 조회수</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.perAccount.map((account) => (
-                <tr
-                  key={account.id}
-                  className="border-b border-neutral-800 last:border-0"
-                >
-                  <td className="px-4 py-2.5 text-white">
-                    {account.label}
-                    <span className="ml-1.5 text-xs text-neutral-500">
-                      @{account.username ?? "unknown"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-neutral-300">
-                    {account.todayPosts.toLocaleString("ko-KR")}개
-                  </td>
-                  <td className="px-4 py-2.5 font-medium text-neutral-100">
-                    {account.todayViews.toLocaleString("ko-KR")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <AccountStatsGrid accounts={stats.perAccount} />
     </div>
   );
 }
