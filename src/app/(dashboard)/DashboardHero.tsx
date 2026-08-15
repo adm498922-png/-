@@ -92,13 +92,25 @@ export default function DashboardHero({ accounts }: { accounts: Account[] }) {
   useEffect(() => {
     if (!accountId) return;
     let cancelled = false;
-    fetch(`/api/dashboard/hourly?date=${date}&accountId=${accountId}`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (!cancelled) setData(json);
-      });
+
+    function load() {
+      fetch(`/api/dashboard/hourly?date=${date}&accountId=${accountId}`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (!cancelled) setData(json);
+        });
+    }
+
+    load();
+    // 조회수 수집은 서버에서 매 10분마다 자동으로 돌아가므로, 화면도 주기적으로
+    // 다시 불러와서 새로고침 없이 최신 숫자가 보이게 함.
+    const interval = setInterval(load, 60_000);
+    // "조회수 새로고침" 버튼을 누르면 다음 60초를 기다리지 않고 바로 반영
+    window.addEventListener("insights-refreshed", load);
     return () => {
       cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener("insights-refreshed", load);
     };
   }, [date, accountId]);
 
