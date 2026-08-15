@@ -1,10 +1,11 @@
 import { prisma } from "./prisma";
-import { getValidAccessToken } from "./threads-accounts";
+import { getValidAccessToken, markAccountNeedsReconnect } from "./threads-accounts";
 import {
   createTextContainer,
   publishContainer,
   getMediaPermalink,
   ThreadsApiError,
+  isSessionExpiredError,
 } from "./threads-api";
 
 function sleep(ms: number) {
@@ -108,10 +109,21 @@ export async function publishTarget(targetId: string) {
       }
     }
   } catch (e) {
-    await prisma.postTarget.update({
-      where: { id: targetId },
-      data: { status: "FAILED", errorMessage: describeError(e) },
-    });
+    if (isSessionExpiredError(e)) {
+      await markAccountNeedsReconnect(target.threadsAccountId);
+      await prisma.postTarget.update({
+        where: { id: targetId },
+        data: {
+          status: "FAILED",
+          errorMessage: "계정 세션이 만료되어 재연결이 필요합니다. 스레드 계정 화면에서 다시 연결해주세요.",
+        },
+      });
+    } else {
+      await prisma.postTarget.update({
+        where: { id: targetId },
+        data: { status: "FAILED", errorMessage: describeError(e) },
+      });
+    }
   }
 
   return prisma.postTarget.findUniqueOrThrow({ where: { id: targetId } });

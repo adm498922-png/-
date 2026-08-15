@@ -29,6 +29,14 @@ export async function saveOrUpdateAccount(params: {
   });
 }
 
+/** Meta가 세션을 무효화했을 때(로그아웃 등) 계정을 재연결 필요 상태로 표시 */
+export async function markAccountNeedsReconnect(accountId: string) {
+  await prisma.threadsAccount.update({
+    where: { id: accountId },
+    data: { isActive: false },
+  });
+}
+
 /** 만료가 임박했으면 자동 갱신 후, 사용 가능한 access token을 반환 */
 export async function getValidAccessToken(accountId: string): Promise<string> {
   const account = await prisma.threadsAccount.findUniqueOrThrow({

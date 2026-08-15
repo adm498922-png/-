@@ -3,6 +3,11 @@ import { getSettingsStatus } from "@/lib/settings";
 import Link from "next/link";
 import AccountRow from "./AccountRow";
 
+function getDaysLeft(expiresAt: Date | null): number | null {
+  if (!expiresAt) return null;
+  return Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
 export default async function AccountsPage({
   searchParams,
 }: {
@@ -58,7 +63,12 @@ export default async function AccountsPage({
       ) : (
         <div className="space-y-2">
           {accounts.map((account, i) => (
-            <AccountRow key={account.id} account={account} index={i + 1} />
+            <AccountRow
+              key={account.id}
+              account={account}
+              daysLeft={getDaysLeft(account.tokenExpiresAt)}
+              index={i + 1}
+            />
           ))}
         </div>
       )}

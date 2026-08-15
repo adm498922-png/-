@@ -7,15 +7,16 @@ type Account = {
   id: string;
   label: string;
   username: string | null;
-  tokenExpiresAt: Date | null;
   isActive: boolean;
 };
 
 export default function AccountRow({
   account,
+  daysLeft,
   index,
 }: {
   account: Account;
+  daysLeft: number | null;
   index: number;
 }) {
   const router = useRouter();
@@ -40,13 +41,6 @@ export default function AccountRow({
     await fetch(`/api/threads/accounts/${account.id}`, { method: "DELETE" });
     router.refresh();
   }
-
-  const expiresAt = account.tokenExpiresAt
-    ? new Date(account.tokenExpiresAt)
-    : null;
-  const daysLeft = expiresAt
-    ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
 
   return (
     <div className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
@@ -90,7 +84,7 @@ export default function AccountRow({
           )}
           <p className="text-xs text-neutral-500">
             @{account.username ?? "unknown"}
-            {daysLeft !== null && (
+            {account.isActive && daysLeft !== null && (
               <span className={daysLeft < 7 ? "text-amber-400" : ""}>
                 {" "}
                 · 토큰 만료 {daysLeft}일 남음
@@ -98,13 +92,28 @@ export default function AccountRow({
             )}
           </p>
         </div>
+        {!account.isActive && (
+          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-medium text-red-400">
+            재연결 필요
+          </span>
+        )}
       </div>
-      <button
-        onClick={handleDelete}
-        className="text-xs text-neutral-500 hover:text-red-400"
-      >
-        연결 해제
-      </button>
+      <div className="flex items-center gap-3">
+        {!account.isActive && (
+          <a
+            href="/api/threads/oauth/start"
+            className="text-xs text-blue-400 hover:underline"
+          >
+            다시 연결하기
+          </a>
+        )}
+        <button
+          onClick={handleDelete}
+          className="text-xs text-neutral-500 hover:text-red-400"
+        >
+          연결 해제
+        </button>
+      </div>
     </div>
   );
 }

@@ -178,4 +178,11 @@ export async function getMediaInsights(params: {
   return result;
 }
 
+/** Meta 쪽에서 세션(토큰)이 무효화됐다는 뜻인지 판별 (재연결이 필요한 경우) */
+export function isSessionExpiredError(e: unknown): boolean {
+  if (!(e instanceof ThreadsApiError)) return false;
+  const body = e.body as { error?: { type?: string; code?: number } } | undefined;
+  return body?.error?.type === "OAuthException" || body?.error?.code === 190;
+}
+
 export { ThreadsApiError };
