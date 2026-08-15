@@ -59,7 +59,7 @@ function GeuriIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-5 w-5 shrink-0"
+      className="h-6 w-6 shrink-0"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -83,13 +83,16 @@ function GeuriIcon() {
   );
 }
 
-function AccountStatsCard({ account, date }: { account: Account; date: string }) {
+export default function DashboardHero({ accounts }: { accounts: Account[] }) {
+  const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
+  const [date, setDate] = useState(todayStr());
   const [data, setData] = useState<HourlyResponse | null>(null);
   const loading = !data || data.date !== date;
 
   useEffect(() => {
+    if (!accountId) return;
     let cancelled = false;
-    fetch(`/api/dashboard/hourly?date=${date}&accountId=${account.id}`)
+    fetch(`/api/dashboard/hourly?date=${date}&accountId=${accountId}`)
       .then((res) => res.json())
       .then((json) => {
         if (!cancelled) setData(json);
@@ -97,45 +100,63 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
     return () => {
       cancelled = true;
     };
-  }, [date, account.id]);
+  }, [date, accountId]);
+
+  if (accounts.length === 0) return null;
 
   const trendUp = data ? data.totalViews >= data.prevDayTotalViews : true;
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-white">
-            {account.label}
-            <span className="ml-1.5 text-xs text-neutral-500">
-              @{account.username ?? "unknown"}
-            </span>
-          </p>
-          <p className="text-xs text-neutral-500">{formatDateLabel(date)}</p>
+    <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {accounts.length > 1 &&
+            accounts.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => setAccountId(a.id)}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  a.id === accountId
+                    ? "bg-blue-600 text-white"
+                    : "bg-neutral-800 text-neutral-400 hover:text-neutral-200"
+                }`}
+              >
+                {a.label}
+              </button>
+            ))}
         </div>
-        {data && (
-          <span className="rounded-full bg-neutral-800 px-2 py-0.5 text-[11px] text-neutral-300">
-            {data.totalPosts}건 발행
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-neutral-400">{formatDateLabel(date)}</span>
+          <input
+            type="date"
+            value={date}
+            max={todayStr()}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1 text-sm text-white outline-none focus:border-blue-500"
+          />
+        </div>
       </div>
 
       {loading ? (
-        <p className="text-sm text-neutral-500">불러오는 중...</p>
+        <p className="py-8 text-center text-sm text-neutral-500">불러오는 중...</p>
       ) : (
         <>
-          <div className="mb-3 flex items-end gap-2">
-            <p className="text-2xl font-semibold text-white">
-              {data.totalViews.toLocaleString("ko-KR")}
-            </p>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-sm text-neutral-400">이 날 올린 글 조회수</p>
             <span
-              className={`mb-1 flex items-center gap-0.5 text-xs font-medium ${
-                trendUp ? "text-green-400" : "text-red-400"
+              className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                trendUp ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
               }`}
             >
-              {trendUp ? "▲" : "▼"} 어제 {data.prevDayTotalViews.toLocaleString("ko-KR")}
+              {trendUp ? "▲ 어제보다 상승" : "▼ 어제보다 하락"}
             </span>
           </div>
+          <p className="mb-1 text-4xl font-bold text-white sm:text-5xl">
+            {data.totalViews.toLocaleString("ko-KR")}
+          </p>
+          <p className="mb-5 text-sm text-neutral-500">
+            {data.totalPosts}건 발행 · 글당 평균 {data.avgViews.toLocaleString("ko-KR")}회
+          </p>
 
           <div className="mb-2 flex flex-wrap items-center gap-3 text-[10px] text-neutral-500">
             <span className="flex items-center gap-1">
@@ -156,19 +177,19 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
             </span>
           </div>
 
-          <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
+          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
             {data.hourly.map((h) => (
               <div
                 key={h.hour}
-                className={`relative rounded-md border p-1 text-center ${cellStyle(h)}`}
+                className={`relative rounded-lg border p-2 text-center ${cellStyle(h)}`}
               >
                 {h.isBest && (
-                  <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-green-500/30 px-1 text-[8px] font-medium text-green-300">
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-green-500/30 px-1.5 py-px text-[8px] font-medium text-green-300">
                     BEST
                   </span>
                 )}
-                <p className="text-[9px] text-neutral-500">{h.hour}시</p>
-                <p className="text-[11px] font-medium text-white">
+                <p className="text-[10px] text-neutral-500">{h.hour}시</p>
+                <p className="text-sm font-semibold text-white">
                   {h.count > 0 ? h.count : h.scheduledCount > 0 ? h.scheduledCount : "-"}
                 </p>
                 <p className="text-[9px] text-neutral-500">
@@ -178,7 +199,7 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
             ))}
           </div>
 
-          <div className="mt-3 flex items-center gap-1.5 border-t border-neutral-800 pt-2 text-[11px] text-neutral-500">
+          <div className="mt-4 flex items-center gap-1.5 border-t border-neutral-800 pt-3 text-xs text-neutral-500">
             <GeuriIcon />
             <span>
               <span className="font-semibold text-neutral-300">그리</span> · 무인 자동 발행중
@@ -186,32 +207,6 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-export default function AccountStatsGrid({ accounts }: { accounts: Account[] }) {
-  const [date, setDate] = useState(todayStr());
-
-  if (accounts.length === 0) return null;
-
-  return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-neutral-300">계정별 운영 현황</h2>
-        <input
-          type="date"
-          value={date}
-          max={todayStr()}
-          onChange={(e) => setDate(e.target.value)}
-          className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1 text-sm text-white outline-none focus:border-blue-500"
-        />
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {accounts.map((account) => (
-          <AccountStatsCard key={account.id} account={account} date={date} />
-        ))}
-      </div>
     </div>
   );
 }
