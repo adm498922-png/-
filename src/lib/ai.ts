@@ -134,6 +134,7 @@ export async function generateDailyPostDrafts(params: {
   topic?: string;
   category?: string;
   tone?: string;
+  timeHint?: string;
   count?: number;
 }): Promise<string[]> {
   const client = new OpenAI({ apiKey: params.apiKey });
@@ -143,6 +144,7 @@ export async function generateDailyPostDrafts(params: {
   const hints: string[] = [];
   if (params.category) hints.push(`소재 카테고리: ${params.category}`);
   if (params.topic) hints.push(`구체적인 소재/키워드: ${params.topic}`);
+  if (params.timeHint) hints.push(`지금 올라갈 시간대 분위기(참고만 하고 억지로 언급하지 않아도 됨): ${params.timeHint}`);
   const hintText =
     hints.length > 0
       ? hints.join("\n")
@@ -179,6 +181,65 @@ export async function generateDailyPostDrafts(params: {
     throw new Error("AI가 글을 생성하지 못했습니다.");
   }
   return drafts;
+}
+
+const FOLLOWUP_COMMENT_SYSTEM_PROMPT =
+  "너는 스레드(Threads)에 방금 올린 글에 스스로 첫 댓글(셀프 대댓글)을 다는 사람이야. " +
+  "본문을 방금 읽은 사람처럼, 본문에서 실제로 나온 구체적인 단어나 상황을 최소 하나는 언급하면서 " +
+  "자연스럽게 이어지는 짧은 댓글을 하나 써. 사람들이 댓글을 달고 싶어지게 질문을 던지거나 " +
+  "리액션을 유도해도 좋아.\n" +
+  "- 무조건 반말\n" +
+  "- 한두 문장, 짧게\n" +
+  "- 이모지, 해시태그 금지\n" +
+  "- 본문과 무관한 뜬금없는 말 금지 — 반드시 본문 내용에 붙어서 이어지는 댓글이어야 해\n" +
+  "- 댓글 내용만 출력하고 설명이나 따옴표는 붙이지 마.";
+
+/** 방금 만든 글 본문을 그대로 이어받아, 본문 내용과 연결되는 셀프 댓글을 하나 생성 (일상글용) */
+export async function generateFollowUpComment(params: {
+  apiKey: string;
+  postBody: string;
+}): Promise<string> {
+  const client = new OpenAI({ apiKey: params.apiKey });
+  const res = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: FOLLOWUP_COMMENT_SYSTEM_PROMPT },
+      { role: "user", content: `방금 올린 글:\n${params.postBody}` },
+    ],
+  });
+  const text = res.choices[0]?.message?.content?.trim();
+  if (!text) {
+    throw new Error("AI가 댓글을 생성하지 못했습니다.");
+  }
+  return text;
+}
+
+const FOLLOWUP_TEASER_SYSTEM_PROMPT =
+  "너는 스레드에서 방금 올린 상품 후기 글에 스스로 댓글을 달아 구매 링크로 유도하는 사람이야. " +
+  "방금 올린 글에서 실제로 언급한 내용(제품 특징, 상황 등)과 자연스럽게 이어지는 아주 짧은 유도 " +
+  "문구를 하나 써 줘. 링크는 네가 붙이지 마, 문구만 써.\n" +
+  "- 무조건 반말, 한 문장, 아주 짧게\n" +
+  "- 본문과 무관한 뜬금없는 문구 금지 — 본문에서 말한 내용과 이어져야 해\n" +
+  "- 이모지, 해시태그, 따옴표 금지, 문구만 출력";
+
+/** 상품 소개 글 본문과 이어지는 짧은 링크 유도 문구를 생성 (댓글의 쿠팡 링크 앞에 붙임) */
+export async function generateFollowUpTeaser(params: {
+  apiKey: string;
+  postBody: string;
+}): Promise<string> {
+  const client = new OpenAI({ apiKey: params.apiKey });
+  const res = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: FOLLOWUP_TEASER_SYSTEM_PROMPT },
+      { role: "user", content: `방금 올린 글:\n${params.postBody}` },
+    ],
+  });
+  const text = res.choices[0]?.message?.content?.trim();
+  if (!text) {
+    throw new Error("AI가 유도 문구를 생성하지 못했습니다.");
+  }
+  return text;
 }
 
 /** 상품 자동 수집용 검색 키워드를 AI가 하나 추천 (직접 검색 없이도 상품 링크를 모을 수 있도록) */

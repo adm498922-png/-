@@ -1,16 +1,22 @@
 import { prisma } from "./prisma";
 import { getDecryptedSettings } from "./settings";
-import { generateDailyPostDrafts, generateThreadsPost } from "./ai";
+import {
+  generateDailyPostDrafts,
+  generateThreadsPost,
+  generateFollowUpComment,
+  generateFollowUpTeaser,
+} from "./ai";
 import { collectTrendingProduct } from "./auto-collect-products";
 import {
   TOPIC_CATEGORIES,
   TONE_OPTIONS,
   ENGAGEMENT_PROMPTS,
   buildCoupangComment,
+  getTimeSlot,
 } from "./daily-post-options";
 
 const REVIEW_WINDOW_MINUTES = 1;
-const PRODUCT_POST_CHANCE = 0.4; // 켜져 있을 때 상품 글이 나올 확률 (나머지는 일상글)
+const PRODUCT_POST_CHANCE = 0.5; // 켜져 있을 때 상품 글이 나올 확률 (나머지는 일상글)
 const COLLECT_CHANCE = 0.5; // 상품 링크 풀을 자동으로 채울지 여부 (매 실행마다 시도하진 않음)
 
 // 테스트 기간: 매시 정각을 기준으로, 그 시각의 1~19분 사이에 무조건 하나씩
@@ -40,7 +46,7 @@ export type AutoDailyPostResult =
 /**
  * 소재·말투를 스스로 골라 글 초안을 만들고, 사람이 확인할 수 있도록
  * 몇 분 뒤로 예약해둔다 (즉시 발행하지 않음).
- * 설정에 따라 가끔(기본 40%) 이미 저장된 쿠팡 링크로 상품 소개 글을 섞는다.
+ * 설정에 따라 가끔(기본 50%) 이미 저장된 쿠팡 링크로 상품 소개 글을 섞는다.
  */
 export async function generateAndScheduleDailyPost(
   options?: { force?: boolean }
@@ -94,10 +100,11 @@ export async function generateAndScheduleDailyPost(
       apiKey: settings.openaiApiKey,
       productName: existingLink.productName ?? existingLink.originalUrl,
     });
-    const commentBody = buildCoupangComment(
-      existingLink.shortUrl,
-      pickRandom(ENGAGEMENT_PROMPTS)
-    );
+    const teaser = await generateFollowUpTeaser({
+      apiKey: settings.openaiApiKey,
+      postBody: body,
+    }).catch(() => pickRandom(ENGAGEMENT_PROMPTS));
+    const commentBody = buildCoupangComment(existingLink.shortUrl, teaser);
 
     const post = await prisma.post.create({
       data: {
@@ -122,15 +129,20 @@ export async function generateAndScheduleDailyPost(
 
   const category = pickRandom(TOPIC_CATEGORIES);
   const tone = pickRandom(TONE_OPTIONS);
+  const timeSlot = getTimeSlot();
 
   const drafts = await generateDailyPostDrafts({
     apiKey: settings.openaiApiKey,
     category,
     tone,
+    timeHint: timeSlot.hint,
     count: 1,
   });
   const body = drafts[0];
-  const commentBody = pickRandom(ENGAGEMENT_PROMPTS);
+  const commentBody = await generateFollowUpComment({
+    apiKey: settings.openaiApiKey,
+    postBody: body,
+  }).catch(() => pickRandom(ENGAGEMENT_PROMPTS));
 
   const post = await prisma.post.create({
     data: {

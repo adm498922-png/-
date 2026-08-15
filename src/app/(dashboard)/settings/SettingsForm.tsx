@@ -298,7 +298,7 @@ export default function SettingsForm({
             onChange={(e) => setAutoDailyPostIncludeProducts(e.target.checked)}
             className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
           />
-          가끔(약 40%) 쿠팡 상품 소개 글도 섞기
+          가끔(약 50%) 쿠팡 상품 소개 글도 섞기
         </label>
         <p className="-mt-3 mb-4 text-xs text-neutral-500">
           &quot;쿠팡 링크&quot; 화면에서 직접 검색해 만들어둔 링크가 있으면
