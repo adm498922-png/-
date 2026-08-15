@@ -15,6 +15,7 @@ type ProductSearchResult = {
   productPrice: number;
   productImage: string;
   productUrl: string;
+  isRocket: boolean;
 };
 type PostTarget = {
   id: string;
@@ -112,7 +113,12 @@ export default function ComposeForm({
       setSearchResults(null);
       return;
     }
-    setSearchResults(data.products);
+    // 로켓배송 상품(대체로 판매량이 검증된 상품)을 우선 표시
+    const sorted = [...data.products].sort(
+      (a: ProductSearchResult, b: ProductSearchResult) =>
+        (b.isRocket ? 1 : 0) - (a.isRocket ? 1 : 0)
+    );
+    setSearchResults(sorted);
   }
 
   async function handleSelectProduct(product: ProductSearchResult) {
@@ -318,8 +324,13 @@ export default function ComposeForm({
                     <p className="truncate text-sm text-white">
                       {product.productName}
                     </p>
-                    <p className="text-xs text-neutral-400">
+                    <p className="flex items-center gap-1.5 text-xs text-neutral-400">
                       {product.productPrice.toLocaleString("ko-KR")}원
+                      {product.isRocket && (
+                        <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
+                          로켓배송
+                        </span>
+                      )}
                     </p>
                   </div>
                   <button
