@@ -35,14 +35,17 @@ function formatDateLabel(dateStr: string) {
 }
 
 /**
- * 셀 색상 규칙(사용자 지정): 조회수 1000+ = 파랑, 발행예정 = 노랑,
- * 조회수 두 자리(10~99) = 빨강. 그 외는 전부 기본(검정) 유지.
+ * 셀 색상 규칙(사용자 지정): 조회수 두 자리 이하(0~99) = 빨강,
+ * 세 자리(100~999) = 보라, 네 자리 이상(1000+) = 파랑, 발행예정 = 노랑.
  */
 function cellStyle(h: HourlyStat) {
   if (h.count > 0 && h.views >= 1000) {
     return "border-blue-500 bg-blue-950/60";
   }
-  if (h.count > 0 && h.views >= 10 && h.views <= 99) {
+  if (h.count > 0 && h.views >= 100) {
+    return "border-purple-500 bg-purple-950/60";
+  }
+  if (h.count > 0) {
     return "border-red-500 bg-red-950/60";
   }
   if (h.scheduledCount > 0) {
@@ -136,12 +139,16 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
 
           <div className="mb-2 flex flex-wrap items-center gap-3 text-[10px] text-neutral-500">
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
-              조회수 1,000+
+              <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+              조회수 0~99
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
-              조회수 두 자리
+              <span className="inline-block h-2 w-2 rounded-full bg-purple-500" />
+              조회수 100~999
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+              조회수 1,000+
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-full bg-yellow-500" />
