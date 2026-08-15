@@ -122,6 +122,7 @@ export type HourlyStat = {
   count: number;
   views: number;
   isBest: boolean;
+  scheduledCount: number;
 };
 
 /** dateStr: "YYYY-MM-DD" (서버 로컬 타임존 기준). accountId를 주면 해당 계정만 집계 */
@@ -139,17 +140,34 @@ export async function getHourlyStats(dateStr: string, accountId?: string) {
     select: { id: true, publishedAt: true },
   });
 
+  const scheduledTargets = await prisma.postTarget.findMany({
+    where: {
+      status: { notIn: ["DONE", "FAILED"] },
+      ...(accountId ? { threadsAccountId: accountId } : {}),
+      post: {
+        status: "SCHEDULED",
+        scheduledAt: { gte: dayStart, lte: dayEnd },
+      },
+    },
+    select: { id: true, post: { select: { scheduledAt: true } } },
+  });
+
   const viewsMap = await latestViewsByTargetId(targets.map((t) => t.id));
 
-  const hours: { count: number; views: number }[] = Array.from(
+  const hours: { count: number; views: number; scheduledCount: number }[] = Array.from(
     { length: 24 },
-    () => ({ count: 0, views: 0 })
+    () => ({ count: 0, views: 0, scheduledCount: 0 })
   );
   for (const t of targets) {
     if (!t.publishedAt) continue;
     const hour = t.publishedAt.getHours();
     hours[hour].count += 1;
     hours[hour].views += viewsMap.get(t.id) ?? 0;
+  }
+  for (const t of scheduledTargets) {
+    if (!t.post.scheduledAt) continue;
+    const hour = t.post.scheduledAt.getHours();
+    hours[hour].scheduledCount += 1;
   }
 
   const bestHours = new Set(
@@ -166,6 +184,7 @@ export async function getHourlyStats(dateStr: string, accountId?: string) {
     count: h.count,
     views: h.views,
     isBest: bestHours.has(hour),
+    scheduledCount: h.scheduledCount,
   }));
 
   const totalPosts = targets.length;

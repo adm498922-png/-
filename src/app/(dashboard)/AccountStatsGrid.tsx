@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 
 type Account = { id: string; label: string; username: string | null };
-type HourlyStat = { hour: number; count: number; views: number; isBest: boolean };
+type HourlyStat = {
+  hour: number;
+  count: number;
+  views: number;
+  isBest: boolean;
+  scheduledCount: number;
+};
 type HourlyResponse = {
   date: string;
   hourly: HourlyStat[];
@@ -26,6 +32,23 @@ function formatDateLabel(dateStr: string) {
   const date = new Date(y, (m ?? 1) - 1, d ?? 1);
   const weekday = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
   return `${m}월 ${d}일 (${weekday})`;
+}
+
+/**
+ * 셀 색상 규칙(사용자 지정): 조회수 1000+ = 파랑, 발행예정 = 노랑,
+ * 조회수 두 자리(10~99) = 빨강. 그 외는 전부 기본(검정) 유지.
+ */
+function cellStyle(h: HourlyStat) {
+  if (h.count > 0 && h.views >= 1000) {
+    return "border-blue-500 bg-blue-950/60";
+  }
+  if (h.count > 0 && h.views >= 10 && h.views <= 99) {
+    return "border-red-500 bg-red-950/60";
+  }
+  if (h.scheduledCount > 0) {
+    return "border-yellow-500 bg-yellow-950/60";
+  }
+  return "border-neutral-800 bg-neutral-950/40";
 }
 
 function AccountStatsCard({ account, date }: { account: Account; date: string }) {
@@ -82,15 +105,26 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
             </span>
           </div>
 
+          <div className="mb-2 flex flex-wrap items-center gap-3 text-[10px] text-neutral-500">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+              조회수 1,000+
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+              조회수 두 자리
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-yellow-500" />
+              발행 예정
+            </span>
+          </div>
+
           <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
             {data.hourly.map((h) => (
               <div
                 key={h.hour}
-                className={`relative rounded-md border p-1 text-center ${
-                  h.count > 0
-                    ? "border-green-800 bg-green-950/40"
-                    : "border-neutral-800 bg-neutral-950/40"
-                }`}
+                className={`relative rounded-md border p-1 text-center ${cellStyle(h)}`}
               >
                 {h.isBest && (
                   <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-green-500/30 px-1 text-[8px] font-medium text-green-300">
@@ -99,15 +133,19 @@ function AccountStatsCard({ account, date }: { account: Account; date: string })
                 )}
                 <p className="text-[9px] text-neutral-500">{h.hour}시</p>
                 <p className="text-[11px] font-medium text-white">
-                  {h.count > 0 ? h.count : "-"}
+                  {h.count > 0 ? h.count : h.scheduledCount > 0 ? h.scheduledCount : "-"}
                 </p>
               </div>
             ))}
           </div>
 
           <div className="mt-3 flex items-center gap-1.5 border-t border-neutral-800 pt-2 text-[11px] text-neutral-500">
-            <span>🤖</span>
-            <span>AI 자동 발행이 이 계정을 관리하고 있어요</span>
+            <span className="flex h-4 w-4 items-center justify-center rounded bg-neutral-800 text-[9px] font-bold text-neutral-300">
+              ⚙
+            </span>
+            <span>
+              <span className="font-semibold text-neutral-300">SCV</span> · 무인 자동 발행중
+            </span>
           </div>
         </>
       )}
