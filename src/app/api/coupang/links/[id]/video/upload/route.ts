@@ -27,25 +27,26 @@ export async function POST(
       );
     }
 
-    const formData = await req.formData();
-    const file = formData.get("video");
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "영상 파일이 없습니다." }, { status: 400 });
-    }
-    if (!ALLOWED_TYPES.has(file.type)) {
+    const contentType = req.headers.get("content-type") ?? "";
+    if (!ALLOWED_TYPES.has(contentType)) {
       return NextResponse.json(
-        { error: `mp4 형식의 영상만 업로드할 수 있어요. (받은 형식: ${file.type || "알 수 없음"})` },
+        { error: `mp4 형식의 영상만 업로드할 수 있어요. (받은 형식: ${contentType || "알 수 없음"})` },
         { status: 400 }
       );
     }
-    if (file.size > MAX_SIZE) {
+
+    const arrayBuffer = await req.arrayBuffer();
+    if (arrayBuffer.byteLength === 0) {
+      return NextResponse.json({ error: "영상 파일이 없습니다." }, { status: 400 });
+    }
+    if (arrayBuffer.byteLength > MAX_SIZE) {
       return NextResponse.json(
         { error: "영상 용량이 너무 커요 (50MB 이하로 올려주세요)." },
         { status: 400 }
       );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = Buffer.from(arrayBuffer);
     saveVideoFile(id, buffer);
 
     const updated = await prisma.coupangLink.update({

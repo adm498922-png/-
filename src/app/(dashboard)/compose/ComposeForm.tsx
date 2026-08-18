@@ -115,11 +115,10 @@ export default function ComposeForm({
     setUploadingVideo(true);
     setUploadVideoError(null);
     try {
-      const formData = new FormData();
-      formData.append("video", file);
       const res = await fetch(`/api/coupang/links/${coupangLinkId}/video/upload`, {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": file.type || "video/mp4" },
+        body: file,
       });
       let data: { error?: string; [key: string]: unknown };
       try {
