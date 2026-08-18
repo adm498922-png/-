@@ -650,6 +650,13 @@ export default function ComposeForm({
                 </p>
               </div>
             )}
+            {selectedLink?.videoStatus === "READY" && selectedLink.videoUrl && (
+              <p className="select-all break-all text-[10px] text-neutral-500">
+                실제 영상 주소(확인용, 길게 눌러 복사):{" "}
+                {typeof window !== "undefined" ? window.location.origin : ""}
+                {selectedLink.videoUrl}
+              </p>
+            )}
             {selectedLink?.videoStatus === "FAILED" && selectedLink.videoError && (
               <p className="text-[11px] text-red-400">
                 영상 생성 실패: {selectedLink.videoError}
