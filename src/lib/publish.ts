@@ -5,7 +5,6 @@ import {
   createTextContainer,
   createImageContainer,
   createVideoContainer,
-  createCarouselContainer,
   waitUntilContainerReady,
   publishContainer,
   getMediaPermalink,
@@ -32,35 +31,8 @@ async function publishWithRetry(params: {
 }): Promise<{ mediaId: string }> {
   let containerId: string;
 
-  if (params.imageUrl && params.videoUrl) {
-    // 사진 + 영상을 한 게시물에 같이 올리려면 캐러셀로 묶어야 함
-    const [imageChild, videoChild] = await Promise.all([
-      createImageContainer({
-        accessToken: params.accessToken,
-        threadsUserId: params.threadsUserId,
-        imageUrl: params.imageUrl,
-        isCarouselItem: true,
-      }),
-      createVideoContainer({
-        accessToken: params.accessToken,
-        threadsUserId: params.threadsUserId,
-        videoUrl: params.videoUrl,
-        isCarouselItem: true,
-      }),
-    ]);
-    await waitUntilContainerReady({
-      accessToken: params.accessToken,
-      containerId: videoChild.id,
-    });
-    const carousel = await createCarouselContainer({
-      accessToken: params.accessToken,
-      threadsUserId: params.threadsUserId,
-      childrenIds: [videoChild.id, imageChild.id],
-      text: params.text,
-      replyToId: params.replyToId,
-    });
-    containerId = carousel.id;
-  } else if (params.videoUrl) {
+  if (params.videoUrl) {
+    // 영상이 있으면 사진은 붙이지 않고 영상만 올린다 (캐러셀 조합은 신뢰성이 낮아 제외)
     const video = await createVideoContainer({
       accessToken: params.accessToken,
       threadsUserId: params.threadsUserId,
