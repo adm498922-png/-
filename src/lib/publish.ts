@@ -55,7 +55,7 @@ async function publishWithRetry(params: {
     const carousel = await createCarouselContainer({
       accessToken: params.accessToken,
       threadsUserId: params.threadsUserId,
-      childrenIds: [imageChild.id, videoChild.id],
+      childrenIds: [videoChild.id, imageChild.id],
       text: params.text,
       replyToId: params.replyToId,
     });
