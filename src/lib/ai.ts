@@ -1,13 +1,12 @@
 import OpenAI from "openai";
 
-const HOOK_MAX_LENGTH = 34;
-const PRODUCT_HOOK_MAX_LENGTH = 10;
-const PRODUCT_MAX_LINES = 3;
+const HOOK_MAX_LENGTH = 10;
+const MAX_LINES = 3;
 
 const STYLE_RULES =
-  `2. 첫 줄은 반드시 공백 포함 ${PRODUCT_HOOK_MAX_LENGTH}자 이내여야 해. '후기를 써야지'가 아니라 방금 ` +
+  `2. 첫 줄은 반드시 공백 포함 ${HOOK_MAX_LENGTH}자 이내여야 해. '후기를 써야지'가 아니라 방금 ` +
   "실제로 일어난 일에 즉흥적으로 반응하듯, 아주 짧게 툭 던져.\n" +
-  `3. 전체 글은 최대 ${PRODUCT_MAX_LINES}줄. 후기 글이 아니라 방금 겪은 일에 대한 캡션처럼 짧게 — ` +
+  `3. 전체 글은 최대 ${MAX_LINES}줄. 후기 글이 아니라 방금 겪은 일에 대한 캡션처럼 짧게 — ` +
   "길어질수록 안 읽고 넘긴다. 딱 필요한 장면 하나만 담아. 문단(줄바꿈)은 한 호흡에 한 장면씩.\n" +
   "4. 정리하는 마무리 문장 필요 없어. 반응 한 줄로 툭 끝내도 돼. 다만 " +
   "'강추!!', '완전 추천!' 같은 광고 말투는 여전히 금지.\n\n" +
@@ -65,9 +64,8 @@ const DAILY_CORE_RULES =
   "되고, 매번 쓰지는 마. 해시태그는 금지\n" +
   "- 상품 홍보나 판매 얘기는 절대 하지 마 (완전히 다른 목적의 글이야)\n" +
   "- 매번 소재와 흐름을 다르게 써서 뻔한 글처럼 보이지 않게 해\n" +
-  "- 길이는 보통 2~5줄이 딱 좋아. 정말 할 얘기가 많은 썰이면 6~7줄까지는 괜찮지만, " +
-  "억지로 늘리지 마 — 길다고 더 잘 읽히는 거 아니야. 오히려 짧고 툭 던지는 한두 줄짜리 글이 " +
-  "훨씬 잘 먹힐 때도 많아\n" +
+  `- 전체 글은 절대 ${MAX_LINES}줄을 넘기지 마. 썰이 길어질 것 같아도 제일 임팩트 있는 장면 ` +
+  "하나만 남기고 다 쳐내 — 길게 늘어놓는 것보다 짧고 툭 던지는 한두 줄짜리 글이 훨씬 잘 먹혀\n" +
   "- 글 내용만 출력하고 설명이나 따옴표는 붙이지 마.";
 
 function buildDailySystemPrompt(tone: string): string {
@@ -94,8 +92,6 @@ async function generate(params: {
   apiKey: string;
   systemPrompt: string;
   userContent: string;
-  hookMaxLength: number;
-  maxLines?: number;
 }): Promise<string> {
   const client = new OpenAI({ apiKey: params.apiKey });
 
@@ -121,11 +117,11 @@ async function generate(params: {
 
   let result = await attempt();
   const violations: string[] = [];
-  if (firstLineLength(result) > params.hookMaxLength) {
-    violations.push(`첫 줄은 반드시 공백 포함 ${params.hookMaxLength}자를 넘기지 마`);
+  if (firstLineLength(result) > HOOK_MAX_LENGTH) {
+    violations.push(`첫 줄은 반드시 공백 포함 ${HOOK_MAX_LENGTH}자를 넘기지 마`);
   }
-  if (params.maxLines && lineCount(result) > params.maxLines) {
-    violations.push(`전체 줄 수는 절대 ${params.maxLines}줄을 넘기지 마`);
+  if (lineCount(result) > MAX_LINES) {
+    violations.push(`전체 줄 수는 절대 ${MAX_LINES}줄을 넘기지 마`);
   }
   if (violations.length > 0) {
     result = await attempt(`방금 글이 규칙을 어겼어. ${violations.join(", ")}. 다시 써줘.`);
@@ -145,8 +141,6 @@ export async function generateThreadsPost(params: {
     apiKey: params.apiKey,
     systemPrompt: PRODUCT_SYSTEM_PROMPT,
     userContent: `다음 상품을 실제로 써본 사람 후기 톤으로 스레드 글을 써줘.\n상품명: ${params.productName}\n${priceLine}`,
-    hookMaxLength: PRODUCT_HOOK_MAX_LENGTH,
-    maxLines: PRODUCT_MAX_LINES,
   });
 }
 
