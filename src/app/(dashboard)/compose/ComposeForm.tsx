@@ -108,21 +108,37 @@ export default function ComposeForm({
 
   async function handleUploadVideo(file: File) {
     if (!coupangLinkId) return;
-    setUploadingVideo(true);
-    setUploadVideoError(null);
-    const formData = new FormData();
-    formData.append("video", file);
-    const res = await fetch(`/api/coupang/links/${coupangLinkId}/video/upload`, {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-    setUploadingVideo(false);
-    if (!res.ok) {
-      setUploadVideoError(data.error ?? "영상 업로드에 실패했습니다.");
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadVideoError("영상 용량이 너무 커요 (50MB 이하로 올려주세요).");
       return;
     }
-    setLinks((prev) => prev.map((l) => (l.id === coupangLinkId ? data : l)));
+    setUploadingVideo(true);
+    setUploadVideoError(null);
+    try {
+      const formData = new FormData();
+      formData.append("video", file);
+      const res = await fetch(`/api/coupang/links/${coupangLinkId}/video/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      let data: { error?: string; [key: string]: unknown };
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(`서버 응답을 읽지 못했어요 (상태 코드 ${res.status}).`);
+      }
+      if (!res.ok) {
+        setUploadVideoError(data.error ?? "영상 업로드에 실패했습니다.");
+        return;
+      }
+      setLinks((prev) => prev.map((l) => (l.id === coupangLinkId ? (data as unknown as CoupangLink) : l)));
+    } catch (e) {
+      setUploadVideoError(
+        e instanceof Error ? e.message : "영상 업로드 중 알 수 없는 오류가 발생했어요."
+      );
+    } finally {
+      setUploadingVideo(false);
+    }
   }
 
   async function handleProductSearch(e: React.FormEvent) {
