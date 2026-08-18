@@ -68,10 +68,14 @@ export async function generateAndScheduleDailyPost(
   const scheduledAt = new Date(Date.now() + REVIEW_WINDOW_MINUTES * 60 * 1000);
 
   // 상품 링크는 더 이상 AI가 자동으로 검색해 채우지 않는다. "쿠팡 링크" 화면에서
-  // 직접 등록해둔 링크 풀 중에서만 무작위로 골라 소개 글을 쓴다.
+  // 직접 등록해두고 영상까지 붙여둔(videoStatus === READY) 링크 풀 중에서만
+  // 무작위로 골라 소개 글을 쓴다 — 영상이 없는 링크는 자동발행 후보에서 제외.
   let existingLink = null;
   if (settings.autoDailyPostIncludeProducts && Math.random() < PRODUCT_POST_CHANCE) {
-    const links = await prisma.coupangLink.findMany({ take: 100 });
+    const links = await prisma.coupangLink.findMany({
+      where: { videoStatus: "READY" },
+      take: 100,
+    });
     if (links.length > 0) existingLink = pickRandom(links);
   }
 

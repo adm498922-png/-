@@ -73,6 +73,8 @@ export default function ComposeForm({
 
   const [requestingVideo, setRequestingVideo] = useState(false);
   const [videoRequestError, setVideoRequestError] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadVideoError, setUploadVideoError] = useState<string | null>(null);
 
   const selectedLink = links_.find((l) => l.id === coupangLinkId) ?? null;
 
@@ -99,6 +101,25 @@ export default function ComposeForm({
     setRequestingVideo(false);
     if (!res.ok) {
       setVideoRequestError(data.error ?? "영상 생성 요청에 실패했습니다.");
+      return;
+    }
+    setLinks((prev) => prev.map((l) => (l.id === coupangLinkId ? data : l)));
+  }
+
+  async function handleUploadVideo(file: File) {
+    if (!coupangLinkId) return;
+    setUploadingVideo(true);
+    setUploadVideoError(null);
+    const formData = new FormData();
+    formData.append("video", file);
+    const res = await fetch(`/api/coupang/links/${coupangLinkId}/video/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    setUploadingVideo(false);
+    if (!res.ok) {
+      setUploadVideoError(data.error ?? "영상 업로드에 실패했습니다.");
       return;
     }
     setLinks((prev) => prev.map((l) => (l.id === coupangLinkId ? data : l)));
@@ -557,39 +578,61 @@ export default function ComposeForm({
               </p>
             </div>
 
-            {aiConfigured && (
-              <div className="flex items-center gap-2 border-t border-neutral-800 pt-2">
-                {!selectedLink?.videoStatus || selectedLink.videoStatus === "FAILED" ? (
-                  <>
+            <div className="flex flex-wrap items-center gap-2 border-t border-neutral-800 pt-2">
+              {selectedLink?.videoStatus === "GENERATING" ? (
+                <p className="text-xs text-amber-400">
+                  🎬 영상 생성 중... (완료되면 자동으로 이 상품 글에 첨부돼요)
+                </p>
+              ) : (
+                <>
+                  {aiConfigured && (
                     <button
                       type="button"
                       onClick={handleRequestVideo}
-                      disabled={requestingVideo}
+                      disabled={requestingVideo || uploadingVideo}
                       className="rounded-full bg-purple-600/20 px-2.5 py-1 text-xs text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
                     >
                       {requestingVideo ? "요청 중..." : "🎬 AI 영상도 만들기"}
                     </button>
-                    <p className="text-[11px] text-neutral-500">
-                      완성까지 몇 분 걸려요. 완료되면 사진과 함께 자동으로 첨부돼요.
-                      (영상 1개당 OpenAI 요금이 따로 부과돼요)
-                    </p>
-                  </>
-                ) : selectedLink.videoStatus === "GENERATING" ? (
-                  <p className="text-xs text-amber-400">
-                    🎬 영상 생성 중... (완료되면 자동으로 이 상품 글에 첨부돼요)
-                  </p>
-                ) : selectedLink.videoStatus === "READY" && selectedLink.videoUrl ? (
-                  <div className="flex items-center gap-2">
-                    <video
-                      src={selectedLink.videoUrl}
-                      muted
-                      className="h-16 w-9 rounded-md bg-black object-cover"
+                  )}
+                  <label
+                    className={`rounded-full bg-neutral-800 px-2.5 py-1 text-xs text-neutral-200 hover:bg-neutral-700 ${
+                      uploadingVideo || requestingVideo ? "opacity-50" : "cursor-pointer"
+                    }`}
+                  >
+                    {uploadingVideo ? "업로드 중..." : "📤 내 영상 올리기"}
+                    <input
+                      type="file"
+                      accept="video/mp4"
+                      className="hidden"
+                      disabled={uploadingVideo || requestingVideo}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (file) handleUploadVideo(file);
+                      }}
                     />
-                    <p className="text-xs text-green-400">
-                      🎬 영상 준비 완료 — 발행 시 사진과 함께 첨부돼요.
+                  </label>
+                  {selectedLink?.videoStatus !== "READY" && (
+                    <p className="text-[11px] text-neutral-500">
+                      내 영상은 mp4, 50MB 이하로 올려주세요.
+                      {aiConfigured &&
+                        " AI 영상은 완성까지 몇 분 걸리고 1개당 OpenAI 요금이 따로 부과돼요."}
                     </p>
-                  </div>
-                ) : null}
+                  )}
+                </>
+              )}
+            </div>
+            {selectedLink?.videoStatus === "READY" && selectedLink.videoUrl && (
+              <div className="flex items-center gap-2">
+                <video
+                  src={selectedLink.videoUrl}
+                  muted
+                  className="h-16 w-9 rounded-md bg-black object-cover"
+                />
+                <p className="text-xs text-green-400">
+                  🎬 영상 준비 완료 — 발행 시 사진과 함께 첨부돼요.
+                </p>
               </div>
             )}
             {selectedLink?.videoStatus === "FAILED" && selectedLink.videoError && (
@@ -599,6 +642,9 @@ export default function ComposeForm({
             )}
             {videoRequestError && (
               <p className="text-[11px] text-red-400">{videoRequestError}</p>
+            )}
+            {uploadVideoError && (
+              <p className="text-[11px] text-red-400">{uploadVideoError}</p>
             )}
           </div>
         )}
