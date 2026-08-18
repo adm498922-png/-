@@ -303,15 +303,12 @@ export default function SettingsForm({
             onChange={(e) => setAutoDailyPostIncludeProducts(e.target.checked)}
             className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
           />
-          가끔(약 50%) 쿠팡 상품 소개 글도 섞기
+          자주(약 60%) 쿠팡 상품 소개 글도 섞기
         </label>
         <p className="-mt-3 mb-4 text-xs text-neutral-500">
-          &quot;쿠팡 링크&quot; 화면에서 직접 검색해 만들어둔 링크가 있으면
-          그중 하나를 랜덤으로 골라 소개 글을 씁니다. 링크를 하나도 안
-          만들어놨어도, AI가 인기 있을 만한 상품 키워드로 스스로 검색해서
-          로켓배송 상품 위주로 자동으로 링크를 모아둡니다 (직접 검색 안
-          하셔도 됩니다). 쿠팡파트너스 API 키가 설정되어 있어야 자동
-          수집이 동작합니다.
+          &quot;쿠팡 링크&quot; 화면에서 직접 검색해 만들어둔 링크 중에서만
+          랜덤으로 골라 소개 글을 씁니다. AI가 상품을 스스로 검색해 자동으로
+          채워넣지는 않으니, 소개하고 싶은 상품은 미리 직접 등록해두세요.
         </p>
 
         <div className="border-t border-neutral-800 pt-4">

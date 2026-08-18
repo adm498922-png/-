@@ -6,7 +6,6 @@ import {
   generateFollowUpComment,
   generateFollowUpTeaser,
 } from "./ai";
-import { collectTrendingProduct } from "./auto-collect-products";
 import {
   TOPIC_CATEGORIES,
   TONE_OPTIONS,
@@ -16,8 +15,7 @@ import {
 } from "./daily-post-options";
 
 const REVIEW_WINDOW_MINUTES = 1;
-const PRODUCT_POST_CHANCE = 0.5; // 켜져 있을 때 상품 글이 나올 확률 (나머지는 일상글)
-const COLLECT_CHANCE = 0.5; // 상품 링크 풀을 자동으로 채울지 여부 (매 실행마다 시도하진 않음)
+const PRODUCT_POST_CHANCE = 0.6; // 켜져 있을 때 상품 글이 나올 확률 (나머지는 일상글)
 
 // 테스트 기간: 매시 정각을 기준으로, 그 시각의 1~19분 사이에 무조건 하나씩
 // 발행 (하루 24개). 서버 재시작/재배포 시각과 무관하게 항상 실제 시계 기준으로 돈다.
@@ -46,7 +44,7 @@ export type AutoDailyPostResult =
 /**
  * 소재·말투를 스스로 골라 글 초안을 만들고, 사람이 확인할 수 있도록
  * 몇 분 뒤로 예약해둔다 (즉시 발행하지 않음).
- * 설정에 따라 가끔(기본 50%) 이미 저장된 쿠팡 링크로 상품 소개 글을 섞는다.
+ * 설정에 따라 가끔(기본 60%) 이미 저장된 쿠팡 링크로 상품 소개 글을 섞는다.
  */
 export async function generateAndScheduleDailyPost(
   options?: { force?: boolean }
@@ -69,27 +67,8 @@ export async function generateAndScheduleDailyPost(
   const openaiApiKey = settings.openaiApiKey;
   const scheduledAt = new Date(Date.now() + REVIEW_WINDOW_MINUTES * 60 * 1000);
 
-  // 쿠팡 상품 글도 섞기로 되어 있으면, 사람이 직접 검색하지 않아도 되도록
-  // AI가 고른 키워드로 상품을 자동 수집해 링크 풀을 채워둔다 (실패해도 무시).
-  if (
-    settings.autoDailyPostIncludeProducts &&
-    settings.coupangAccessKey &&
-    settings.coupangSecretKey &&
-    Math.random() < COLLECT_CHANCE
-  ) {
-    try {
-      await collectTrendingProduct({
-        coupangAccessKey: settings.coupangAccessKey,
-        coupangSecretKey: settings.coupangSecretKey,
-        openaiApiKey: settings.openaiApiKey,
-        naverClientId: settings.naverClientId ?? undefined,
-        naverClientSecret: settings.naverClientSecret ?? undefined,
-      });
-    } catch (e) {
-      console.error("상품 자동 수집 실패", e);
-    }
-  }
-
+  // 상품 링크는 더 이상 AI가 자동으로 검색해 채우지 않는다. "쿠팡 링크" 화면에서
+  // 직접 등록해둔 링크 풀 중에서만 무작위로 골라 소개 글을 쓴다.
   let existingLink = null;
   if (settings.autoDailyPostIncludeProducts && Math.random() < PRODUCT_POST_CHANCE) {
     const links = await prisma.coupangLink.findMany({ take: 100 });
