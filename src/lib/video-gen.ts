@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { prisma } from "./prisma";
-import { saveVideoFile, videoRoutePath } from "./media-storage";
+import { saveVideoFile, videoRoutePath, generateVideoFileId } from "./media-storage";
 
 /**
  * 실제 촬영한 것처럼 위장하지 않는, "광고/편집 영상"임이 자연스러운 상품 홍보
@@ -64,12 +64,13 @@ export async function pollPendingVideoJobs(apiKey: string | null): Promise<void>
       if (video.status === "completed") {
         const content = await client.videos.downloadContent(link.videoJobId);
         const buffer = Buffer.from(await content.arrayBuffer());
-        saveVideoFile(link.id, buffer);
+        const fileId = generateVideoFileId(link.id);
+        saveVideoFile(fileId, buffer);
         await prisma.coupangLink.update({
           where: { id: link.id },
           data: {
             videoStatus: "READY",
-            videoUrl: videoRoutePath(link.id),
+            videoUrl: videoRoutePath(fileId),
             videoJobId: null,
             videoError: null,
           },

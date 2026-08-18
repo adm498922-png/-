@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { saveVideoFile, videoRoutePath } from "@/lib/media-storage";
+import { saveVideoFile, videoRoutePath, generateVideoFileId } from "@/lib/media-storage";
 
 const MAX_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = new Set(["video/mp4"]);
@@ -47,13 +47,14 @@ export async function POST(
     }
 
     const buffer = Buffer.from(arrayBuffer);
-    saveVideoFile(id, buffer);
+    const fileId = generateVideoFileId(id);
+    saveVideoFile(fileId, buffer);
 
     const updated = await prisma.coupangLink.update({
       where: { id },
       data: {
         videoStatus: "READY",
-        videoUrl: videoRoutePath(id),
+        videoUrl: videoRoutePath(fileId),
         videoJobId: null,
         videoError: null,
       },

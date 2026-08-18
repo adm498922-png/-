@@ -17,6 +17,14 @@ export function videoFileName(linkId: string): string {
   return `${linkId}.mp4`;
 }
 
+/**
+ * 영상을 다시 올릴 때마다 새 파일 키를 만든다 (linkId만 쓰면 URL이 항상 같아서,
+ * Threads(메타) 쪽에서 예전에 실패했던 그 URL을 다시 캐시해서 재시도를 안 할 수 있음).
+ */
+export function generateVideoFileId(linkId: string): string {
+  return `${linkId}${Date.now().toString(36)}`;
+}
+
 export function videoFilePath(linkId: string): string {
   return path.join(getMediaDir(), videoFileName(linkId));
 }
