@@ -32,8 +32,6 @@ export default function SettingsForm({
     status.threadsRedirectUri ?? suggestedRedirectUri
   );
   const [openaiApiKey, setOpenaiApiKey] = useState("");
-  const [naverClientId, setNaverClientId] = useState(status.naverClientId ?? "");
-  const [naverClientSecret, setNaverClientSecret] = useState("");
   const [autoDailyPostEnabled, setAutoDailyPostEnabled] = useState(
     status.autoDailyPostEnabled
   );
@@ -80,8 +78,6 @@ export default function SettingsForm({
         threadsAppSecret,
         threadsRedirectUri,
         openaiApiKey,
-        naverClientId,
-        naverClientSecret,
         autoDailyPostEnabled,
         autoDailyPostIncludeProducts,
       }),
@@ -97,7 +93,6 @@ export default function SettingsForm({
     setCoupangSecretKey("");
     setThreadsAppSecret("");
     setOpenaiApiKey("");
-    setNaverClientSecret("");
     setMessage("저장되었습니다.");
   }
 
@@ -227,49 +222,6 @@ export default function SettingsForm({
             }
             className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
           />
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="font-semibold text-white">네이버 데이터랩 (검색 트렌드)</h2>
-          <StatusBadge ok={current.naverConfigured} />
-        </div>
-        <p className="mb-4 text-xs text-neutral-500">
-          상품 자동 수집 시, AI가 추측만 하지 않고 후보 키워드들을 실제 최근
-          7일 검색 트렌드로 비교해서 고르게 됩니다. developers.naver.com →
-          Application 등록(검색 API) 후 발급받은 키를 입력하세요. 선택
-          사항 — 비워두면 AI 추측만으로 키워드를 정합니다.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              Client ID
-            </label>
-            <input
-              type="text"
-              value={naverClientId}
-              onChange={(e) => setNaverClientId(e.target.value)}
-              placeholder="네이버 애플리케이션 Client ID"
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              Client Secret
-            </label>
-            <input
-              type="password"
-              value={naverClientSecret}
-              onChange={(e) => setNaverClientSecret(e.target.value)}
-              placeholder={
-                current.naverConfigured
-                  ? "저장되어 있음 (변경하려면 입력)"
-                  : "Client Secret"
-              }
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-          </div>
         </div>
       </section>
 
