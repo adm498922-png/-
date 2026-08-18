@@ -9,7 +9,8 @@ export async function proxy(req: NextRequest) {
   if (
     PUBLIC_PATHS.some((p) => pathname === p) ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/cron") // 크론 라우트는 자체 시크릿으로 보호
+    pathname.startsWith("/api/cron") || // 크론 라우트는 자체 시크릿으로 보호
+    pathname.startsWith("/api/media/") // Threads(메타) 서버가 로그인 없이 영상을 가져가야 함
   ) {
     return NextResponse.next();
   }
