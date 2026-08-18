@@ -1,12 +1,14 @@
 import OpenAI from "openai";
 
 const HOOK_MAX_LENGTH = 34;
+const PRODUCT_HOOK_MAX_LENGTH = 10;
+const PRODUCT_MAX_LINES = 3;
 
 const STYLE_RULES =
-  `2. 첫 줄은 반드시 공백 포함 ${HOOK_MAX_LENGTH}자 이내여야 해. '후기를 써야지'가 아니라 방금 실제로 ` +
-  "일어난 일에 즉흥적으로 반응하듯 써.\n" +
-  "3. 전체 글은 딱 2~4줄. 후기 글이 아니라 방금 겪은 일에 대한 캡션처럼 짧게 — 길어질수록 " +
-  "안 읽고 넘긴다. 문단(줄바꿈)은 한 호흡에 한 장면씩.\n" +
+  `2. 첫 줄은 반드시 공백 포함 ${PRODUCT_HOOK_MAX_LENGTH}자 이내여야 해. '후기를 써야지'가 아니라 방금 ` +
+  "실제로 일어난 일에 즉흥적으로 반응하듯, 아주 짧게 툭 던져.\n" +
+  `3. 전체 글은 최대 ${PRODUCT_MAX_LINES}줄. 후기 글이 아니라 방금 겪은 일에 대한 캡션처럼 짧게 — ` +
+  "길어질수록 안 읽고 넘긴다. 딱 필요한 장면 하나만 담아. 문단(줄바꿈)은 한 호흡에 한 장면씩.\n" +
   "4. 정리하는 마무리 문장 필요 없어. 반응 한 줄로 툭 끝내도 돼. 다만 " +
   "'강추!!', '완전 추천!' 같은 광고 말투는 여전히 금지.\n\n" +
   "문체 규칙:\n" +
@@ -29,10 +31,9 @@ const PRODUCT_SYSTEM_PROMPT =
   "너가 쓰는 글은 블로그 후기가 아니고, 심지어 스레드 치고도 짧아야 해. 문장을 길게 " +
   "늘어뜨리지 말고, 한 줄 한 줄이 각자 임팩트를 갖게 짧게 끊어 써.\n\n" +
   "구조:\n" +
-  "1. 첫 줄 = 훅. 가족/지인 반응이나 의외의 반전, 구체적인 한 장면으로 스크롤을 멈추게 해. " +
-  "예시(그대로 베끼지 말고 이런 임팩트와 짧기로 매번 다르게): '남편이 돈지랄이라더니, 지금은 " +
-  "자기가 끼고 사는 육아치트키' / '이걸로 애 재웠더니 5분 만에 뻗음 ㅋㅋㅋ' / '다이소에서 산 " +
-  "이거 미쳤다 진짜'\n" +
+  "1. 첫 줄 = 훅. 가족/지인 반응이나 의외의 반전, 구체적인 한 장면을 아주 짧은 한마디로 던져서 " +
+  "스크롤을 멈추게 해. 예시(그대로 베끼지 말고 이런 임팩트와 짧기로 매번 다르게): " +
+  "'이거 실화냐' / '다이소 또 미쳤음' / '이거 뭐야 대박'\n" +
   STYLE_RULES +
   "\n- 가격/링크는 절대 포함하지 마 (그건 별도로 붙는다).";
 
@@ -85,10 +86,16 @@ function firstLineLength(text: string): number {
   return Array.from(firstLine).length;
 }
 
+function lineCount(text: string): number {
+  return text.split("\n").filter((line) => line.trim().length > 0).length;
+}
+
 async function generate(params: {
   apiKey: string;
   systemPrompt: string;
   userContent: string;
+  hookMaxLength: number;
+  maxLines?: number;
 }): Promise<string> {
   const client = new OpenAI({ apiKey: params.apiKey });
 
@@ -113,10 +120,15 @@ async function generate(params: {
   }
 
   let result = await attempt();
-  if (firstLineLength(result) > HOOK_MAX_LENGTH) {
-    result = await attempt(
-      `방금 첫 줄이 너무 길었어. 첫 줄은 반드시 공백 포함 ${HOOK_MAX_LENGTH}자를 넘기지 않게 다시 써줘.`
-    );
+  const violations: string[] = [];
+  if (firstLineLength(result) > params.hookMaxLength) {
+    violations.push(`첫 줄은 반드시 공백 포함 ${params.hookMaxLength}자를 넘기지 마`);
+  }
+  if (params.maxLines && lineCount(result) > params.maxLines) {
+    violations.push(`전체 줄 수는 절대 ${params.maxLines}줄을 넘기지 마`);
+  }
+  if (violations.length > 0) {
+    result = await attempt(`방금 글이 규칙을 어겼어. ${violations.join(", ")}. 다시 써줘.`);
   }
   return result;
 }
@@ -133,6 +145,8 @@ export async function generateThreadsPost(params: {
     apiKey: params.apiKey,
     systemPrompt: PRODUCT_SYSTEM_PROMPT,
     userContent: `다음 상품을 실제로 써본 사람 후기 톤으로 스레드 글을 써줘.\n상품명: ${params.productName}\n${priceLine}`,
+    hookMaxLength: PRODUCT_HOOK_MAX_LENGTH,
+    maxLines: PRODUCT_MAX_LINES,
   });
 }
 
