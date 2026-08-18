@@ -105,10 +105,15 @@ export async function publishTarget(targetId: string) {
     const accessToken = await getValidAccessToken(target.threadsAccountId);
 
     let videoUrl: string | undefined;
+    let videoSkipNote: string | undefined;
     if (target.post.coupangLink?.videoStatus === "READY" && target.post.coupangLink.videoUrl) {
       const settings = await getDecryptedSettings();
       if (settings.threadsRedirectUri) {
         videoUrl = `${getPublicBaseUrl(settings.threadsRedirectUri)}${target.post.coupangLink.videoUrl}`;
+      } else {
+        // 영상은 준비돼 있지만 공개 주소(threadsRedirectUri)가 설정 안 돼 있어 시도조차 못 함
+        videoSkipNote =
+          "영상이 준비돼 있었지만 설정 화면의 Threads 리디렉션 URI가 비어 있어 영상 없이 발행됨.";
       }
     }
 
@@ -128,6 +133,7 @@ export async function publishTarget(targetId: string) {
     } catch (e) {
       if (!videoUrl) throw e;
       // 영상 처리 실패는 사진/글 발행까지 막지 않고, 영상만 빼고 재시도
+      videoSkipNote = `영상 처리 실패로 영상 없이 발행됨: ${describeError(e)}`;
       console.error("영상 포함 발행 실패, 영상 없이 재시도", describeError(e));
       if (target.post.coupangLinkId) {
         await prisma.coupangLink.update({
@@ -164,6 +170,7 @@ export async function publishTarget(targetId: string) {
         threadsMediaId: mediaId,
         threadsPermalink: permalink,
         publishedAt: new Date(),
+        errorMessage: videoSkipNote,
       },
     });
 
