@@ -17,6 +17,7 @@ export type CreatorFormValues = {
   handle: string;
   profileUrl: string;
   followers: string;
+  following: string;
   category: string;
   status: string;
   contactType: string;
@@ -46,6 +47,7 @@ export function emptyCreatorForm(): CreatorFormValues {
     handle: "",
     profileUrl: "",
     followers: "",
+    following: "",
     category: "",
     status: "LEAD",
     contactType: "오픈채팅",
@@ -75,6 +77,7 @@ export function creatorToForm(c: CreatorView): CreatorFormValues {
     handle: c.handle ?? "",
     profileUrl: c.profileUrl ?? "",
     followers: c.followers === null ? "" : String(c.followers),
+    following: c.following === null ? "" : String(c.following),
     category: c.category ?? "",
     status: c.status,
     contactType: c.contactType ?? "",

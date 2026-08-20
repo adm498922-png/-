@@ -28,6 +28,16 @@ export async function PATCH(
   assign("unitsSold", data.unitsSold);
   assign("revenue", data.revenue);
   assign("settlement", data.settlement);
+  assign("salesCommission", data.salesCommission);
+  assign("contentFee", data.contentFee);
+  assign("agencyFee", data.agencyFee);
+  assign("commissionRate", data.commissionRate);
+  assign("agencyRate", data.agencyRate);
+  assign("settleDueDate", data.settleDueDate);
+  assign("settledAt", data.settledAt);
+  assign("linkSent", data.linkSent);
+  assign("taxReported", data.taxReported);
+  assign("statementIssued", data.statementIssued);
 
   const deal = await prisma.deal.update({
     where: { id },

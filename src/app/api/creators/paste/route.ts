@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
         name: p.name ?? "",
         handle: p.handle ?? "",
         followers: p.followers === null ? "" : String(p.followers),
+        following: p.following === null ? "" : String(p.following),
         postCount: p.postCount === null ? "" : String(p.postCount),
         bio: p.bio ?? "",
         category: p.category ?? "",

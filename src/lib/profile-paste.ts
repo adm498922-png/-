@@ -14,6 +14,7 @@ export type ParsedProfile = {
   name: string | null;
   handle: string | null;
   followers: number | null;
+  following: number | null;
   postCount: number | null;
   bio: string | null;
   category: string | null;
@@ -30,7 +31,13 @@ const SYSTEM_PROMPT = `너는 인스타그램 프로필 화면에서 복사한 �
 - handle: @ 뒤에 오는 영문 아이디. @는 빼고 아이디만.
 - followers: 팔로워 수를 숫자로. "3.2만" → 32000, "1,234" → 1234, "12.5K" → 12500, "1.1M" → 1100000.
 - postCount: 게시물 수를 숫자로. 없으면 null.
-- bio: 소개글 전체를 그대로. 줄바꿈은 유지.
+- following: '팔로우' 수(이 사람이 팔로우하는 수)를 숫자로. 없으면 null.
+- bio: 프로필 소개글만. 줄바꿈은 유지.
+  ★ 아래는 소개글이 아니므로 절대 넣지 않는다:
+    - 맨 윗줄의 브라우저 탭 제목, 아이디(@로 시작하는 본인 계정)
+    - "게시물 1816", "팔로워 10만", "팔로우 774" 같은 숫자 줄
+    - "팔로잉", "팔로우", "메시지 보내기" 같은 버튼 이름
+    - 스토리 하이라이트 이름 목록(공구일정, 이벤트발표 처럼 짧은 단어가 죽 나열된 부분)
 - category: 어떤 분야인지 한국어 한 단어로 추측 (예: 육아, 주방, 리빙, 뷰티, 식품, 패션, 반려동물, 여행). 근거가 없으면 null.
 - profileUrl: 텍스트 안에 인스타그램 주소가 있으면 그대로. 없으면 null.
 - linkInBio: 소개글에 걸린 바깥 링크(인포크링크 link.inpock.co.kr, 링크트리 linktr.ee, 스마트스토어, 블로그 등). 여러 개면 첫 번째. 없으면 null.
@@ -46,7 +53,7 @@ const SYSTEM_PROMPT = `너는 인스타그램 프로필 화면에서 복사한 �
 - 설명·인사말·코드펜스 없이 JSON만 출력한다.
 
 출력 형식:
-{"name":"","handle":"","followers":null,"postCount":null,"bio":"","category":null,"profileUrl":null,"linkInBio":null,"isGongguCreator":false}`;
+{"name":"","handle":"","followers":null,"following":null,"postCount":null,"bio":"","category":null,"profileUrl":null,"linkInBio":null,"isGongguCreator":false}`;
 
 /** OpenAI가 뱉는 영어 오류를 사장님이 읽을 수 있는 말로 바꾼다. */
 function friendlyAiError(err: unknown): string {
@@ -64,6 +71,66 @@ function friendlyAiError(err: unknown): string {
   return "AI에 연결하지 못했습니다. 잠시 후 다시 시도하거나 직접 입력해주세요.";
 }
 
+/** 인스타 프로필 화면의 버튼 이름들. 여기부터 아래는 소개글이 아니다. */
+const UI_LABELS = [
+  "팔로잉",
+  "팔로우하기",
+  "팔로우",
+  "메시지 보내기",
+  "메시지",
+  "친구 추가",
+  "Following",
+  "Follow",
+  "Message",
+];
+
+/**
+ * 프로필 화면을 통째로 복사하면 소개글 뒤에 버튼(팔로잉·메시지 보내기)과
+ * 스토리 하이라이트 이름(공구일정, 이벤트발표 …)까지 딸려온다.
+ * 버튼이 처음 나오는 지점에서 잘라내 소개글까지만 남긴다.
+ */
+function cutAtButtons(text: string): string {
+  const lines = text.split("\n");
+  const cut = lines.findIndex((line) => {
+    const t = line.trim().replace(/\s+/g, " ");
+    if (!t) return false;
+    if (UI_LABELS.some((l) => t === l || t === l + " ∨" || t === l + " v")) return true;
+    // '팔로잉메시지 보내기+친구' 처럼 붙어서 한 줄로 들어오는 경우
+    const squeezed = t.replace(/[\s+]/g, "");
+    return (
+      squeezed.startsWith("팔로잉메시지") ||
+      squeezed.startsWith("팔로우메시지") ||
+      squeezed.startsWith("FollowingMessage")
+    );
+  });
+  return cut === -1 ? text : lines.slice(0, cut).join("\n");
+}
+
+/** AI가 소개글에 섞어 넣었을 수 있는 군더더기 줄을 걷어낸다. */
+function cleanBio(
+  bio: string | null,
+  handle: string | null,
+  link: string | null
+): string | null {
+  if (!bio) return null;
+  const bareLink = link ? link.replace(/^https?:\/\//, "").replace(/\/$/, "") : null;
+  const drop = (line: string) => {
+    const t = line.trim();
+    if (!t) return true;
+    // 링크는 따로 저장해서 눌러볼 수 있게 보여주므로 소개글에서는 뺀다
+    if (bareLink && t.replace(/^https?:\/\//, "").replace(/\/$/, "") === bareLink) return true;
+    if (handle && t.replace(/^@/, "") === handle) return true;
+    if (/^(게시물|팔로워|팔로우|팔로잉|posts|followers|following)\s*[\d,.만천KkMm]+$/i.test(t)) return true;
+    if (UI_LABELS.some((l) => t === l)) return true;
+    if (/(instagram\.com|threads\.(net|com))/i.test(t) && t.length < 60) return true;
+    if (/•\s*Instagram|Instagram 사진 및 동영상/i.test(t)) return true;
+    return false;
+  };
+  const kept = bio.split("\n").filter((line) => !drop(line));
+  const out = kept.join("\n").trim();
+  return out ? out : null;
+}
+
 function toNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return Math.round(value);
   if (typeof value !== "string") return null;
@@ -78,7 +145,7 @@ function toText(value: unknown): string | null {
 }
 
 export async function parseProfilePaste(text: string): Promise<ParsedProfile> {
-  const trimmed = text.trim();
+  const trimmed = cutAtButtons(text).trim();
   if (!trimmed) {
     throw new Error("붙여넣은 내용이 비어 있습니다.");
   }
@@ -119,7 +186,9 @@ export async function parseProfilePaste(text: string): Promise<ParsedProfile> {
   // 붙여넣은 원문에 주소가 있으면 AI 판단보다 그쪽을 믿는다.
   const handleFromText = extractInstagramHandle(trimmed);
 
-  const bio = toText(parsed.bio);
+  const handle = toText(parsed.handle)?.replace(/^@/, "") ?? handleFromText;
+  const linkInBio = withScheme(toText(parsed.linkInBio) ?? findLinkInBio(trimmed));
+  const bio = cleanBio(toText(parsed.bio), handle, linkInBio);
   // AI가 놓쳐도 원문에 공구 신호가 있으면 잡아낸다.
   const gongguSignal =
     parsed.isGongguCreator === true ||
@@ -127,13 +196,14 @@ export async function parseProfilePaste(text: string): Promise<ParsedProfile> {
 
   return {
     name: toText(parsed.name),
-    handle: toText(parsed.handle)?.replace(/^@/, "") ?? handleFromText,
+    handle,
     followers: toNumber(parsed.followers),
+    following: toNumber(parsed.following),
     postCount: toNumber(parsed.postCount),
     bio,
     category: toText(parsed.category),
     profileUrl: toText(parsed.profileUrl),
-    linkInBio: withScheme(toText(parsed.linkInBio) ?? findLinkInBio(trimmed)),
+    linkInBio,
     tags: gongguSignal ? "공구진행중" : null,
     isGongguCreator: gongguSignal,
   };

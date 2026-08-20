@@ -25,6 +25,7 @@ import {
   formatFollowers,
   formatWon,
   summarizeDeals,
+  toDateInput,
   type CreatorView,
   type DealView,
   type ProductView,
@@ -42,9 +43,12 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 export default function CreatorDetail({
   initialCreator,
   products,
+  today,
 }: {
   initialCreator: CreatorView;
   products: ProductView[];
+  /** 서버가 알려준 오늘 날짜(YYYY-MM-DD). 정산 예정일이 지났는지 판단에 쓴다. */
+  today: string;
 }) {
   const router = useRouter();
   const [creator, setCreator] = useState(initialCreator);
@@ -177,56 +181,103 @@ export default function CreatorDetail({
         <Link href="/creators" className="text-xs text-slate-500 hover:text-slate-900">
           ← 크리에이터 목록
         </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          {creator.profileImageUrl && (
-            /* 인스타에서 준 주소를 그대로 쓰므로 next/image 최적화 대상이 아니다 */
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={creator.profileImageUrl}
-              alt=""
-              className="h-12 w-12 rounded-full object-cover"
-              onError={(e) => {
-                // 인스타 사진 주소는 시간이 지나면 만료된다. 깨진 그림 대신 그냥 감춘다.
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-900">{creator.name}</h1>
-            {creator.handle && (
-              <span className="text-sm text-slate-500">@{creator.handle}</span>
+        {/* 인스타 프로필 화면과 같은 순서로 보여준다 — 사진 · 아이디 · 숫자 · 이름 · 소개글 · 링크 */}
+        <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex items-start gap-5">
+            {creator.profileImageUrl ? (
+              /* 인스타가 준 주소를 그대로 쓰므로 next/image 최적화 대상이 아니다 */
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={creator.profileImageUrl}
+                alt=""
+                className="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-slate-100"
+                onError={(e) => {
+                  // 인스타 사진 주소는 시간이 지나면 만료된다. 깨진 그림 대신 감춘다.
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-slate-100 text-xl font-bold text-slate-400">
+                {creator.name.slice(0, 1)}
+              </div>
             )}
-            {creator.profileUrl && (
-              <a
-                href={creator.profileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-blue-600 underline underline-offset-4 hover:text-blue-700"
-              >
-                채널 열기
-              </a>
-            )}
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h1 className="text-xl font-bold text-slate-900">
+                  {creator.handle ? `@${creator.handle}` : creator.name}
+                </h1>
+                {creator.profileUrl && (
+                  <a
+                    href={creator.profileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 underline underline-offset-4 hover:text-blue-700"
+                  >
+                    채널 열기
+                  </a>
+                )}
+                {creator.platform === "INSTAGRAM" && creator.handle && (
+                  <button
+                    onClick={handleSync}
+                    disabled={syncing}
+                    className="ml-auto rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 disabled:opacity-60"
+                  >
+                    {syncing ? "새로고침 중…" : "↻ 인스타 정보 새로고침"}
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-700">
+                <span>
+                  게시물{" "}
+                  <strong className="font-semibold text-slate-900">
+                    {creator.postCount === null
+                      ? "-"
+                      : creator.postCount.toLocaleString("ko-KR")}
+                  </strong>
+                </span>
+                <span>
+                  팔로워{" "}
+                  <strong className="font-semibold text-slate-900">
+                    {formatFollowers(creator.followers)}
+                  </strong>
+                </span>
+                <span>
+                  팔로우{" "}
+                  <strong className="font-semibold text-slate-900">
+                    {creator.following === null
+                      ? "-"
+                      : creator.following.toLocaleString("ko-KR")}
+                  </strong>
+                </span>
+              </div>
+
+              <p className="mt-3 font-semibold text-slate-900">{creator.name}</p>
+              {creator.bio && (
+                <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                  {creator.bio}
+                </p>
+              )}
+              {creator.linkInBio && (
+                <a
+                  href={creator.linkInBio}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block text-sm text-blue-600 underline underline-offset-4 hover:text-blue-700"
+                >
+                  {creator.linkInBio.replace(/^https?:\/\//, "")}
+                </a>
+              )}
+              {creator.syncedAt && (
+                <p className="mt-2 text-[11px] text-slate-400">
+                  인스타 정보 기준 {formatDate(creator.syncedAt)}
+                </p>
+              )}
+            </div>
           </div>
-          {creator.platform === "INSTAGRAM" && creator.handle && (
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className="ml-auto rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 disabled:opacity-60"
-            >
-              {syncing ? "새로고침 중…" : "↻ 인스타 정보 새로고침"}
-            </button>
-          )}
         </div>
-        {creator.bio && (
-          <p className="mt-2 whitespace-pre-wrap text-sm text-slate-500">
-            {creator.bio}
-          </p>
-        )}
-        {creator.syncedAt && (
-          <p className="mt-1 text-[11px] text-slate-400">
-            인스타 정보 기준 {formatDate(creator.syncedAt)}
-          </p>
-        )}
+
         {syncNotice && (
           <p className="mt-2 rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-700">
             {syncNotice}
@@ -263,13 +314,7 @@ export default function CreatorDetail({
       </section>
 
       {(creator.engagementRate !== null || creator.avgLikes !== null) && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <p className="text-xs text-slate-500">팔로워</p>
-            <p className="mt-1 text-lg font-bold text-slate-900">
-              {formatFollowers(creator.followers)}
-            </p>
-          </div>
+        <div className="grid grid-cols-3 gap-3">
           <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
             <p className="text-xs text-slate-500">참여율</p>
             <p
@@ -351,12 +396,6 @@ export default function CreatorDetail({
             <InfoRow label="채널">
               {PLATFORM_LABEL[creator.platform] ?? creator.platform}
             </InfoRow>
-            <InfoRow label="팔로워">{formatFollowers(creator.followers)}</InfoRow>
-            <InfoRow label="게시물 수">
-              {creator.postCount === null
-                ? "-"
-                : creator.postCount.toLocaleString("ko-KR") + "개"}
-            </InfoRow>
             <InfoRow label="분야">{creator.category ?? "-"}</InfoRow>
             <InfoRow label="연락처">
               {creator.contact ? (
@@ -393,6 +432,13 @@ export default function CreatorDetail({
               ) : (
                 "-"
               )}
+            </InfoRow>
+            <InfoRow label="사업자 여부">
+              {creator.isBusiness === null
+                ? "-"
+                : creator.isBusiness
+                  ? "사업자 (세금계산서)"
+                  : "개인 (3.3% 원천징수)"}
             </InfoRow>
             <InfoRow label="태그">{creator.tags ?? "-"}</InfoRow>
             <InfoRow label="메모">
@@ -476,8 +522,43 @@ export default function CreatorDetail({
                     <span>{d.unitsSold.toLocaleString("ko-KR")}개</span>
                   )}
                   {d.revenue !== null && <span>매출 {formatWon(d.revenue)}</span>}
+                  {d.commissionRate !== null && <span>수수료 {d.commissionRate}%</span>}
                   {d.settlement !== null && <span>지급 {formatWon(d.settlement)}</span>}
+                  {d.agencyFee !== null && <span>우리 몫 {formatWon(d.agencyFee)}</span>}
                 </div>
+                {(d.settleDueDate ||
+                  d.settledAt ||
+                  d.linkSent ||
+                  d.taxReported ||
+                  d.statementIssued) && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                    {d.settledAt ? (
+                      <span className="text-green-700">
+                        정산 완료 {formatDate(d.settledAt)}
+                      </span>
+                    ) : d.settleDueDate ? (
+                      <span
+                        className={
+                          toDateInput(d.settleDueDate) < today
+                            ? "font-semibold text-red-600"
+                            : "text-slate-500"
+                        }
+                      >
+                        정산 예정 {formatDate(d.settleDueDate)}
+                        {toDateInput(d.settleDueDate) < today && " · 지났습니다"}
+                      </span>
+                    ) : null}
+                    <span className={d.linkSent ? "text-slate-600" : "text-slate-400"}>
+                      {d.linkSent ? "✓" : "·"} 링크 전달
+                    </span>
+                    <span className={d.taxReported ? "text-slate-600" : "text-slate-400"}>
+                      {d.taxReported ? "✓" : "·"} 세금신고
+                    </span>
+                    <span className={d.statementIssued ? "text-slate-600" : "text-slate-400"}>
+                      {d.statementIssued ? "✓" : "·"} 간이지급명세서
+                    </span>
+                  </div>
+                )}
                 {d.memo && (
                   <p className="mt-1.5 whitespace-pre-wrap text-xs text-slate-500">
                     {d.memo}

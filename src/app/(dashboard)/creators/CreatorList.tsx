@@ -8,6 +8,7 @@ import CreatorForm, {
 } from "./CreatorForm";
 import ImportPanel from "./ImportPanel";
 import BookmarkletBox from "./BookmarkletBox";
+import SalesImportPanel from "./SalesImportPanel";
 import {
   CREATOR_STATUSES,
   CREATOR_STATUS_CLASS,
@@ -234,6 +235,8 @@ export default function CreatorList({
           />
         </div>
       )}
+
+      <SalesImportPanel />
 
       {visible.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 px-6 py-14 text-center">

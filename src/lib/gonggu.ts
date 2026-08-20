@@ -142,6 +142,16 @@ export type DealView = {
   unitsSold: number | null;
   revenue: number | null;
   settlement: number | null;
+  commissionRate: number | null;
+  salesCommission: number | null;
+  contentFee: number | null;
+  agencyRate: number | null;
+  agencyFee: number | null;
+  settleDueDate: string | Date | null;
+  settledAt: string | Date | null;
+  linkSent: boolean;
+  taxReported: boolean;
+  statementIssued: boolean;
   memo: string | null;
   createdAt: string | Date;
 };
@@ -153,6 +163,7 @@ export type CreatorView = {
   handle: string | null;
   profileUrl: string | null;
   followers: number | null;
+  following: number | null;
   category: string | null;
   contactType: string | null;
   contact: string | null;
@@ -163,6 +174,7 @@ export type CreatorView = {
   tags: string | null;
   memo: string | null;
   lastContactAt: string | Date | null;
+  isBusiness: boolean | null;
   bio: string | null;
   linkInBio: string | null;
   profileImageUrl: string | null;
@@ -226,4 +238,16 @@ export function engagementClass(value: number | null | undefined): string {
   if (value >= 3) return "text-green-700";
   if (value >= 1) return "text-amber-700";
   return "text-slate-500";
+}
+
+/**
+ * 오늘 날짜를 "YYYY-MM-DD"로. 한국 시간 기준.
+ *
+ * 정산 예정일이 지났는지 같은 판단에 쓴다. 화면 안에서 직접 시계를 읽으면
+ * 다시 그릴 때마다 값이 달라지므로, 서버에서 한 번 읽어 화면으로 넘긴다.
+ */
+export function todayInKorea(): string {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().slice(0, 10);
 }

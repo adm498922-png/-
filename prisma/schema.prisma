@@ -148,6 +148,7 @@ model Creator {
   handle         String? // @아이디
   profileUrl     String?
   followers      Int?
+  following      Int? // 이 사람이 팔로우하는 수 (인스타 프로필의 '팔로우')
   category       String? // 육아, 주방, 리빙 …
   contactType    String? // 오픈채팅 / 이메일 / DM / 전화
   contact        String?
@@ -155,6 +156,7 @@ model Creator {
   commissionRate Float? // 수수료 %
   status         CreatorStatus @default(LEAD)
   rating         Int? // 1~5, 내 평가
+  isBusiness     Boolean? // 사업자 여부 (사업자면 3.3% 원천징수 없이 세금계산서)
   tags           String? // 쉼표로 구분
   memo           String?
   lastContactAt  DateTime?
@@ -214,7 +216,22 @@ model Deal {
   endDate     DateTime?
   unitsSold   Int? // 판매 수량
   revenue     Int? // 매출(원)
-  settlement  Int? // 크리에이터에게 지급한 금액(원)
+
+  // 정산 — 판매일보에서 쓰던 항목들
+  commissionRate  Float? // 인플루언서 수수료율 %
+  salesCommission Int? // 인플루언서 판매 수수료(원, 세전)
+  contentFee      Int? // 콘텐츠 제작비(원)
+  settlement      Int? // 인플루언서 실 지급 정산금(원, 3.3% 뗀 뒤)
+  agencyRate      Float? // 우리 수수료율 %
+  agencyFee       Int? // 우리 수수료(원)
+  settleDueDate   DateTime? // 정산 예정일
+  settledAt       DateTime? // 정산 완료일
+
+  // 진행 체크
+  linkSent         Boolean @default(false) // 링크 전달
+  taxReported      Boolean @default(false) // 세금신고
+  statementIssued  Boolean @default(false) // 간이지급명세서
+
   memo        String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt

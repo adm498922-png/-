@@ -22,6 +22,7 @@ export function normalizeCreatorInput(input: Record<string, unknown>) {
       : undefined;
 
   const followers = parseNumber(input.followers);
+  const following = parseNumber(input.following);
   const feeKrw = parseNumber(input.feeKrw);
   const commissionRate = parseNumber(input.commissionRate);
   const rating = parseNumber(input.rating);
@@ -54,6 +55,7 @@ export function normalizeCreatorInput(input: Record<string, unknown>) {
     platform,
     status,
     followers: followers === null ? null : Math.round(followers),
+    following: following === null ? null : Math.round(following),
     feeKrw: feeKrw === null ? null : Math.round(feeKrw),
     commissionRate,
     rating: rating === null ? null : Math.min(5, Math.max(1, Math.round(rating))),
@@ -66,5 +68,6 @@ export function normalizeCreatorInput(input: Record<string, unknown>) {
     engagementRate,
     syncedAt: synced && !Number.isNaN(synced.getTime()) ? synced : null,
     hasSyncedAtField: typeof input.syncedAt === "string",
+    isBusiness: typeof input.isBusiness === "boolean" ? input.isBusiness : undefined,
   };
 }

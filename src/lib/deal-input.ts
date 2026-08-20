@@ -21,6 +21,9 @@ export function normalizeDealInput(input: Record<string, unknown>) {
     return n === null ? null : Math.round(n);
   };
 
+  const bool = (key: string) =>
+    typeof input[key] === "boolean" ? (input[key] as boolean) : undefined;
+
   const status =
     typeof input.status === "string" &&
     (DEAL_STATUSES as readonly string[]).includes(input.status)
@@ -37,5 +40,15 @@ export function normalizeDealInput(input: Record<string, unknown>) {
     unitsSold: int("unitsSold"),
     revenue: int("revenue"),
     settlement: int("settlement"),
+    salesCommission: int("salesCommission"),
+    contentFee: int("contentFee"),
+    agencyFee: int("agencyFee"),
+    commissionRate: "commissionRate" in input ? parseNumber(input.commissionRate) : undefined,
+    agencyRate: "agencyRate" in input ? parseNumber(input.agencyRate) : undefined,
+    settleDueDate: date("settleDueDate"),
+    settledAt: date("settledAt"),
+    linkSent: bool("linkSent"),
+    taxReported: bool("taxReported"),
+    statementIssued: bool("statementIssued"),
   };
 }

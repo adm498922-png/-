@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import CreatorDetail from "./CreatorDetail";
-import type { CreatorView, ProductView } from "@/lib/gonggu";
+import { todayInKorea, type CreatorView, type ProductView } from "@/lib/gonggu";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +27,7 @@ export default async function CreatorDetailPage({
     <CreatorDetail
       initialCreator={creator as unknown as CreatorView}
       products={products as unknown as ProductView[]}
+      today={todayInKorea()}
     />
   );
 }

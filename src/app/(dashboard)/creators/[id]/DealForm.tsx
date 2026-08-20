@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   DEAL_STATUSES,
   DEAL_STATUS_LABEL,
@@ -17,6 +18,16 @@ export type DealFormValues = {
   unitsSold: string;
   revenue: string;
   settlement: string;
+  commissionRate: string;
+  salesCommission: string;
+  contentFee: string;
+  agencyRate: string;
+  agencyFee: string;
+  settleDueDate: string;
+  settledAt: string;
+  linkSent: boolean;
+  taxReported: boolean;
+  statementIssued: boolean;
   memo: string;
 };
 
@@ -30,6 +41,16 @@ export function emptyDealForm(): DealFormValues {
     unitsSold: "",
     revenue: "",
     settlement: "",
+    commissionRate: "",
+    salesCommission: "",
+    contentFee: "",
+    agencyRate: "",
+    agencyFee: "",
+    settleDueDate: "",
+    settledAt: "",
+    linkSent: false,
+    taxReported: false,
+    statementIssued: false,
     memo: "",
   };
 }
@@ -44,6 +65,16 @@ export function dealToForm(d: DealView): DealFormValues {
     unitsSold: d.unitsSold === null ? "" : String(d.unitsSold),
     revenue: d.revenue === null ? "" : String(d.revenue),
     settlement: d.settlement === null ? "" : String(d.settlement),
+    commissionRate: d.commissionRate === null ? "" : String(d.commissionRate),
+    salesCommission: d.salesCommission === null ? "" : String(d.salesCommission),
+    contentFee: d.contentFee === null ? "" : String(d.contentFee),
+    agencyRate: d.agencyRate === null ? "" : String(d.agencyRate),
+    agencyFee: d.agencyFee === null ? "" : String(d.agencyFee),
+    settleDueDate: toDateInput(d.settleDueDate),
+    settledAt: toDateInput(d.settledAt),
+    linkSent: d.linkSent,
+    taxReported: d.taxReported,
+    statementIssued: d.statementIssued,
     memo: d.memo ?? "",
   };
 }
@@ -71,7 +102,10 @@ export default function DealForm({
   saving: boolean;
   error?: string | null;
 }) {
+  const [showSettle, setShowSettle] = useState(false);
   const set = (key: keyof DealFormValues) => (value: string) =>
+    onChange({ ...values, [key]: value });
+  const toggle = (key: keyof DealFormValues) => (value: boolean) =>
     onChange({ ...values, [key]: value });
 
   return (
@@ -177,6 +211,112 @@ export default function DealForm({
           />
         </div>
       </div>
+      {!showSettle ? (
+        <button
+          type="button"
+          onClick={() => setShowSettle(true)}
+          className="text-xs text-slate-500 underline underline-offset-4 hover:text-slate-700"
+        >
+          정산 · 세금 항목 입력하기
+        </button>
+      ) : (
+        <div className="space-y-3 border-t border-slate-200 pt-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>
+                인플루언서 수수료율 <span className="ml-1 text-slate-400">%</span>
+              </label>
+              <input
+                className={inputClass}
+                value={values.commissionRate}
+                onChange={(e) => set("commissionRate")(e.target.value)}
+                placeholder="15"
+                inputMode="decimal"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>판매 수수료 <span className="ml-1 text-slate-400">세전</span></label>
+              <input
+                className={inputClass}
+                value={values.salesCommission}
+                onChange={(e) => set("salesCommission")(e.target.value)}
+                placeholder="493500"
+                inputMode="numeric"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>콘텐츠 제작비</label>
+              <input
+                className={inputClass}
+                value={values.contentFee}
+                onChange={(e) => set("contentFee")(e.target.value)}
+                placeholder="0"
+                inputMode="numeric"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>
+                우리 수수료율 <span className="ml-1 text-slate-400">%</span>
+              </label>
+              <input
+                className={inputClass}
+                value={values.agencyRate}
+                onChange={(e) => set("agencyRate")(e.target.value)}
+                placeholder="10"
+                inputMode="decimal"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>우리 수수료 금액</label>
+              <input
+                className={inputClass}
+                value={values.agencyFee}
+                onChange={(e) => set("agencyFee")(e.target.value)}
+                placeholder="329000"
+                inputMode="numeric"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>정산 예정일</label>
+              <input
+                type="date"
+                className={inputClass}
+                value={values.settleDueDate}
+                onChange={(e) => set("settleDueDate")(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>정산 완료일</label>
+              <input
+                type="date"
+                className={inputClass}
+                value={values.settledAt}
+                onChange={(e) => set("settledAt")(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4 text-sm text-slate-700">
+            {(
+              [
+                ["linkSent", "링크 전달"],
+                ["taxReported", "세금신고"],
+                ["statementIssued", "간이지급명세서"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={values[key]}
+                  onChange={(e) => toggle(key)(e.target.checked)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div>
         <label className={labelClass}>메모</label>
         <textarea

@@ -60,9 +60,11 @@ export async function PATCH(
   assign("linkInBio", data.linkInBio);
   assign("profileImageUrl", data.profileImageUrl);
   assign("igUserId", data.igUserId);
+  assign("isBusiness", data.isBusiness);
   assign("platform", data.platform);
   assign("status", data.status);
   if ("followers" in input) patch.followers = data.followers;
+  if ("following" in input) patch.following = data.following;
   if ("feeKrw" in input) patch.feeKrw = data.feeKrw;
   if ("commissionRate" in input) patch.commissionRate = data.commissionRate;
   if ("rating" in input) patch.rating = data.rating;

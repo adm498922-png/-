@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
       handle: data.handle ?? null,
       profileUrl: data.profileUrl ?? null,
       followers: data.followers,
+      following: data.following,
       category: data.category ?? null,
       contactType: data.contactType ?? null,
       contact: data.contact ?? null,
