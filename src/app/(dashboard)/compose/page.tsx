@@ -1,9 +1,14 @@
+import { redirect } from "next/navigation";
+import { isGongguOnly } from "@/lib/app-mode";
 import { prisma } from "@/lib/prisma";
 import { getSettingsStatus } from "@/lib/settings";
 import Link from "next/link";
 import ComposeForm from "./ComposeForm";
 
 export default async function ComposePage() {
+  // 공동구매 전용 사이트에는 스레드 화면이 없다.
+  if (isGongguOnly()) redirect("/creators");
+
   const [accounts, links, settingsStatus] = await Promise.all([
     prisma.threadsAccount.findMany({
       where: { isActive: true },

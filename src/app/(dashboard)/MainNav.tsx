@@ -70,19 +70,37 @@ const NAV_ITEMS = [
   { href: "/settings", label: "연결 설정", short: "설정", Icon: ConnectionsIcon, group: "설정" },
 ];
 
+/**
+ * 사이트 모드에 맞는 메뉴만 고른다.
+ * - gonggu 전용: 공동구매 + 설정
+ * - threads 전용: 공동구매를 뺀 나머지
+ */
+function itemsFor(mode: "full" | "threads" | "gonggu") {
+  if (mode === "gonggu") {
+    return NAV_ITEMS.filter(
+      (item) => item.group === "공동구매" || item.href === "/settings"
+    );
+  }
+  if (mode === "threads") {
+    return NAV_ITEMS.filter((item) => item.group !== "공동구매");
+  }
+  return NAV_ITEMS;
+}
+
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   // /creators/xxxx 같은 하위 화면에서도 해당 메뉴가 켜져 있어야 한다.
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function SidebarNav() {
+export function SidebarNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
   const pathname = usePathname();
+  const items = itemsFor(mode);
   return (
     <nav className="flex flex-1 flex-col gap-1">
-      {NAV_ITEMS.map((item, i) => {
+      {items.map((item, i) => {
         const active = isActive(pathname, item.href);
-        const isNewGroup = i === 0 || NAV_ITEMS[i - 1].group !== item.group;
+        const isNewGroup = i === 0 || items[i - 1].group !== item.group;
         return (
           <div key={item.href}>
             {isNewGroup && (
@@ -108,11 +126,11 @@ export function SidebarNav() {
   );
 }
 
-export function BottomNav() {
+export function BottomNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
   const pathname = usePathname();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-neutral-800 bg-neutral-900 sm:hidden">
-      {NAV_ITEMS.map((item) => {
+      {itemsFor(mode).map((item) => {
         const active = isActive(pathname, item.href);
         return (
           <Link

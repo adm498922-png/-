@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isGongguOnly } from "@/lib/app-mode";
 import { getDashboardStats } from "@/lib/dashboard-stats";
 import WeekBarChart from "./WeekBarChart";
 import InsightsRefreshButton from "./InsightsRefreshButton";
 import DashboardHero from "./DashboardHero";
 
 export default async function DashboardHomePage() {
+  // 공동구매 전용 사이트에는 스레드 대시보드가 없다.
+  if (isGongguOnly()) redirect("/creators");
+
   const stats = await getDashboardStats();
 
   if (stats.accountsCount === 0) {

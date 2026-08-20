@@ -20,9 +20,12 @@ function StatusBadge({ ok }: { ok: boolean }) {
 export default function SettingsForm({
   status,
   suggestedRedirectUri,
+  gongguOnly = false,
 }: {
   status: SettingsStatus;
   suggestedRedirectUri: string;
+  /** 공동구매 전용 사이트에서는 스레드·쿠팡 설정을 감춘다 */
+  gongguOnly?: boolean;
 }) {
   const [coupangAccessKey, setCoupangAccessKey] = useState("");
   const [coupangSecretKey, setCoupangSecretKey] = useState("");
@@ -105,237 +108,321 @@ export default function SettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="font-semibold text-white">쿠팡파트너스</h2>
-          <StatusBadge ok={current.coupangConfigured} />
-        </div>
-        <p className="mb-4 text-xs text-neutral-500">
-          쿠팡Wing &gt; 판매자정보 &gt; 추가판매자정보에서 발급받은 OpenAPI
-          Access Key / Secret Key를 입력하세요.
-        </p>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              Access Key
-            </label>
-            <input
-              value={coupangAccessKey}
-              onChange={(e) => setCoupangAccessKey(e.target.value)}
-              placeholder={
-                current.coupangConfigured
-                  ? `현재: ${current.coupangAccessKeyPreview} (변경하려면 입력)`
-                  : "예: 1a2b3c4d..."
-              }
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
+      {!gongguOnly && (
+        <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <h2 className="font-semibold text-white">쿠팡파트너스</h2>
+            <StatusBadge ok={current.coupangConfigured} />
           </div>
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              Secret Key
-            </label>
-            <input
-              type="password"
-              value={coupangSecretKey}
-              onChange={(e) => setCoupangSecretKey(e.target.value)}
-              placeholder={
-                current.coupangConfigured
-                  ? "저장되어 있음 (변경하려면 입력)"
-                  : ""
-              }
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
+          <p className="mb-4 text-xs text-neutral-500">
+            쿠팡Wing &gt; 판매자정보 &gt; 추가판매자정보에서 발급받은 OpenAPI
+            Access Key / Secret Key를 입력하세요.
+          </p>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs text-neutral-400">
+                Access Key
+              </label>
+              <input
+                value={coupangAccessKey}
+                onChange={(e) => setCoupangAccessKey(e.target.value)}
+                placeholder={
+                  current.coupangConfigured
+                    ? `현재: ${current.coupangAccessKeyPreview} (변경하려면 입력)`
+                    : "예: 1a2b3c4d..."
+                }
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-neutral-400">
+                Secret Key
+              </label>
+              <input
+                type="password"
+                value={coupangSecretKey}
+                onChange={(e) => setCoupangSecretKey(e.target.value)}
+                placeholder={
+                  current.coupangConfigured
+                    ? "저장되어 있음 (변경하려면 입력)"
+                    : ""
+                }
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+              />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <details className="group space-y-8 rounded-xl border border-neutral-800 bg-neutral-900/40 p-5 [&_section]:bg-neutral-900">
-        <summary className="cursor-pointer text-sm font-semibold text-neutral-300 group-open:mb-4">
-          고급 설정 (Threads 앱 등록 · AI 키 · 자동화)
-        </summary>
+      {gongguOnly ? (
+        <>
+          <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-white">AI 글 자동 생성 (OpenAI)</h2>
+              <StatusBadge ok={current.aiConfigured} />
+            </div>
+            <p className="mb-4 text-xs text-neutral-500">
+              인스타 프로필을 붙여넣었을 때 이름 · 팔로워 수 · 소개글을 항목별로
+              나눠 담는 데 사용됩니다. platform.openai.com에서 발급받은 API 키를
+              입력하세요 (ChatGPT 앱 구독과는 별개의 키입니다). 이 키가 없으면
+              붙여넣기 자동 정리를 쓸 수 없습니다.
+            </p>
+            <div>
+              <label className="mb-1 block text-xs text-neutral-400">
+                OpenAI API Key
+              </label>
+              <input
+                type="password"
+                value={openaiApiKey}
+                onChange={(e) => setOpenaiApiKey(e.target.value)}
+                placeholder={
+                  current.aiConfigured
+                    ? "저장되어 있음 (변경하려면 입력)"
+                    : "sk-proj-..."
+                }
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+              />
+            </div>
+          </section>
+          <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-white">
+                인스타그램 프로필 자동 불러오기
+              </h2>
+              <StatusBadge ok={current.instagramConfigured} />
+            </div>
+            <p className="mb-4 text-xs text-neutral-500">
+              연결하면 &quot;공동구매 › 크리에이터&quot; 화면에서 인스타 아이디만
+              넣어도 이름 · 소개글 · 팔로워 수 · 최근 게시물 반응(참여율)이 자동으로
+              채워집니다. 선택 사항 — 연결하지 않아도 프로필 화면을 복사해
+              붙여넣는 방법으로 쓸 수 있습니다.
+            </p>
+            <p className="mb-4 rounded-lg bg-neutral-950 px-3 py-2 text-xs text-neutral-500">
+              연결하려면 <strong className="text-neutral-300">내 인스타 계정이
+              프로페셔널(비즈니스·크리에이터) 계정</strong>이어야 하고, 페이스북
+              페이지와 연결되어 있어야 합니다. 상대방도 프로페셔널 계정일 때만
+              정보를 가져올 수 있습니다(개인 계정은 인스타그램이 아예 내주지
+              않습니다). 값을 어디서 받는지는 대화창에서 한 단계씩 알려드릴게요.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">
+                  인스타그램 비즈니스 계정 ID
+                </label>
+                <input
+                  value={igBusinessAccountId}
+                  onChange={(e) => setIgBusinessAccountId(e.target.value)}
+                  placeholder="17841400000000000"
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">
+                  액세스 토큰
+                </label>
+                <input
+                  type="password"
+                  value={igAccessToken}
+                  onChange={(e) => setIgAccessToken(e.target.value)}
+                  placeholder={
+                    current.instagramConfigured
+                      ? "저장되어 있음 (변경하려면 입력)"
+                      : "EAAG..."
+                  }
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          <details className="group space-y-8 rounded-xl border border-neutral-800 bg-neutral-900/40 p-5 [&_section]:bg-neutral-900">
+            <summary className="cursor-pointer text-sm font-semibold text-neutral-300 group-open:mb-4">
+              고급 설정 (Threads 앱 등록 · AI 키 · 자동화)
+            </summary>
 
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="font-semibold text-white">Threads 개발자 앱</h2>
-          <StatusBadge ok={current.threadsConfigured} />
-        </div>
-        <p className="mb-4 text-xs text-neutral-500">
-          Meta 개발자 앱의 App ID / App Secret을 입력하고, 아래 Redirect URI를
-          Meta 개발자 콘솔의 Threads &gt; 설정에 동일하게 등록하세요.
-        </p>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              App ID
+          <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-white">Threads 개발자 앱</h2>
+              <StatusBadge ok={current.threadsConfigured} />
+            </div>
+            <p className="mb-4 text-xs text-neutral-500">
+              Meta 개발자 앱의 App ID / App Secret을 입력하고, 아래 Redirect URI를
+              Meta 개발자 콘솔의 Threads &gt; 설정에 동일하게 등록하세요.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">
+                  App ID
+                </label>
+                <input
+                  value={threadsAppId}
+                  onChange={(e) => setThreadsAppId(e.target.value)}
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">
+                  App Secret
+                </label>
+                <input
+                  type="password"
+                  value={threadsAppSecret}
+                  onChange={(e) => setThreadsAppSecret(e.target.value)}
+                  placeholder={
+                    current.threadsConfigured
+                      ? "저장되어 있음 (변경하려면 입력)"
+                      : ""
+                  }
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">
+                  Redirect URI (Meta 콘솔에 그대로 등록)
+                </label>
+                <input
+                  value={threadsRedirectUri}
+                  onChange={(e) => setThreadsRedirectUri(e.target.value)}
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </section>
+          <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-white">AI 글 자동 생성 (OpenAI)</h2>
+              <StatusBadge ok={current.aiConfigured} />
+            </div>
+            <p className="mb-4 text-xs text-neutral-500">
+              선택한 쿠팡 상품 정보를 바탕으로 AI가 스레드 글 초안을 매번 새로
+              써주는 기능에 사용됩니다. platform.openai.com에서 발급받은 API
+              키를 입력하세요 (ChatGPT 앱 구독과는 별개의 키입니다). 선택
+              사항 — 입력하지 않으면 AI 초안 생성 버튼이 비활성화됩니다.
+            </p>
+            <div>
+              <label className="mb-1 block text-xs text-neutral-400">
+                OpenAI API Key
+              </label>
+              <input
+                type="password"
+                value={openaiApiKey}
+                onChange={(e) => setOpenaiApiKey(e.target.value)}
+                placeholder={
+                  current.aiConfigured
+                    ? "저장되어 있음 (변경하려면 입력)"
+                    : "sk-proj-..."
+                }
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+              />
+            </div>
+          </section>
+          <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-white">
+                인스타그램 프로필 자동 불러오기
+              </h2>
+              <StatusBadge ok={current.instagramConfigured} />
+            </div>
+            <p className="mb-4 text-xs text-neutral-500">
+              연결하면 &quot;공동구매 › 크리에이터&quot; 화면에서 인스타 아이디만
+              넣어도 이름 · 소개글 · 팔로워 수 · 최근 게시물 반응(참여율)이 자동으로
+              채워집니다. 선택 사항 — 연결하지 않아도 프로필 화면을 복사해
+              붙여넣는 방법으로 쓸 수 있습니다.
+            </p>
+            <p className="mb-4 rounded-lg bg-neutral-950 px-3 py-2 text-xs text-neutral-500">
+              연결하려면 <strong className="text-neutral-300">내 인스타 계정이
+              프로페셔널(비즈니스·크리에이터) 계정</strong>이어야 하고, 페이스북
+              페이지와 연결되어 있어야 합니다. 상대방도 프로페셔널 계정일 때만
+              정보를 가져올 수 있습니다(개인 계정은 인스타그램이 아예 내주지
+              않습니다). 값을 어디서 받는지는 대화창에서 한 단계씩 알려드릴게요.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">
+                  인스타그램 비즈니스 계정 ID
+                </label>
+                <input
+                  value={igBusinessAccountId}
+                  onChange={(e) => setIgBusinessAccountId(e.target.value)}
+                  placeholder="17841400000000000"
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">
+                  액세스 토큰
+                </label>
+                <input
+                  type="password"
+                  value={igAccessToken}
+                  onChange={(e) => setIgAccessToken(e.target.value)}
+                  placeholder={
+                    current.instagramConfigured
+                      ? "저장되어 있음 (변경하려면 입력)"
+                      : "EAAG..."
+                  }
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </section>
+          <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-white">매일 자동 일상글 생성</h2>
+              <StatusBadge ok={autoDailyPostEnabled} />
+            </div>
+            <p className="mb-4 text-xs text-neutral-500">
+              켜두면 <strong className="text-neutral-300">매시 1~19분 사이</strong>{" "}
+              (테스트 기간 동안 하루 24개) AI가 소재·말투를 스스로 골라 일상글
+              초안을 만들고, <strong className="text-neutral-300">1분 뒤</strong>로
+              자동 예약해둡니다. 그 사이 &quot;글 작성/예약&quot; 화면에서 확인·
+              수정·취소할 수 있고, 아무것도 안 하면 그대로 자동 발행됩니다.
+              OpenAI API 키가 설정되어 있어야 동작합니다.
+            </p>
+            <label className="mb-2 flex items-center gap-2 text-sm text-neutral-300">
+              <input
+                type="checkbox"
+                checked={autoDailyPostEnabled}
+                onChange={(e) => setAutoDailyPostEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+              />
+              매일 자동 생성 켜기
             </label>
-            <input
-              value={threadsAppId}
-              onChange={(e) => setThreadsAppId(e.target.value)}
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              App Secret
+
+            <label className="mb-4 flex items-center gap-2 text-sm text-neutral-300">
+              <input
+                type="checkbox"
+                checked={autoDailyPostIncludeProducts}
+                onChange={(e) => setAutoDailyPostIncludeProducts(e.target.checked)}
+                className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+              />
+              자주(약 60%) 쿠팡 상품 소개 글도 섞기
             </label>
-            <input
-              type="password"
-              value={threadsAppSecret}
-              onChange={(e) => setThreadsAppSecret(e.target.value)}
-              placeholder={
-                current.threadsConfigured
-                  ? "저장되어 있음 (변경하려면 입력)"
-                  : ""
-              }
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              Redirect URI (Meta 콘솔에 그대로 등록)
-            </label>
-            <input
-              value={threadsRedirectUri}
-              onChange={(e) => setThreadsRedirectUri(e.target.value)}
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-          </div>
-        </div>
-      </section>
+            <p className="-mt-3 mb-4 text-xs text-neutral-500">
+              &quot;쿠팡 링크&quot; 화면에서 직접 검색해 만들어둔 링크 중에서만
+              랜덤으로 골라 소개 글을 씁니다. AI가 상품을 스스로 검색해 자동으로
+              채워넣지는 않으니, 소개하고 싶은 상품은 미리 직접 등록해두세요.
+            </p>
 
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="font-semibold text-white">AI 글 자동 생성 (OpenAI)</h2>
-          <StatusBadge ok={current.aiConfigured} />
-        </div>
-        <p className="mb-4 text-xs text-neutral-500">
-          선택한 쿠팡 상품 정보를 바탕으로 AI가 스레드 글 초안을 매번 새로
-          써주는 기능에 사용됩니다. platform.openai.com에서 발급받은 API
-          키를 입력하세요 (ChatGPT 앱 구독과는 별개의 키입니다). 선택
-          사항 — 입력하지 않으면 AI 초안 생성 버튼이 비활성화됩니다.
-        </p>
-        <div>
-          <label className="mb-1 block text-xs text-neutral-400">
-            OpenAI API Key
-          </label>
-          <input
-            type="password"
-            value={openaiApiKey}
-            onChange={(e) => setOpenaiApiKey(e.target.value)}
-            placeholder={
-              current.aiConfigured
-                ? "저장되어 있음 (변경하려면 입력)"
-                : "sk-proj-..."
-            }
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-          />
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="font-semibold text-white">
-            인스타그램 프로필 자동 불러오기
-          </h2>
-          <StatusBadge ok={current.instagramConfigured} />
-        </div>
-        <p className="mb-4 text-xs text-neutral-500">
-          연결하면 &quot;공동구매 › 크리에이터&quot; 화면에서 인스타 아이디만
-          넣어도 이름 · 소개글 · 팔로워 수 · 최근 게시물 반응(참여율)이 자동으로
-          채워집니다. 선택 사항 — 연결하지 않아도 프로필 화면을 복사해
-          붙여넣는 방법으로 쓸 수 있습니다.
-        </p>
-        <p className="mb-4 rounded-lg bg-neutral-950 px-3 py-2 text-xs text-neutral-500">
-          연결하려면 <strong className="text-neutral-300">내 인스타 계정이
-          프로페셔널(비즈니스·크리에이터) 계정</strong>이어야 하고, 페이스북
-          페이지와 연결되어 있어야 합니다. 상대방도 프로페셔널 계정일 때만
-          정보를 가져올 수 있습니다(개인 계정은 인스타그램이 아예 내주지
-          않습니다). 값을 어디서 받는지는 대화창에서 한 단계씩 알려드릴게요.
-        </p>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              인스타그램 비즈니스 계정 ID
-            </label>
-            <input
-              value={igBusinessAccountId}
-              onChange={(e) => setIgBusinessAccountId(e.target.value)}
-              placeholder="17841400000000000"
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-neutral-400">
-              액세스 토큰
-            </label>
-            <input
-              type="password"
-              value={igAccessToken}
-              onChange={(e) => setIgAccessToken(e.target.value)}
-              placeholder={
-                current.instagramConfigured
-                  ? "저장되어 있음 (변경하려면 입력)"
-                  : "EAAG..."
-              }
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="font-semibold text-white">매일 자동 일상글 생성</h2>
-          <StatusBadge ok={autoDailyPostEnabled} />
-        </div>
-        <p className="mb-4 text-xs text-neutral-500">
-          켜두면 <strong className="text-neutral-300">매시 1~19분 사이</strong>{" "}
-          (테스트 기간 동안 하루 24개) AI가 소재·말투를 스스로 골라 일상글
-          초안을 만들고, <strong className="text-neutral-300">1분 뒤</strong>로
-          자동 예약해둡니다. 그 사이 &quot;글 작성/예약&quot; 화면에서 확인·
-          수정·취소할 수 있고, 아무것도 안 하면 그대로 자동 발행됩니다.
-          OpenAI API 키가 설정되어 있어야 동작합니다.
-        </p>
-        <label className="mb-2 flex items-center gap-2 text-sm text-neutral-300">
-          <input
-            type="checkbox"
-            checked={autoDailyPostEnabled}
-            onChange={(e) => setAutoDailyPostEnabled(e.target.checked)}
-            className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
-          />
-          매일 자동 생성 켜기
-        </label>
-
-        <label className="mb-4 flex items-center gap-2 text-sm text-neutral-300">
-          <input
-            type="checkbox"
-            checked={autoDailyPostIncludeProducts}
-            onChange={(e) => setAutoDailyPostIncludeProducts(e.target.checked)}
-            className="h-4 w-4 rounded border-neutral-700 bg-neutral-950"
-          />
-          자주(약 60%) 쿠팡 상품 소개 글도 섞기
-        </label>
-        <p className="-mt-3 mb-4 text-xs text-neutral-500">
-          &quot;쿠팡 링크&quot; 화면에서 직접 검색해 만들어둔 링크 중에서만
-          랜덤으로 골라 소개 글을 씁니다. AI가 상품을 스스로 검색해 자동으로
-          채워넣지는 않으니, 소개하고 싶은 상품은 미리 직접 등록해두세요.
-        </p>
-
-        <div className="border-t border-neutral-800 pt-4">
-          <button
-            type="button"
-            onClick={handleRunTest}
-            disabled={runningTest}
-            className="rounded-lg bg-purple-600/20 px-3 py-1.5 text-xs font-medium text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
-          >
-            {runningTest ? "생성 중..." : "✦ 지금 바로 테스트 실행 (설정과 무관하게 1개 생성)"}
-          </button>
-          {testResult && (
-            <p className="mt-2 text-xs text-neutral-400">{testResult}</p>
-          )}
-        </div>
-      </section>
-      </details>
+            <div className="border-t border-neutral-800 pt-4">
+              <button
+                type="button"
+                onClick={handleRunTest}
+                disabled={runningTest}
+                className="rounded-lg bg-purple-600/20 px-3 py-1.5 text-xs font-medium text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
+              >
+                {runningTest ? "생성 중..." : "✦ 지금 바로 테스트 실행 (설정과 무관하게 1개 생성)"}
+              </button>
+              {testResult && (
+                <p className="mt-2 text-xs text-neutral-400">{testResult}</p>
+              )}
+            </div>
+          </section>
+          </details>
+        </>
+      )}
 
       {message && <p className="text-sm text-blue-400">{message}</p>}
 

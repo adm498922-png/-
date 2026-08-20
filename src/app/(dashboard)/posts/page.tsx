@@ -1,7 +1,12 @@
+import { redirect } from "next/navigation";
+import { isGongguOnly } from "@/lib/app-mode";
 import { prisma } from "@/lib/prisma";
 import PostList from "./PostList";
 
 export default async function PostsPage() {
+  // 공동구매 전용 사이트에는 스레드 화면이 없다.
+  if (isGongguOnly()) redirect("/creators");
+
   const posts = await prisma.post.findMany({
     orderBy: { createdAt: "desc" },
     take: 50,

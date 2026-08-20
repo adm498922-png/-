@@ -8,6 +8,11 @@ export async function register() {
   // Vercel 등 서버리스 배포에서는 Vercel Cron이 /api/cron/publish-scheduled 를 호출하므로
   // 이 인메모리 스케줄러는 로컬 개발/자체 호스팅(예: PM2, Docker) 환경에서만 사용합니다.
   if (process.env.VERCEL) return;
+  // 공동구매 전용 사이트에는 발행할 스레드 글도, 연결된 계정도 없다.
+  if (process.env.APP_MODE === "gonggu") {
+    console.log("[공구 허브] 공동구매 전용 모드 — 스레드 발행 스케줄러는 켜지 않습니다.");
+    return;
+  }
 
   const globalForScheduler = globalThis as unknown as {
     __threadsHubSchedulerStarted?: boolean;

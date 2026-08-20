@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { APP_TITLE, getAppMode } from "@/lib/app-mode";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,10 +13,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Threads Hub",
-  description: "스레드 다중 계정 · 쿠팡파트너스 자동화 대시보드",
-};
+export function generateMetadata(): Metadata {
+  const mode = getAppMode();
+  return {
+    title: APP_TITLE[mode],
+    description:
+      mode === "gonggu"
+        ? "공동구매 크리에이터 · 상품 관리"
+        : "스레드 다중 계정 · 쿠팡파트너스 자동화 대시보드",
+  };
+}
 
 export default function RootLayout({
   children,

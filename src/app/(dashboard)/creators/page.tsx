@@ -1,5 +1,7 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { hidesGonggu } from "@/lib/app-mode";
 import { getSettingsStatus } from "@/lib/settings";
 import CreatorList from "./CreatorList";
 import type { CreatorView } from "@/lib/gonggu";
@@ -11,6 +13,9 @@ export default async function CreatorsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  // 스레드 전용 사이트에서는 공동구매 화면을 열지 않는다.
+  if (hidesGonggu()) redirect("/");
+
   const [creators, params, headerList, settings] = await Promise.all([
     prisma.creator.findMany({
       orderBy: { updatedAt: "desc" },

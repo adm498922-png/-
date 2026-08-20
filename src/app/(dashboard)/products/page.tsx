@@ -1,10 +1,14 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { hidesGonggu } from "@/lib/app-mode";
 import ProductList from "./ProductList";
 import type { ProductView } from "@/lib/gonggu";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
+  if (hidesGonggu()) redirect("/");
+
   const products = await prisma.product.findMany({
     orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
     include: { deals: { select: { id: true } } },
