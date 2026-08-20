@@ -93,56 +93,31 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function SidebarNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
+export function TopNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
   const pathname = usePathname();
   const items = itemsFor(mode);
   return (
-    <nav className="flex flex-1 flex-col gap-1">
+    <nav className="-mx-1 flex items-center gap-1 overflow-x-auto">
       {items.map((item, i) => {
         const active = isActive(pathname, item.href);
-        const isNewGroup = i === 0 || items[i - 1].group !== item.group;
+        // 묶음이 바뀌는 자리에는 옅은 세로선을 넣어 갈래를 표시한다
+        const newGroup = i > 0 && items[i - 1].group !== item.group;
         return (
-          <div key={item.href}>
-            {isNewGroup && (
-              <p className="px-3 pt-3 pb-1 text-[11px] font-semibold text-slate-400">
-                {item.group}
-              </p>
-            )}
-          <Link
-            href={item.href}
-            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm ${
-              active
-                ? "bg-blue-50 font-semibold text-blue-700"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-            }`}
-          >
-            <item.Icon active={active} />
-            {item.label}
-          </Link>
+          <div key={item.href} className="flex items-center">
+            {newGroup && <span className="mx-1.5 h-4 w-px shrink-0 bg-slate-200" />}
+            <Link
+              href={item.href}
+              className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap ${
+                active
+                  ? "bg-blue-50 font-semibold text-blue-700"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <item.Icon active={active} />
+              <span className="hidden sm:inline">{item.label}</span>
+              <span className="sm:hidden">{item.short}</span>
+            </Link>
           </div>
-        );
-      })}
-    </nav>
-  );
-}
-
-export function BottomNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
-  const pathname = usePathname();
-  return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white sm:hidden">
-      {itemsFor(mode).map((item) => {
-        const active = isActive(pathname, item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
-              active ? "text-blue-600" : "text-slate-500"
-            }`}
-          >
-            <item.Icon active={active} />
-            {item.short}
-          </Link>
         );
       })}
     </nav>

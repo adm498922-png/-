@@ -11,6 +11,7 @@ type Preview = {
   newCreators: string[];
   newProducts: string[];
   unmatchedHeaders: string[];
+  usedSavedHeader: boolean;
   skipped: { lineNo: number; reason: string }[];
   sample: {
     creatorName: string;
@@ -99,10 +100,22 @@ export default function SalesImportPanel() {
 
       {open && (
         <div className="mt-4 space-y-3">
-          <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-            구글 시트에서 <strong className="text-slate-700">제목 줄부터 마지막 줄까지</strong>{" "}
-            드래그해서 복사(Ctrl+C)한 뒤 아래에 붙여넣으세요. 빈 줄은 알아서 걸러냅니다.
-          </p>
+          <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
+            <p className="mb-1.5">
+              구글 시트에서{" "}
+              <strong className="text-slate-700">
+                제목 줄(닉네임 · 판매 시작 …)부터 마지막 줄까지
+              </strong>{" "}
+              드래그해서 복사(Ctrl+C)한 뒤 아래에 붙여넣으세요.
+            </p>
+            <p className="mb-1.5">
+              가장 쉬운 방법은 시트 <strong className="text-slate-700">왼쪽 위 모서리</strong>를
+              눌러 전체 선택하는 것입니다. 빈 줄은 알아서 걸러냅니다.
+            </p>
+            <p className="text-slate-400">
+              한 번 제목 줄과 함께 가져오고 나면, 다음부터는 내용 줄만 붙여넣어도 됩니다.
+            </p>
+          </div>
 
           <textarea
             value={text}
@@ -149,6 +162,12 @@ export default function SalesImportPanel() {
                 <p className="text-xs text-slate-600">
                   <strong className="text-slate-900">새로 만들 상품</strong>{" "}
                   {preview.newProducts.join(", ")}
+                </p>
+              )}
+              {preview.usedSavedHeader && (
+                <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  제목 줄이 없어서 <strong>지난번에 쓰던 제목 줄</strong>로 맞췄습니다. 아래 표가
+                  맞는지 꼭 확인해주세요.
                 </p>
               )}
               {preview.unmatchedHeaders.length > 0 && (

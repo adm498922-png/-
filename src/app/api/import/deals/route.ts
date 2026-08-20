@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseSalesSheet, type ImportRow } from "@/lib/sales-import";
+import { getDecryptedSettings, updateSettings } from "@/lib/settings";
 
 /**
  * 판매일보 붙여넣기 → 공구 기록 만들기.
@@ -92,9 +93,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const settings = await getDecryptedSettings();
+  let savedHeader: string[] | null = null;
+  try {
+    savedHeader = settings.salesSheetHeader
+      ? (JSON.parse(settings.salesSheetHeader) as string[])
+      : null;
+  } catch {
+    savedHeader = null;
+  }
+
   let parsed;
   try {
-    parsed = parseSalesSheet(text);
+    parsed = parseSalesSheet(text, new Date(), savedHeader);
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 400 });
   }
@@ -121,6 +132,7 @@ export async function POST(req: NextRequest) {
       duplicates: duplicates.length,
       skipped: parsed.skipped,
       unmatchedHeaders: parsed.unmatchedHeaders,
+      usedSavedHeader: parsed.usedSavedHeader,
       newCreators,
       newProducts,
       sample: willCreate.slice(0, 8).map((m) => ({
@@ -132,6 +144,11 @@ export async function POST(req: NextRequest) {
         status: m.row.status,
       })),
     });
+  }
+
+  // 다음번에 제목 없이 내용만 붙여넣어도 되도록 이번 제목 줄을 기억해 둔다
+  if (!parsed.usedSavedHeader) {
+    await updateSettings({ salesSheetHeader: JSON.stringify(parsed.headers) });
   }
 
   // ── 여기서부터 실제 저장 ──

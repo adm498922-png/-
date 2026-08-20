@@ -35,6 +35,10 @@ export type ParseResult = {
   rows: ImportRow[];
   skipped: { lineNo: number; reason: string }[];
   unmatchedHeaders: string[];
+  /** 이번에 사용한 제목 줄 (다음번에 제목 없이 붙여넣을 때 쓰려고 저장해 둔다) */
+  headers: string[];
+  /** 저장해 둔 제목 줄을 대신 썼는지 */
+  usedSavedHeader: boolean;
 };
 
 /** 제목 줄 한 칸을 비교하기 쉽게 다듬는다 (줄바꿈·공백 제거) */
@@ -176,7 +180,12 @@ function decideStatus(
   return "PLANNED";
 }
 
-export function parseSalesSheet(text: string, today = new Date()): ParseResult {
+export function parseSalesSheet(
+  text: string,
+  today = new Date(),
+  /** 지난번에 성공한 제목 줄. 이번에 제목 없이 내용만 붙여넣었을 때 대신 쓴다. */
+  savedHeader?: string[] | null
+): ParseResult {
   const table = parseTable(text);
 
   // 제목 줄 찾기 — '닉네임'이나 '판매 시작'이 들어있는 첫 줄
@@ -190,10 +199,22 @@ export function parseSalesSheet(text: string, today = new Date()): ParseResult {
       break;
     }
   }
+  let usedSavedHeader = false;
   if (headerIndex === -1) {
-    throw new Error(
-      "제목 줄을 찾지 못했습니다. '닉네임'이나 '판매 시작' 같은 제목이 있는 줄부터 함께 복사해주세요."
-    );
+    // 제목 없이 내용만 붙여넣은 경우 — 지난번 제목 줄을 쓴다.
+    // 칸 개수가 똑같을 때만. 다르면 엉뚱한 곳에 값이 들어갈 수 있어 막는다.
+    const firstDataRow = table.find((r) => r.some((v) => v.trim()));
+    if (savedHeader && firstDataRow && savedHeader.length === firstDataRow.length) {
+      headers = savedHeader;
+      headerIndex = -1; // 첫 줄부터 내용으로 읽는다
+      usedSavedHeader = true;
+    } else {
+      throw new Error(
+        savedHeader
+          ? "제목 줄이 없고, 지난번 제목 줄과 칸 개수도 달라서 어디에 넣을지 알 수 없습니다. 제목 줄부터 함께 복사해주세요."
+          : "제목 줄을 찾지 못했습니다. 시트에서 '닉네임', '판매 시작' 같은 제목이 있는 줄부터 함께 드래그해서 복사해주세요."
+      );
+    }
   }
 
   const fields = headers.map(fieldOf);
@@ -260,5 +281,5 @@ export function parseSalesSheet(text: string, today = new Date()): ParseResult {
     });
   }
 
-  return { rows, skipped, unmatchedHeaders };
+  return { rows, skipped, unmatchedHeaders, headers, usedSavedHeader };
 }

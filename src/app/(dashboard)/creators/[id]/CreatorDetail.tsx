@@ -12,6 +12,7 @@ import DealForm, {
   emptyDealForm,
   type DealFormValues,
 } from "./DealForm";
+import { looksDirtyBio } from "@/lib/profile-text";
 import {
   CREATOR_STATUSES,
   CREATOR_STATUS_CLASS,
@@ -258,6 +259,15 @@ export default function CreatorDetail({
                 <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                   {creator.bio}
                 </p>
+              )}
+              {looksDirtyBio(creator.bio) && (
+                <button
+                  onClick={() => patchCreator({ bio: creator.bio })}
+                  disabled={saving}
+                  className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-60"
+                >
+                  소개글에 팔로워 수·버튼 이름이 섞여 있습니다 — 정리하기
+                </button>
               )}
               {creator.linkInBio && (
                 <a

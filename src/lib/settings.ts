@@ -12,6 +12,7 @@ export type DecryptedSettings = {
   naverClientSecret: string | null;
   igBusinessAccountId: string | null;
   igAccessToken: string | null;
+  salesSheetHeader: string | null;
   autoDailyPostEnabled: boolean;
   autoDailyPostIncludeProducts: boolean;
 };
@@ -45,6 +46,7 @@ export async function getDecryptedSettings(): Promise<DecryptedSettings> {
       : null,
     igBusinessAccountId: row.igBusinessAccountId,
     igAccessToken: row.igAccessTokenEnc ? decrypt(row.igAccessTokenEnc) : null,
+    salesSheetHeader: row.salesSheetHeader,
     autoDailyPostEnabled: row.autoDailyPostEnabled,
     autoDailyPostIncludeProducts: row.autoDailyPostIncludeProducts,
   };
@@ -98,6 +100,7 @@ export async function updateSettings(input: {
   naverClientSecret?: string;
   igBusinessAccountId?: string;
   igAccessToken?: string;
+  salesSheetHeader?: string;
   autoDailyPostEnabled?: boolean;
   autoDailyPostIncludeProducts?: boolean;
 }) {
@@ -114,6 +117,7 @@ export async function updateSettings(input: {
   if (input.igBusinessAccountId !== undefined)
     data.igBusinessAccountId = input.igBusinessAccountId;
   if (input.igAccessToken) data.igAccessTokenEnc = encrypt(input.igAccessToken);
+  if (input.salesSheetHeader !== undefined) data.salesSheetHeader = input.salesSheetHeader;
   if (input.autoDailyPostEnabled !== undefined)
     data.autoDailyPostEnabled = input.autoDailyPostEnabled;
   if (input.autoDailyPostIncludeProducts !== undefined)

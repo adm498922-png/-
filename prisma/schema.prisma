@@ -27,6 +27,8 @@ model Settings {
   // 인스타그램 프로필 자동 불러오기(Business Discovery)용
   igBusinessAccountId String?
   igAccessTokenEnc    String?
+  // 판매일보 가져오기에서 마지막으로 쓴 제목 줄 (JSON 배열 문자열)
+  salesSheetHeader    String?
   autoDailyPostEnabled Boolean @default(false)
   autoDailyPostIncludeProducts Boolean @default(false)
   updatedAt           DateTime @updatedAt

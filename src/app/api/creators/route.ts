@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeCreatorInput } from "@/lib/creator-input";
+import { tidyBio } from "@/lib/profile-text";
 
 export async function GET() {
   const creators = await prisma.creator.findMany({
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
       tags: data.tags ?? null,
       memo: data.memo ?? null,
       lastContactAt: data.lastContactAt,
-      bio: data.bio ?? null,
+      bio: tidyBio(data.bio, data.handle ?? null, data.linkInBio ?? null),
       linkInBio: data.linkInBio ?? null,
       profileImageUrl: data.profileImageUrl ?? null,
       igUserId: data.igUserId ?? null,

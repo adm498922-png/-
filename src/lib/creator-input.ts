@@ -39,17 +39,21 @@ export function normalizeCreatorInput(input: Record<string, unknown>) {
       ? new Date(input.lastContactAt)
       : null;
 
+  const handleValue = text("handle");
+  const linkValue = text("linkInBio");
+  const bioValue = text("bio");
+
   return {
     name: text("name"),
-    handle: text("handle"),
+    handle: handleValue,
     profileUrl: text("profileUrl"),
     category: text("category"),
     contactType: text("contactType"),
     contact: text("contact"),
     tags: text("tags"),
     memo: text("memo"),
-    bio: text("bio"),
-    linkInBio: text("linkInBio"),
+    bio: bioValue,
+    linkInBio: linkValue,
     profileImageUrl: text("profileImageUrl"),
     igUserId: text("igUserId"),
     platform,

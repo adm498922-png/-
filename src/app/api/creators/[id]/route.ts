@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeCreatorInput } from "@/lib/creator-input";
+import { tidyBio } from "@/lib/profile-text";
 
 export async function GET(
   _req: NextRequest,
@@ -56,7 +57,14 @@ export async function PATCH(
   assign("contact", data.contact);
   assign("tags", data.tags);
   assign("memo", data.memo);
-  assign("bio", data.bio);
+  if (data.bio !== undefined) {
+    // 소개글을 다듬을 때는 이번에 같이 안 보낸 아이디·링크도 저장된 값으로 채워서 본다
+    patch.bio = tidyBio(
+      data.bio,
+      data.handle ?? existing.handle,
+      data.linkInBio ?? existing.linkInBio
+    );
+  }
   assign("linkInBio", data.linkInBio);
   assign("profileImageUrl", data.profileImageUrl);
   assign("igUserId", data.igUserId);

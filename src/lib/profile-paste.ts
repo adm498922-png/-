@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getDecryptedSettings } from "./settings";
 import { extractInstagramHandle } from "./instagram-discovery";
+import { cutAtButtons, findLinkInBio, tidyBio, withScheme } from "./profile-text";
 
 /**
  * 인스타그램 앱/웹에서 프로필 화면을 그대로 긁어 복사해 붙여넣은 텍스트에서
@@ -71,66 +72,6 @@ function friendlyAiError(err: unknown): string {
   return "AI에 연결하지 못했습니다. 잠시 후 다시 시도하거나 직접 입력해주세요.";
 }
 
-/** 인스타 프로필 화면의 버튼 이름들. 여기부터 아래는 소개글이 아니다. */
-const UI_LABELS = [
-  "팔로잉",
-  "팔로우하기",
-  "팔로우",
-  "메시지 보내기",
-  "메시지",
-  "친구 추가",
-  "Following",
-  "Follow",
-  "Message",
-];
-
-/**
- * 프로필 화면을 통째로 복사하면 소개글 뒤에 버튼(팔로잉·메시지 보내기)과
- * 스토리 하이라이트 이름(공구일정, 이벤트발표 …)까지 딸려온다.
- * 버튼이 처음 나오는 지점에서 잘라내 소개글까지만 남긴다.
- */
-function cutAtButtons(text: string): string {
-  const lines = text.split("\n");
-  const cut = lines.findIndex((line) => {
-    const t = line.trim().replace(/\s+/g, " ");
-    if (!t) return false;
-    if (UI_LABELS.some((l) => t === l || t === l + " ∨" || t === l + " v")) return true;
-    // '팔로잉메시지 보내기+친구' 처럼 붙어서 한 줄로 들어오는 경우
-    const squeezed = t.replace(/[\s+]/g, "");
-    return (
-      squeezed.startsWith("팔로잉메시지") ||
-      squeezed.startsWith("팔로우메시지") ||
-      squeezed.startsWith("FollowingMessage")
-    );
-  });
-  return cut === -1 ? text : lines.slice(0, cut).join("\n");
-}
-
-/** AI가 소개글에 섞어 넣었을 수 있는 군더더기 줄을 걷어낸다. */
-function cleanBio(
-  bio: string | null,
-  handle: string | null,
-  link: string | null
-): string | null {
-  if (!bio) return null;
-  const bareLink = link ? link.replace(/^https?:\/\//, "").replace(/\/$/, "") : null;
-  const drop = (line: string) => {
-    const t = line.trim();
-    if (!t) return true;
-    // 링크는 따로 저장해서 눌러볼 수 있게 보여주므로 소개글에서는 뺀다
-    if (bareLink && t.replace(/^https?:\/\//, "").replace(/\/$/, "") === bareLink) return true;
-    if (handle && t.replace(/^@/, "") === handle) return true;
-    if (/^(게시물|팔로워|팔로우|팔로잉|posts|followers|following)\s*[\d,.만천KkMm]+$/i.test(t)) return true;
-    if (UI_LABELS.some((l) => t === l)) return true;
-    if (/(instagram\.com|threads\.(net|com))/i.test(t) && t.length < 60) return true;
-    if (/•\s*Instagram|Instagram 사진 및 동영상/i.test(t)) return true;
-    return false;
-  };
-  const kept = bio.split("\n").filter((line) => !drop(line));
-  const out = kept.join("\n").trim();
-  return out ? out : null;
-}
-
 function toNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return Math.round(value);
   if (typeof value !== "string") return null;
@@ -188,7 +129,7 @@ export async function parseProfilePaste(text: string): Promise<ParsedProfile> {
 
   const handle = toText(parsed.handle)?.replace(/^@/, "") ?? handleFromText;
   const linkInBio = withScheme(toText(parsed.linkInBio) ?? findLinkInBio(trimmed));
-  const bio = cleanBio(toText(parsed.bio), handle, linkInBio);
+  const bio = tidyBio(toText(parsed.bio), handle, linkInBio);
   // AI가 놓쳐도 원문에 공구 신호가 있으면 잡아낸다.
   const gongguSignal =
     parsed.isGongguCreator === true ||
@@ -209,17 +150,3 @@ export async function parseProfilePaste(text: string): Promise<ParsedProfile> {
   };
 }
 
-/** "link.inpock.co.kr/…" 처럼 http가 빠진 주소도 눌러서 열 수 있게 만든다. */
-function withScheme(url: string | null): string | null {
-  if (!url) return null;
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
-}
-
-/** AI가 링크를 못 뽑았을 때 원문에서 직접 찾는다. 인스타 주소는 제외. */
-function findLinkInBio(text: string): string | null {
-  const matches = text.match(/(?:https?:\/\/)?[\w-]+(?:\.[\w-]+)+\/[^\s]*/g);
-  if (!matches) return null;
-  const external = matches.find((m) => !/instagram\.com|threads\.(net|com)/i.test(m));
-  if (!external) return null;
-  return external.startsWith("http") ? external : `https://${external}`;
-}
