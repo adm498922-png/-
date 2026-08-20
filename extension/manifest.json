@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "공구 크리에이터 담기",
+  "version": "1.0.0",
+  "description": "인스타그램 프로필 화면에 '담기' 버튼을 띄우고, 누르면 공구 허브 등록 화면이 정보가 채워진 채로 열립니다.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.instagram.com/*", "https://instagram.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_title": "공구 허브 주소 설정",
+    "default_popup": "options.html"
+  }
+}

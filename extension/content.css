@@ -1,0 +1,40 @@
+/* 인스타 화면에 끼워 넣는 버튼. 인스타 자체 스타일과 섞이지 않게 이름을 길게 잡았다. */
+.gonggu-hub-save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 8px 6px 0;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.gonggu-hub-save-button:hover {
+  background: #1d4ed8;
+}
+.gonggu-hub-save-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.gonggu-hub-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  max-width: 90vw;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: #111827;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
