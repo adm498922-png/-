@@ -123,3 +123,86 @@ model PostStat {
 
   @@index([postTargetId, capturedAt])
 }
+
+// ─────────────────────────────────────────────────────────────
+// 공동구매 크리에이터 관리
+// ─────────────────────────────────────────────────────────────
+
+enum CreatorStatus {
+  LEAD      // 후보 (아직 연락 안 함)
+  CONTACTED // 컨택중
+  CONFIRMED // 확정 (진행하기로 합의)
+  ONGOING   // 공구 진행중
+  DONE      // 진행 완료
+  HOLD      // 보류
+  REJECTED  // 거절/무응답
+}
+
+model Creator {
+  id             String        @id @default(cuid())
+  name           String // 활동명 또는 이름
+  platform       String        @default("INSTAGRAM") // INSTAGRAM / THREADS / YOUTUBE / TIKTOK / BLOG / BAND / ETC
+  handle         String? // @아이디
+  profileUrl     String?
+  followers      Int?
+  category       String? // 육아, 주방, 리빙 …
+  contactType    String? // 오픈채팅 / 이메일 / DM / 전화
+  contact        String?
+  feeKrw         Int? // 진행비(원)
+  commissionRate Float? // 수수료 %
+  status         CreatorStatus @default(LEAD)
+  rating         Int? // 1~5, 내 평가
+  tags           String? // 쉼표로 구분
+  memo           String?
+  lastContactAt  DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  deals          Deal[]
+
+  @@index([status])
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  name           String
+  brand          String?
+  imageUrl       String?
+  retailPrice    Int? // 소비자가(원)
+  supplyPrice    Int? // 공급가(원)
+  commissionRate Float? // 크리에이터에게 줄 수수료 %
+  memo           String?
+  isActive       Boolean  @default(true) // 지금 공구 가능한 상품인지
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  deals          Deal[]
+}
+
+enum DealStatus {
+  PLANNED  // 예정
+  ONGOING  // 진행중
+  CLOSED   // 종료
+  CANCELED // 취소
+}
+
+// 크리에이터 한 명이 상품 하나로 진행한 공구 1건
+model Deal {
+  id          String     @id @default(cuid())
+  creatorId   String
+  creator     Creator    @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product?   @relation(fields: [productId], references: [id])
+  productName String? // 상품 목록에 없는 상품을 직접 적은 경우
+  status      DealStatus @default(PLANNED)
+  startDate   DateTime?
+  endDate     DateTime?
+  unitsSold   Int? // 판매 수량
+  revenue     Int? // 매출(원)
+  settlement  Int? // 크리에이터에게 지급한 금액(원)
+  memo        String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([creatorId])
+}

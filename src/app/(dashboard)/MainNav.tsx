@@ -42,26 +42,55 @@ function ConnectionsIcon({ active }: { active: boolean }) {
   );
 }
 
+function CreatorsIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+      <circle cx="9" cy="8.5" r="3.2" />
+      <path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" strokeLinecap="round" />
+      <path d="M16.5 6.2a3 3 0 0 1 0 5.6M18.4 14.9c1.4.9 2.3 2.5 2.6 4.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ProductsIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+      <path d="M4 8.5 12 4.5l8 4v7L12 19.5l-8-4z" strokeLinejoin="round" />
+      <path d="M4 8.5 12 12.5l8-4M12 12.5v7" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 const NAV_ITEMS = [
-  { href: "/", label: "대시보드", Icon: DashboardIcon },
-  { href: "/compose", label: "글쓰기", Icon: ComposeIcon },
-  { href: "/posts", label: "전체 글", Icon: PostsIcon },
-  { href: "/settings", label: "연결 설정", Icon: ConnectionsIcon },
+  { href: "/", label: "대시보드", short: "홈", Icon: DashboardIcon, group: "스레드 발행" },
+  { href: "/compose", label: "글쓰기", short: "글쓰기", Icon: ComposeIcon, group: "스레드 발행" },
+  { href: "/posts", label: "전체 글", short: "글목록", Icon: PostsIcon, group: "스레드 발행" },
+  { href: "/creators", label: "크리에이터", short: "크리에이터", Icon: CreatorsIcon, group: "공동구매" },
+  { href: "/products", label: "공구 상품", short: "상품", Icon: ProductsIcon, group: "공동구매" },
+  { href: "/settings", label: "연결 설정", short: "설정", Icon: ConnectionsIcon, group: "설정" },
 ];
 
 function isActive(pathname: string, href: string): boolean {
-  return pathname === href;
+  if (href === "/") return pathname === "/";
+  // /creators/xxxx 같은 하위 화면에서도 해당 메뉴가 켜져 있어야 한다.
+  return pathname === href || pathname.startsWith(href + "/");
 }
 
 export function SidebarNav() {
   const pathname = usePathname();
   return (
     <nav className="flex flex-1 flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
+      {NAV_ITEMS.map((item, i) => {
         const active = isActive(pathname, item.href);
+        const isNewGroup = i === 0 || NAV_ITEMS[i - 1].group !== item.group;
         return (
+          <div key={item.href}>
+            {isNewGroup && (
+              <p className="px-3 pt-3 pb-1 text-[11px] font-semibold text-neutral-600">
+                {item.group}
+              </p>
+            )}
           <Link
-            key={item.href}
             href={item.href}
             className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm ${
               active
@@ -72,6 +101,7 @@ export function SidebarNav() {
             <item.Icon active={active} />
             {item.label}
           </Link>
+          </div>
         );
       })}
     </nav>
@@ -88,12 +118,12 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] ${
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
               active ? "text-blue-400" : "text-neutral-500"
             }`}
           >
             <item.Icon active={active} />
-            {item.label}
+            {item.short}
           </Link>
         );
       })}
