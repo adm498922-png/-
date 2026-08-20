@@ -185,6 +185,10 @@ export default function CreatorDetail({
               src={creator.profileImageUrl}
               alt=""
               className="h-12 w-12 rounded-full object-cover"
+              onError={(e) => {
+                // 인스타 사진 주소는 시간이 지나면 만료된다. 깨진 그림 대신 그냥 감춘다.
+                e.currentTarget.style.display = "none";
+              }}
             />
           )}
           <div className="flex flex-wrap items-center gap-2">

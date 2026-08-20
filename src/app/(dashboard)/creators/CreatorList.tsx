@@ -46,6 +46,8 @@ export default function CreatorList({
   autoOpen,
   autoHandle,
   autoPaste,
+  autoImage,
+  instagramConfigured,
 }: {
   initialCreators: CreatorView[];
   origin: string;
@@ -53,13 +55,19 @@ export default function CreatorList({
   autoOpen?: boolean;
   autoHandle?: string;
   autoPaste?: string;
+  autoImage?: string;
+  instagramConfigured?: boolean;
 }) {
   const [creators, setCreators] = useState(initialCreators);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [sort, setSort] = useState<SortKey>("recent");
   const [adding, setAdding] = useState(Boolean(autoOpen));
-  const [form, setForm] = useState<CreatorFormValues>(emptyCreatorForm);
+  const [form, setForm] = useState<CreatorFormValues>(() => ({
+    ...emptyCreatorForm(),
+    // 즐겨찾기 버튼이 프로필 사진 주소까지 실어 보낸 경우
+    profileImageUrl: autoImage ?? "",
+  }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // 새로고침해도 같은 값이 다시 실행되지 않게 주소창만 깔끔히 되돌린다.
@@ -197,6 +205,7 @@ export default function CreatorList({
           <ImportPanel
             autoHandle={autoHandle}
             autoPaste={autoPaste}
+            instagramConfigured={instagramConfigured}
             onPrefill={(prefill) =>
               setForm((prev) => {
                 const next = { ...prev };

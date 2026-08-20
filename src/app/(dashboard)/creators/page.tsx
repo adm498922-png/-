@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { getSettingsStatus } from "@/lib/settings";
 import CreatorList from "./CreatorList";
 import type { CreatorView } from "@/lib/gonggu";
 
@@ -10,13 +11,14 @@ export default async function CreatorsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [creators, params, headerList] = await Promise.all([
+  const [creators, params, headerList, settings] = await Promise.all([
     prisma.creator.findMany({
       orderBy: { updatedAt: "desc" },
       include: { deals: true },
     }),
     searchParams,
     headers(),
+    getSettingsStatus(),
   ]);
 
   const one = (key: string) => {
@@ -44,6 +46,8 @@ export default async function CreatorsPage({
         autoOpen={Boolean(one("add"))}
         autoHandle={one("handle")}
         autoPaste={one("paste")}
+        autoImage={one("img")}
+        instagramConfigured={settings.instagramConfigured}
       />
     </div>
   );

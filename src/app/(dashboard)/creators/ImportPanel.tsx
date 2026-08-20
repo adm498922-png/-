@@ -12,11 +12,14 @@ export default function ImportPanel({
   onPrefill,
   autoHandle,
   autoPaste,
+  instagramConfigured,
 }: {
   onPrefill: (prefill: Prefill) => void;
   /** 북마클릿으로 넘어왔을 때 자동으로 채워서 바로 불러온다 */
   autoHandle?: string;
   autoPaste?: string;
+  /** 인스타 공식 연결이 되어 있는지 (안 되어 있으면 붙여넣기로 바로 간다) */
+  instagramConfigured?: boolean;
 }) {
   const [handle, setHandle] = useState(autoHandle ?? "");
   const [loading, setLoading] = useState(false);
@@ -110,13 +113,23 @@ export default function ImportPanel({
     autoRan.current = true;
     (async () => {
       let done = false;
-      if (autoHandle) done = await handleLookup(autoHandle);
+      // 공식 연결이 안 되어 있는데 붙여넣을 내용이 있으면, 실패할 게 뻔한 조회는 건너뛴다.
+      const skipLookup = !instagramConfigured && Boolean(autoPaste);
+      if (autoHandle && !skipLookup) done = await handleLookup(autoHandle);
+      if (skipLookup && autoHandle) {
+        onPrefill({
+          platform: "INSTAGRAM",
+          handle: autoHandle,
+          profileUrl: `https://www.instagram.com/${autoHandle}/`,
+        });
+        setHandle(autoHandle);
+      }
       if (!done && autoPaste) {
         setPasteOpen(true);
         await handlePaste(autoPaste);
       }
     })();
-  }, [autoHandle, autoPaste, handleLookup, handlePaste]);
+  }, [autoHandle, autoPaste, instagramConfigured, handleLookup, handlePaste, onPrefill]);
 
   return (
     <div className="mb-5 rounded-lg border border-neutral-800 bg-neutral-950 p-4">
@@ -124,8 +137,9 @@ export default function ImportPanel({
         인스타그램에서 정보 가져오기
       </p>
       <p className="mb-3 text-xs text-neutral-500">
-        아이디나 프로필 주소를 넣으면 이름 · 소개글 · 팔로워 수 · 참여율까지
-        아래 칸에 자동으로 채워집니다.
+        {instagramConfigured
+          ? "아이디나 프로필 주소를 넣으면 이름 · 소개글 · 팔로워 수 · 참여율까지 아래 칸에 자동으로 채워집니다."
+          : "아이디나 프로필 주소를 넣으면 아이디와 채널이 채워집니다. 이름 · 팔로워 수까지 자동으로 채우려면 아래 붙여넣기를 쓰거나, 연결 설정 화면에서 인스타그램을 연결하세요."}
       </p>
 
       <div className="flex flex-wrap gap-2">
