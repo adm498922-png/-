@@ -11,7 +11,7 @@ export default function WeekBarChart({ days }: { days: Day[] }) {
         const heightPx = Math.max(3, Math.round((day.count / max) * 48));
         return (
           <div key={i} className="flex flex-1 flex-col items-center gap-1">
-            <span className="text-[10px] font-medium text-neutral-400">
+            <span className="text-[10px] font-medium text-slate-500">
               {day.count > 0 ? day.count : ""}
             </span>
             <div className="flex h-12 w-full max-w-5 items-end justify-center">
@@ -24,7 +24,7 @@ export default function WeekBarChart({ days }: { days: Day[] }) {
                 className="w-full max-w-5 rounded-t"
               />
             </div>
-            <span className="text-[10px] text-neutral-500">{day.label}</span>
+            <span className="text-[10px] text-slate-500">{day.label}</span>
           </div>
         );
       })}

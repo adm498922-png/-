@@ -354,11 +354,11 @@ export default function ComposeForm({
   return (
     <div className="space-y-8">
       {aiConfigured && (
-        <div className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-          <h2 className="text-sm font-semibold text-neutral-200">
+        <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-semibold text-slate-700">
             AI로 일상글 쓰기 (쿠팡 상품 없이)
           </h2>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-slate-500">
             소재·말투를 고르고 (비워두면 AI가 알아서 골라요) [AI 일상글 생성]
             누르면, 필요하면 오늘 실제 날씨·이슈를 검색해서 반영한 초안을 3개
             만들어줘요. 쿠팡 링크 홍보 글만 반복되면 부자연스러워 보일 수
@@ -366,7 +366,7 @@ export default function ComposeForm({
           </p>
 
           <div>
-            <p className="mb-1.5 text-xs text-neutral-400">소재 (선택)</p>
+            <p className="mb-1.5 text-xs text-slate-500">소재 (선택)</p>
             <div className="flex flex-wrap gap-1.5">
               {TOPIC_CATEGORIES.map((cat) => (
                 <button
@@ -378,7 +378,7 @@ export default function ComposeForm({
                   className={`rounded-full border px-2.5 py-1 text-xs ${
                     dailyCategory === cat
                       ? "border-purple-500 bg-purple-500/15 text-purple-300"
-                      : "border-neutral-700 text-neutral-400"
+                      : "border-slate-300 text-slate-500"
                   }`}
                 >
                   {cat}
@@ -388,7 +388,7 @@ export default function ComposeForm({
           </div>
 
           <div>
-            <p className="mb-1.5 text-xs text-neutral-400">말투</p>
+            <p className="mb-1.5 text-xs text-slate-500">말투</p>
             <div className="flex flex-wrap gap-1.5">
               {TONE_OPTIONS.map((t) => (
                 <button
@@ -398,7 +398,7 @@ export default function ComposeForm({
                   className={`rounded-full border px-2.5 py-1 text-xs ${
                     dailyTone === t
                       ? "border-purple-500 bg-purple-500/15 text-purple-300"
-                      : "border-neutral-700 text-neutral-400"
+                      : "border-slate-300 text-slate-500"
                   }`}
                 >
                   {t}
@@ -412,7 +412,7 @@ export default function ComposeForm({
               value={dailyTopic}
               onChange={(e) => setDailyTopic(e.target.value)}
               placeholder="구체적인 소재 직접 입력 (선택, 비워둬도 됨)"
-              className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+              className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
             />
             <button
               type="submit"
@@ -424,20 +424,20 @@ export default function ComposeForm({
           </form>
           {dailyDrafts && (
             <div className="space-y-3">
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-slate-500">
                 초안 {dailyDrafts.length}개 — 직접 고쳐도 되고, 마음에 드는
                 걸로 &quot;이 초안 사용&quot;을 눌러주세요.
               </p>
               {dailyDrafts.map((draft, i) => (
                 <div
                   key={i}
-                  className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-950 p-3"
+                  className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
                 >
                   <textarea
                     rows={4}
                     value={draft}
                     onChange={(e) => updateDailyDraft(i, e.target.value)}
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
                   />
                   <button
                     type="button"
@@ -453,8 +453,8 @@ export default function ComposeForm({
         </div>
       )}
 
-      <div className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-        <h2 className="text-sm font-semibold text-neutral-200">
+      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
+        <h2 className="text-sm font-semibold text-slate-700">
           쿠팡파트너스 상품 검색
         </h2>
         <form onSubmit={handleProductSearch} className="flex gap-2">
@@ -462,27 +462,27 @@ export default function ComposeForm({
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             placeholder="찰옥수수"
-            className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+            className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
           />
           <button
             type="submit"
             disabled={searching}
-            className="rounded-lg bg-neutral-800 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-700 disabled:opacity-50"
+            className="rounded-lg bg-slate-100 px-4 py-2 text-sm text-slate-700 hover:bg-slate-200 disabled:opacity-50"
           >
             {searching ? "검색 중..." : "검색"}
           </button>
         </form>
-        {searchError && <p className="text-sm text-red-400">{searchError}</p>}
+        {searchError && <p className="text-sm text-red-600">{searchError}</p>}
         {searchResults && (
           <>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-slate-500">
               {searchResults.length}개 상품 찾음 · 원하는 상품을 선택하세요
             </p>
             <div className="space-y-2">
               {searchResults.map((product, i) => (
                 <div
                   key={`${product.productId}-${i}`}
-                  className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-3"
+                  className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -491,13 +491,13 @@ export default function ComposeForm({
                     className="h-14 w-14 shrink-0 rounded-md object-cover"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-white">
+                    <p className="truncate text-sm text-slate-900">
                       {product.productName}
                     </p>
-                    <p className="flex items-center gap-1.5 text-xs text-neutral-400">
+                    <p className="flex items-center gap-1.5 text-xs text-slate-500">
                       {product.productPrice.toLocaleString("ko-KR")}원
                       {product.isRocket && (
-                        <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
+                        <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
                           로켓배송
                         </span>
                       )}
@@ -520,10 +520,10 @@ export default function ComposeForm({
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-xl border border-neutral-800 bg-neutral-900 p-5"
+        className="space-y-4 rounded-xl border border-slate-200 bg-white p-5"
       >
         <div>
-          <label className="mb-2 block text-xs text-neutral-400">
+          <label className="mb-2 block text-xs text-slate-500">
             발행할 계정
           </label>
           <div className="flex flex-wrap gap-2">
@@ -534,8 +534,8 @@ export default function ComposeForm({
                 onClick={() => toggleAccount(account.id)}
                 className={`rounded-full border px-3 py-1.5 text-xs ${
                   selectedAccountIds.includes(account.id)
-                    ? "border-blue-500 bg-blue-500/15 text-blue-300"
-                    : "border-neutral-700 text-neutral-400"
+                    ? "border-blue-500 bg-blue-500/15 text-blue-700"
+                    : "border-slate-300 text-slate-500"
                 }`}
               >
                 {account.label}
@@ -546,14 +546,14 @@ export default function ComposeForm({
 
         {links_.length > 0 && (
           <div>
-            <label className="mb-1 block text-xs text-neutral-400">
+            <label className="mb-1 block text-xs text-slate-500">
               쿠팡 링크 삽입 (선택)
             </label>
             <div className="flex gap-2">
               <select
                 value={coupangLinkId}
                 onChange={(e) => setCoupangLinkId(e.target.value)}
-                className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
               >
                 <option value="">링크 선택 안함</option>
                 {links_.map((link) => (
@@ -566,13 +566,13 @@ export default function ComposeForm({
                 type="button"
                 onClick={insertSelectedLink}
                 disabled={!coupangLinkId}
-                className="rounded-lg bg-neutral-800 px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-700 disabled:opacity-40"
+                className="rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700 hover:bg-slate-200 disabled:opacity-40"
               >
                 댓글에 삽입
               </button>
             </div>
-            <p className="mt-1 text-xs text-neutral-500">
-              본문이 아니라 <strong className="text-neutral-300">자동 첫 댓글</strong>에
+            <p className="mt-1 text-xs text-slate-500">
+              본문이 아니라 <strong className="text-slate-600">자동 첫 댓글</strong>에
               법적 고지 문구와 함께 링크가 들어갑니다 (본문에 링크가 있으면
               노출이 줄어드는 경우가 많아서요).
             </p>
@@ -580,7 +580,7 @@ export default function ComposeForm({
         )}
 
         {selectedProduct && (
-          <div className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-950 p-2">
+          <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -588,14 +588,14 @@ export default function ComposeForm({
                 alt={selectedProduct.productName}
                 className="h-12 w-12 shrink-0 rounded-md object-cover"
               />
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-slate-500">
                 발행할 때 이 상품 사진이 글에 같이 첨부됩니다.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 border-t border-neutral-800 pt-2">
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-2">
               {selectedLink?.videoStatus === "GENERATING" ? (
-                <p className="text-xs text-amber-400">
+                <p className="text-xs text-amber-700">
                   🎬 영상 생성 중... (완료되면 자동으로 이 상품 글에 첨부돼요)
                 </p>
               ) : (
@@ -611,7 +611,7 @@ export default function ComposeForm({
                     </button>
                   )}
                   <label
-                    className={`rounded-full bg-neutral-800 px-2.5 py-1 text-xs text-neutral-200 hover:bg-neutral-700 ${
+                    className={`rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 hover:bg-slate-200 ${
                       uploadingVideo || requestingVideo ? "opacity-50" : "cursor-pointer"
                     }`}
                   >
@@ -629,7 +629,7 @@ export default function ComposeForm({
                     />
                   </label>
                   {selectedLink?.videoStatus !== "READY" && (
-                    <p className="text-[11px] text-neutral-500">
+                    <p className="text-[11px] text-slate-500">
                       내 영상은 mp4, 50MB 이하로 올려주세요.
                       {aiConfigured &&
                         " AI 영상은 완성까지 몇 분 걸리고 1개당 OpenAI 요금이 따로 부과돼요."}
@@ -645,35 +645,35 @@ export default function ComposeForm({
                   muted
                   className="h-16 w-9 rounded-md bg-black object-cover"
                 />
-                <p className="text-xs text-green-400">
+                <p className="text-xs text-green-700">
                   🎬 영상 준비 완료 — 발행 시 사진과 함께 첨부돼요.
                 </p>
               </div>
             )}
             {selectedLink?.videoStatus === "READY" && selectedLink.videoUrl && (
-              <p className="select-all break-all text-[10px] text-neutral-500">
+              <p className="select-all break-all text-[10px] text-slate-500">
                 실제 영상 주소(확인용, 길게 눌러 복사):{" "}
                 {typeof window !== "undefined" ? window.location.origin : ""}
                 {selectedLink.videoUrl}
               </p>
             )}
             {selectedLink?.videoStatus === "FAILED" && selectedLink.videoError && (
-              <p className="text-[11px] text-red-400">
+              <p className="text-[11px] text-red-600">
                 영상 생성 실패: {selectedLink.videoError}
               </p>
             )}
             {videoRequestError && (
-              <p className="text-[11px] text-red-400">{videoRequestError}</p>
+              <p className="text-[11px] text-red-600">{videoRequestError}</p>
             )}
             {uploadVideoError && (
-              <p className="text-[11px] text-red-400">{uploadVideoError}</p>
+              <p className="text-[11px] text-red-600">{uploadVideoError}</p>
             )}
           </div>
         )}
 
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <label className="block text-xs text-neutral-400">본문</label>
+            <label className="block text-xs text-slate-500">본문</label>
             {aiConfigured && selectedProduct && (
               <button
                 type="button"
@@ -691,13 +691,13 @@ export default function ComposeForm({
             value={bodyText}
             onChange={(e) => setBodyText(e.target.value)}
             placeholder="글 내용을 입력하세요"
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
           />
         </div>
 
         {selectedAccountIds.length > 1 && (
-          <div className="space-y-3 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
-            <p className="text-xs text-neutral-400">
+          <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">
               계정별 문구 (비워두면 위 본문이 그대로 사용됩니다 — 여러 계정에
               똑같은 글이 올라가면 반복 게시처럼 보일 수 있어요)
             </p>
@@ -707,7 +707,7 @@ export default function ComposeForm({
               return (
                 <div key={accountId}>
                   <div className="mb-1 flex items-center justify-between">
-                    <label className="text-xs text-neutral-400">
+                    <label className="text-xs text-slate-500">
                       {account.label}
                     </label>
                     {aiConfigured && selectedProduct && (
@@ -733,7 +733,7 @@ export default function ComposeForm({
                       }))
                     }
                     placeholder="비워두면 위 본문 사용"
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
                   />
                 </div>
               );
@@ -743,13 +743,13 @@ export default function ComposeForm({
 
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <label className="block text-xs text-neutral-400">
+            <label className="block text-xs text-slate-500">
               자동 첫 댓글 (선택)
             </label>
             <button
               type="button"
               onClick={insertEngagementPrompt}
-              className="rounded-full bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300 hover:bg-neutral-700"
+              className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-200"
             >
               참여 유도 문구 추가
             </button>
@@ -759,14 +759,14 @@ export default function ComposeForm({
             value={commentBody}
             onChange={(e) => setCommentBody(e.target.value)}
             placeholder="본문 발행 직후 자동으로 등록될 댓글"
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-xs text-neutral-400">발행 시점</label>
+          <label className="mb-2 block text-xs text-slate-500">발행 시점</label>
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-1.5 text-sm text-neutral-300">
+            <label className="flex items-center gap-1.5 text-sm text-slate-600">
               <input
                 type="radio"
                 checked={scheduleMode === "now"}
@@ -774,7 +774,7 @@ export default function ComposeForm({
               />
               즉시 발행
             </label>
-            <label className="flex items-center gap-1.5 text-sm text-neutral-300">
+            <label className="flex items-center gap-1.5 text-sm text-slate-600">
               <input
                 type="radio"
                 checked={scheduleMode === "later"}
@@ -787,15 +787,15 @@ export default function ComposeForm({
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
-                className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-sm text-white outline-none focus:border-blue-500"
+                className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-blue-500"
               />
             )}
           </div>
         </div>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
         {successMessage && (
-          <p className="text-sm text-green-400">{successMessage}</p>
+          <p className="text-sm text-green-700">{successMessage}</p>
         )}
 
         <div className="flex items-center gap-3">
@@ -812,7 +812,7 @@ export default function ComposeForm({
           </button>
           <Link
             href="/posts"
-            className="text-xs text-neutral-400 hover:text-neutral-200 hover:underline"
+            className="text-xs text-slate-500 hover:text-slate-700 hover:underline"
           >
             전체 글 보기 →
           </Link>

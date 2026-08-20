@@ -23,16 +23,16 @@ export default async function ComposePage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-1 text-2xl font-bold text-white">글쓰기</h1>
-      <p className="mb-6 text-sm text-neutral-400">
+      <h1 className="mb-1 text-2xl font-bold text-slate-900">글쓰기</h1>
+      <p className="mb-6 text-sm text-slate-500">
         여러 스레드 계정에 동시에 글을 올리고, 발행 직후 자동으로 첫 댓글을
         달 수 있습니다.
       </p>
 
       {accounts.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-neutral-800 p-6 text-sm text-neutral-400">
+        <div className="rounded-xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
           먼저{" "}
-          <Link href="/settings" className="text-blue-400 hover:underline">
+          <Link href="/settings" className="text-blue-600 hover:underline">
             스레드 계정
           </Link>
           을 연결해주세요.

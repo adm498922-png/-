@@ -16,8 +16,8 @@ export default async function ProductsPage() {
 
   return (
     <div className="max-w-4xl">
-      <h1 className="mb-1 text-2xl font-bold text-white">공구 상품</h1>
-      <p className="mb-6 text-sm text-neutral-400">
+      <h1 className="mb-1 text-2xl font-bold text-slate-900">공구 상품</h1>
+      <p className="mb-6 text-sm text-slate-500">
         크리에이터에게 제안할 상품을 정리해 둡니다. 공구 기록을 남길 때 여기서
         고르면 상품별 성과가 자동으로 쌓입니다.
       </p>

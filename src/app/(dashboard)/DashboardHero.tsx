@@ -40,18 +40,18 @@ function formatDateLabel(dateStr: string) {
  */
 function cellStyle(h: HourlyStat) {
   if (h.count > 0 && h.views >= 1000) {
-    return "border-blue-500 bg-blue-950/60";
+    return "border-blue-500 bg-blue-50";
   }
   if (h.count > 0 && h.views >= 100) {
     return "border-purple-500 bg-purple-950/60";
   }
   if (h.count > 0) {
-    return "border-red-500 bg-red-950/60";
+    return "border-red-500 bg-red-50";
   }
   if (h.scheduledCount > 0) {
-    return "border-yellow-500 bg-yellow-950/60";
+    return "border-yellow-500 bg-amber-50";
   }
-  return "border-neutral-800 bg-neutral-950/40";
+  return "border-slate-200 bg-slate-100";
 }
 
 /** 이 서비스만의 자동 발행 마스코트 "그리" 아이콘 (원본 디자인) */
@@ -119,7 +119,7 @@ export default function DashboardHero({ accounts }: { accounts: Account[] }) {
   const trendUp = data ? data.totalViews >= data.prevDayTotalViews : true;
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+    <div className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           {accounts.length > 1 &&
@@ -130,7 +130,7 @@ export default function DashboardHero({ accounts }: { accounts: Account[] }) {
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
                   a.id === accountId
                     ? "bg-blue-600 text-white"
-                    : "bg-neutral-800 text-neutral-400 hover:text-neutral-200"
+                    : "bg-slate-100 text-slate-500 hover:text-slate-700"
                 }`}
               >
                 {a.label}
@@ -138,39 +138,39 @@ export default function DashboardHero({ accounts }: { accounts: Account[] }) {
             ))}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-neutral-400">{formatDateLabel(date)}</span>
+          <span className="text-sm text-slate-500">{formatDateLabel(date)}</span>
           <input
             type="date"
             value={date}
             max={todayStr()}
             onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1 text-sm text-white outline-none focus:border-blue-500"
+            className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-sm text-slate-900 outline-none focus:border-blue-500"
           />
         </div>
       </div>
 
       {loading ? (
-        <p className="py-8 text-center text-sm text-neutral-500">불러오는 중...</p>
+        <p className="py-8 text-center text-sm text-slate-500">불러오는 중...</p>
       ) : (
         <>
           <div className="mb-1 flex items-center justify-between">
-            <p className="text-sm text-neutral-400">이 날 올린 글 조회수</p>
+            <p className="text-sm text-slate-500">이 날 올린 글 조회수</p>
             <span
               className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                trendUp ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                trendUp ? "bg-green-500/10 text-green-700" : "bg-red-500/10 text-red-600"
               }`}
             >
               {trendUp ? "▲ 어제보다 상승" : "▼ 어제보다 하락"}
             </span>
           </div>
-          <p className="mb-1 text-4xl font-bold text-white sm:text-5xl">
+          <p className="mb-1 text-4xl font-bold text-slate-900 sm:text-5xl">
             {data.totalViews.toLocaleString("ko-KR")}
           </p>
-          <p className="mb-5 text-sm text-neutral-500">
+          <p className="mb-5 text-sm text-slate-500">
             {data.totalPosts}건 발행 · 글당 평균 {data.avgViews.toLocaleString("ko-KR")}회
           </p>
 
-          <div className="mb-2 flex flex-wrap items-center gap-3 text-[10px] text-neutral-500">
+          <div className="mb-2 flex flex-wrap items-center gap-3 text-[10px] text-slate-500">
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
               조회수 0~99
@@ -196,25 +196,25 @@ export default function DashboardHero({ accounts }: { accounts: Account[] }) {
                 className={`relative rounded-lg border p-2 text-center ${cellStyle(h)}`}
               >
                 {h.isBest && (
-                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-green-500/30 px-1.5 py-px text-[8px] font-medium text-green-300">
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-green-500/30 px-1.5 py-px text-[8px] font-medium text-green-700">
                     BEST
                   </span>
                 )}
-                <p className="text-[10px] text-neutral-500">{h.hour}시</p>
-                <p className="text-sm font-semibold text-white">
+                <p className="text-[10px] text-slate-500">{h.hour}시</p>
+                <p className="text-sm font-semibold text-slate-900">
                   {h.count > 0 ? h.count : h.scheduledCount > 0 ? h.scheduledCount : "-"}
                 </p>
-                <p className="text-[9px] text-neutral-500">
+                <p className="text-[9px] text-slate-500">
                   {h.count > 0 ? h.views.toLocaleString("ko-KR") : ""}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 flex items-center gap-1.5 border-t border-neutral-800 pt-3 text-xs text-neutral-500">
+          <div className="mt-4 flex items-center gap-1.5 border-t border-slate-200 pt-3 text-xs text-slate-500">
             <GeuriIcon />
             <span>
-              <span className="font-semibold text-neutral-300">그리</span> · 무인 자동 발행중
+              <span className="font-semibold text-slate-600">그리</span> · 무인 자동 발행중
             </span>
           </div>
         </>

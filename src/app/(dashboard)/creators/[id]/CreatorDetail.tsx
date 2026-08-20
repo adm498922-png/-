@@ -33,8 +33,8 @@ import {
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3 py-1.5 text-sm">
-      <span className="w-24 shrink-0 text-neutral-500">{label}</span>
-      <span className="min-w-0 flex-1 break-words text-neutral-200">{children}</span>
+      <span className="w-24 shrink-0 text-slate-500">{label}</span>
+      <span className="min-w-0 flex-1 break-words text-slate-700">{children}</span>
     </div>
   );
 }
@@ -174,7 +174,7 @@ export default function CreatorDetail({
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <Link href="/creators" className="text-xs text-neutral-500 hover:text-white">
+        <Link href="/creators" className="text-xs text-slate-500 hover:text-slate-900">
           ← 크리에이터 목록
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -192,16 +192,16 @@ export default function CreatorDetail({
             />
           )}
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold text-white">{creator.name}</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{creator.name}</h1>
             {creator.handle && (
-              <span className="text-sm text-neutral-500">@{creator.handle}</span>
+              <span className="text-sm text-slate-500">@{creator.handle}</span>
             )}
             {creator.profileUrl && (
               <a
                 href={creator.profileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-blue-400 underline underline-offset-4 hover:text-blue-300"
+                className="text-xs text-blue-600 underline underline-offset-4 hover:text-blue-700"
               >
                 채널 열기
               </a>
@@ -211,36 +211,36 @@ export default function CreatorDetail({
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="ml-auto rounded-lg border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 hover:text-white disabled:opacity-60"
+              className="ml-auto rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 disabled:opacity-60"
             >
               {syncing ? "새로고침 중…" : "↻ 인스타 정보 새로고침"}
             </button>
           )}
         </div>
         {creator.bio && (
-          <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-400">
+          <p className="mt-2 whitespace-pre-wrap text-sm text-slate-500">
             {creator.bio}
           </p>
         )}
         {creator.syncedAt && (
-          <p className="mt-1 text-[11px] text-neutral-600">
+          <p className="mt-1 text-[11px] text-slate-400">
             인스타 정보 기준 {formatDate(creator.syncedAt)}
           </p>
         )}
         {syncNotice && (
-          <p className="mt-2 rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-300">
+          <p className="mt-2 rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-700">
             {syncNotice}
           </p>
         )}
         {syncWarn && (
-          <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
             {syncWarn}
           </p>
         )}
       </div>
 
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-        <p className="mb-2 text-xs text-neutral-500">진행 상태 — 눌러서 바꿉니다</p>
+      <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <p className="mb-2 text-xs text-slate-500">진행 상태 — 눌러서 바꿉니다</p>
         <div className="flex flex-wrap gap-1.5">
           {CREATOR_STATUSES.map((s) => {
             const active = creator.status === s;
@@ -252,7 +252,7 @@ export default function CreatorDetail({
                 className={`rounded-full px-3 py-1.5 text-xs disabled:opacity-60 ${
                   active
                     ? CREATOR_STATUS_CLASS[s] + " font-semibold"
-                    : "bg-neutral-950 text-neutral-500 hover:text-white"
+                    : "bg-slate-50 text-slate-500 hover:text-slate-900"
                 }`}
               >
                 {CREATOR_STATUS_LABEL[s]}
@@ -264,14 +264,14 @@ export default function CreatorDetail({
 
       {(creator.engagementRate !== null || creator.avgLikes !== null) && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
-            <p className="text-xs text-neutral-500">팔로워</p>
-            <p className="mt-1 text-lg font-bold text-white">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-xs text-slate-500">팔로워</p>
+            <p className="mt-1 text-lg font-bold text-slate-900">
               {formatFollowers(creator.followers)}
             </p>
           </div>
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
-            <p className="text-xs text-neutral-500">참여율</p>
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-xs text-slate-500">참여율</p>
             <p
               className={`mt-1 text-lg font-bold ${engagementClass(
                 creator.engagementRate
@@ -279,21 +279,21 @@ export default function CreatorDetail({
             >
               {formatEngagement(creator.engagementRate)}
             </p>
-            <p className="mt-0.5 text-[11px] text-neutral-600">
+            <p className="mt-0.5 text-[11px] text-slate-400">
               3% 이상이면 좋은 편
             </p>
           </div>
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
-            <p className="text-xs text-neutral-500">평균 좋아요</p>
-            <p className="mt-1 text-lg font-bold text-white">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-xs text-slate-500">평균 좋아요</p>
+            <p className="mt-1 text-lg font-bold text-slate-900">
               {creator.avgLikes === null
                 ? "-"
                 : creator.avgLikes.toLocaleString("ko-KR")}
             </p>
           </div>
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
-            <p className="text-xs text-neutral-500">평균 댓글</p>
-            <p className="mt-1 text-lg font-bold text-white">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-xs text-slate-500">평균 댓글</p>
+            <p className="mt-1 text-lg font-bold text-slate-900">
               {creator.avgComments === null
                 ? "-"
                 : creator.avgComments.toLocaleString("ko-KR")}
@@ -311,21 +311,21 @@ export default function CreatorDetail({
         ].map((s) => (
           <div
             key={s.label}
-            className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3"
           >
-            <p className="text-xs text-neutral-500">{s.label}</p>
-            <p className="mt-1 text-lg font-bold text-white">{s.value}</p>
+            <p className="text-xs text-slate-500">{s.label}</p>
+            <p className="mt-1 text-lg font-bold text-slate-900">{s.value}</p>
           </div>
         ))}
       </div>
 
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+      <section className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold text-white">기본 정보</h2>
+          <h2 className="font-semibold text-slate-900">기본 정보</h2>
           {!editing && (
             <button
               onClick={() => setEditing(true)}
-              className="text-xs text-neutral-400 hover:text-white"
+              className="text-xs text-slate-500 hover:text-slate-900"
             >
               수정
             </button>
@@ -347,7 +347,7 @@ export default function CreatorDetail({
             error={error}
           />
         ) : (
-          <div className="divide-y divide-neutral-800">
+          <div className="divide-y divide-slate-200">
             <InfoRow label="채널">
               {PLATFORM_LABEL[creator.platform] ?? creator.platform}
             </InfoRow>
@@ -362,7 +362,7 @@ export default function CreatorDetail({
               {creator.contact ? (
                 <>
                   {creator.contactType && (
-                    <span className="mr-1.5 text-neutral-500">
+                    <span className="mr-1.5 text-slate-500">
                       {creator.contactType}
                     </span>
                   )}
@@ -386,7 +386,7 @@ export default function CreatorDetail({
                   href={creator.linkInBio}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-blue-400 underline underline-offset-4 hover:text-blue-300"
+                  className="text-blue-600 underline underline-offset-4 hover:text-blue-700"
                 >
                   {creator.linkInBio}
                 </a>
@@ -402,13 +402,13 @@ export default function CreatorDetail({
         )}
       </section>
 
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+      <section className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold text-white">공구 기록</h2>
+          <h2 className="font-semibold text-slate-900">공구 기록</h2>
           {!dealFormOpen && (
             <button
               onClick={openNewDeal}
-              className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-neutral-900 hover:bg-neutral-200"
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500"
             >
               ＋ 기록 추가
             </button>
@@ -416,7 +416,7 @@ export default function CreatorDetail({
         </div>
 
         {dealFormOpen && (
-          <div className="mb-4 rounded-lg border border-neutral-800 bg-neutral-950 p-4">
+          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <DealForm
               values={dealForm}
               products={products}
@@ -434,7 +434,7 @@ export default function CreatorDetail({
         )}
 
         {creator.deals.length === 0 ? (
-          <p className="py-6 text-center text-sm text-neutral-500">
+          <p className="py-6 text-center text-sm text-slate-500">
             아직 진행한 공구 기록이 없습니다.
           </p>
         ) : (
@@ -442,32 +442,32 @@ export default function CreatorDetail({
             {creator.deals.map((d) => (
               <li
                 key={d.id}
-                className="rounded-lg border border-neutral-800 bg-neutral-950 p-3"
+                className="rounded-lg border border-slate-200 bg-slate-50 p-3"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-semibold text-white">
+                  <span className="text-sm font-semibold text-slate-900">
                     {d.product?.name ?? d.productName ?? "상품 미지정"}
                   </span>
                   <span
                     className={`rounded px-1.5 py-0.5 text-[11px] ${
-                      DEAL_STATUS_CLASS[d.status] ?? "bg-neutral-800 text-neutral-300"
+                      DEAL_STATUS_CLASS[d.status] ?? "bg-slate-100 text-slate-600"
                     }`}
                   >
                     {DEAL_STATUS_LABEL[d.status] ?? d.status}
                   </span>
-                  <span className="ml-auto flex gap-2 text-[11px] text-neutral-500">
-                    <button onClick={() => openEditDeal(d)} className="hover:text-white">
+                  <span className="ml-auto flex gap-2 text-[11px] text-slate-500">
+                    <button onClick={() => openEditDeal(d)} className="hover:text-slate-900">
                       수정
                     </button>
                     <button
                       onClick={() => handleDeleteDeal(d.id)}
-                      className="hover:text-red-300"
+                      className="hover:text-red-700"
                     >
                       삭제
                     </button>
                   </span>
                 </div>
-                <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-400">
+                <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                   <span>
                     {formatDate(d.startDate)}
                     {d.endDate ? ` ~ ${formatDate(d.endDate)}` : ""}
@@ -479,7 +479,7 @@ export default function CreatorDetail({
                   {d.settlement !== null && <span>지급 {formatWon(d.settlement)}</span>}
                 </div>
                 {d.memo && (
-                  <p className="mt-1.5 whitespace-pre-wrap text-xs text-neutral-500">
+                  <p className="mt-1.5 whitespace-pre-wrap text-xs text-slate-500">
                     {d.memo}
                   </p>
                 )}
@@ -491,7 +491,7 @@ export default function CreatorDetail({
 
       <button
         onClick={handleDelete}
-        className="text-xs text-neutral-600 underline underline-offset-4 hover:text-red-400"
+        className="text-xs text-slate-400 underline underline-offset-4 hover:text-red-600"
       >
         이 크리에이터 삭제하기
       </button>

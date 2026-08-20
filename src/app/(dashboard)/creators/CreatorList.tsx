@@ -32,10 +32,10 @@ const SORT_LABEL: Record<SortKey, string> = {
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
-      <p className="text-xs text-neutral-500">{label}</p>
-      <p className="mt-1 text-xl font-bold text-white">{value}</p>
-      {sub && <p className="mt-0.5 text-[11px] text-neutral-500">{sub}</p>}
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-1 text-xl font-bold text-slate-900">{value}</p>
+      {sub && <p className="mt-0.5 text-[11px] text-slate-500">{sub}</p>}
     </div>
   );
 }
@@ -157,12 +157,12 @@ export default function CreatorList({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="이름 · 아이디 · 메모 검색"
-          className="min-w-48 flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-blue-500"
+          className="min-w-48 flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"
         />
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
-          className="rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+          className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
         >
           {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
             <option key={k} value={k}>
@@ -172,7 +172,7 @@ export default function CreatorList({
         </select>
         <button
           onClick={() => setAdding((v) => !v)}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-neutral-200"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
         >
           {adding ? "닫기" : "＋ 크리에이터 추가"}
         </button>
@@ -189,8 +189,8 @@ export default function CreatorList({
               onClick={() => setStatusFilter(s)}
               className={`rounded-full px-3 py-1.5 text-xs ${
                 active
-                  ? "bg-white font-semibold text-neutral-900"
-                  : "bg-neutral-900 text-neutral-400 hover:text-white"
+                  ? "bg-blue-600 font-semibold text-white"
+                  : "bg-white text-slate-500 hover:text-slate-900"
               }`}
             >
               {s === "ALL" ? "전체" : CREATOR_STATUS_LABEL[s]} {count}
@@ -200,8 +200,8 @@ export default function CreatorList({
       </div>
 
       {adding && (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
-          <h2 className="mb-4 font-semibold text-white">새 크리에이터 추가</h2>
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="mb-4 font-semibold text-slate-900">새 크리에이터 추가</h2>
           <ImportPanel
             autoHandle={autoHandle}
             autoPaste={autoPaste}
@@ -236,14 +236,14 @@ export default function CreatorList({
       )}
 
       {visible.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-neutral-800 px-6 py-14 text-center">
-          <p className="text-sm text-neutral-400">
+        <div className="rounded-xl border border-dashed border-slate-200 px-6 py-14 text-center">
+          <p className="text-sm text-slate-500">
             {creators.length === 0
               ? "아직 등록한 크리에이터가 없습니다."
               : "조건에 맞는 크리에이터가 없습니다."}
           </p>
           {creators.length === 0 && (
-            <p className="mt-1 text-xs text-neutral-600">
+            <p className="mt-1 text-xs text-slate-400">
               위 ＋ 크리에이터 추가 버튼으로 한 명씩 모아보세요.
             </p>
           )}
@@ -256,27 +256,27 @@ export default function CreatorList({
               <li key={c.id}>
                 <Link
                   href={`/creators/${c.id}`}
-                  className="block rounded-xl border border-neutral-800 bg-neutral-900 p-4 hover:border-neutral-600"
+                  className="block rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-400"
                 >
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="font-semibold text-white">{c.name}</span>
+                    <span className="font-semibold text-slate-900">{c.name}</span>
                     {c.handle && (
-                      <span className="text-xs text-neutral-500">@{c.handle}</span>
+                      <span className="text-xs text-slate-500">@{c.handle}</span>
                     )}
                     <span
                       className={`rounded px-1.5 py-0.5 text-[11px] ${
-                        CREATOR_STATUS_CLASS[c.status] ?? "bg-neutral-800 text-neutral-300"
+                        CREATOR_STATUS_CLASS[c.status] ?? "bg-slate-100 text-slate-600"
                       }`}
                     >
                       {CREATOR_STATUS_LABEL[c.status] ?? c.status}
                     </span>
                     {c.rating !== null && (
-                      <span className="text-[11px] text-amber-300">
+                      <span className="text-[11px] text-amber-700">
                         {"★".repeat(c.rating)}
                       </span>
                     )}
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-400">
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                     <span>{PLATFORM_LABEL[c.platform] ?? c.platform}</span>
                     <span>팔로워 {formatFollowers(c.followers)}</span>
                     {c.engagementRate !== null && (

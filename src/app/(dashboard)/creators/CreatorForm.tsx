@@ -99,8 +99,8 @@ export function creatorToForm(c: CreatorView): CreatorFormValues {
 }
 
 const inputClass =
-  "w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-blue-500";
-const labelClass = "mb-1 block text-xs text-neutral-400";
+  "w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500";
+const labelClass = "mb-1 block text-xs text-slate-500";
 
 function Field({
   label,
@@ -115,7 +115,7 @@ function Field({
     <div>
       <label className={labelClass}>
         {label}
-        {hint && <span className="ml-1.5 text-neutral-600">{hint}</span>}
+        {hint && <span className="ml-1.5 text-slate-400">{hint}</span>}
       </label>
       {children}
     </div>
@@ -240,14 +240,14 @@ export default function CreatorForm({
         <button
           type="button"
           onClick={() => setShowMore(true)}
-          className="text-xs text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
+          className="text-xs text-slate-500 underline underline-offset-4 hover:text-slate-700"
         >
           단가 · 수수료 · 메모 더 입력하기
         </button>
       )}
 
       {showMore && (
-        <div className="grid gap-3 border-t border-neutral-800 pt-4 sm:grid-cols-2">
+        <div className="grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2">
           <Field label="진행비" hint="1건당 지급액">
             <input
               className={inputClass}
@@ -336,7 +336,7 @@ export default function CreatorForm({
       )}
 
       {error && (
-        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300">
+        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-700">
           {error}
         </p>
       )}
@@ -345,7 +345,7 @@ export default function CreatorForm({
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-neutral-700 disabled:text-neutral-400"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
         >
           {saving ? "저장 중…" : submitLabel}
         </button>
@@ -353,7 +353,7 @@ export default function CreatorForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg px-3 py-2 text-sm text-neutral-400 hover:text-white"
+            className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:text-slate-900"
           >
             취소
           </button>

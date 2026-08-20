@@ -15,8 +15,8 @@ export default async function DashboardHomePage() {
   if (stats.accountsCount === 0) {
     return (
       <div>
-        <h1 className="mb-1 text-2xl font-bold text-white">대시보드</h1>
-        <p className="mb-6 text-sm text-neutral-400">
+        <h1 className="mb-1 text-2xl font-bold text-slate-900">대시보드</h1>
+        <p className="mb-6 text-sm text-slate-500">
           연결된 스레드 계정이 없습니다.
         </p>
         <Link
@@ -33,8 +33,8 @@ export default async function DashboardHomePage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">대시보드</h1>
-          <p className="mt-1 text-sm text-neutral-400">
+          <h1 className="text-2xl font-bold text-slate-900">대시보드</h1>
+          <p className="mt-1 text-sm text-slate-500">
             연결된 계정 {stats.accountsCount}개 · 전체 예약 {stats.totalScheduledCount}개
           </p>
         </div>
@@ -43,10 +43,10 @@ export default async function DashboardHomePage() {
 
       <DashboardHero accounts={stats.perAccount} />
 
-      <div className="mt-6 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-xs text-neutral-500">최근 7일 포스팅</p>
-          <p className="text-sm font-semibold text-neutral-300">
+          <p className="text-xs text-slate-500">최근 7일 포스팅</p>
+          <p className="text-sm font-semibold text-slate-600">
             {stats.last7DaysTotal.toLocaleString("ko-KR")}개
           </p>
         </div>

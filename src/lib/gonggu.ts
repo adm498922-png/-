@@ -23,13 +23,13 @@ export const CREATOR_STATUS_LABEL: Record<string, string> = {
 
 // 목록 상단 배지 색. 진행 단계가 뒤로 갈수록 진한 색이 되도록 잡았다.
 export const CREATOR_STATUS_CLASS: Record<string, string> = {
-  LEAD: "bg-neutral-800 text-neutral-300",
-  CONTACTED: "bg-sky-500/15 text-sky-300",
-  CONFIRMED: "bg-indigo-500/15 text-indigo-300",
-  ONGOING: "bg-amber-500/15 text-amber-300",
-  DONE: "bg-green-500/15 text-green-300",
-  HOLD: "bg-neutral-700 text-neutral-300",
-  REJECTED: "bg-red-500/10 text-red-300",
+  LEAD: "bg-slate-100 text-slate-600",
+  CONTACTED: "bg-sky-100 text-sky-700",
+  CONFIRMED: "bg-indigo-100 text-indigo-700",
+  ONGOING: "bg-amber-100 text-amber-800",
+  DONE: "bg-green-100 text-green-700",
+  HOLD: "bg-slate-200 text-slate-600",
+  REJECTED: "bg-red-100 text-red-700",
 };
 
 export const PLATFORMS = [
@@ -64,10 +64,10 @@ export const DEAL_STATUS_LABEL: Record<string, string> = {
 };
 
 export const DEAL_STATUS_CLASS: Record<string, string> = {
-  PLANNED: "bg-sky-500/15 text-sky-300",
-  ONGOING: "bg-amber-500/15 text-amber-300",
-  CLOSED: "bg-green-500/15 text-green-300",
-  CANCELED: "bg-neutral-800 text-neutral-400",
+  PLANNED: "bg-sky-100 text-sky-700",
+  ONGOING: "bg-amber-100 text-amber-800",
+  CLOSED: "bg-green-100 text-green-700",
+  CANCELED: "bg-slate-100 text-slate-500",
 };
 
 export function formatWon(value: number | null | undefined): string {
@@ -222,8 +222,8 @@ export function formatEngagement(value: number | null | undefined): string {
 
 // 참여율 색깔 기준 — 인스타 기준으로 3% 넘으면 좋은 편, 1% 아래면 낮은 편.
 export function engagementClass(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "text-neutral-400";
-  if (value >= 3) return "text-green-300";
-  if (value >= 1) return "text-amber-300";
-  return "text-neutral-400";
+  if (value === null || value === undefined) return "text-slate-500";
+  if (value >= 3) return "text-green-700";
+  if (value >= 1) return "text-amber-700";
+  return "text-slate-500";
 }

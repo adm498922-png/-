@@ -13,13 +13,13 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen w-full">
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-neutral-800 bg-neutral-900 p-4 sm:flex">
-        <div className="mb-6 px-2 text-lg font-bold text-white">
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-200 bg-white p-4 sm:flex">
+        <div className="mb-6 px-2 text-lg font-bold text-slate-900">
           {APP_TITLE[mode]}
         </div>
         <SidebarNav mode={mode} />
-        <div className="mt-auto space-y-2 border-t border-neutral-800 pt-4">
-          <p className="truncate px-2 text-xs text-neutral-500">
+        <div className="mt-auto space-y-2 border-t border-slate-200 pt-4">
+          <p className="truncate px-2 text-xs text-slate-500">
             {user.email}
           </p>
           <LogoutButton />

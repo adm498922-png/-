@@ -32,23 +32,23 @@ export default function SetupForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-xl border border-neutral-800 bg-neutral-900 p-6"
+      className="space-y-4 rounded-xl border border-slate-200 bg-white p-6"
     >
-      <p className="text-sm text-neutral-300">
+      <p className="text-sm text-slate-600">
         처음 실행하셨네요. 이 사이트를 보호할 관리자 계정을 먼저 만들어주세요.
       </p>
       <div>
-        <label className="mb-1 block text-xs text-neutral-400">이메일</label>
+        <label className="mb-1 block text-xs text-slate-500">이메일</label>
         <input
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-white outline-none focus:border-blue-500"
+          className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-blue-500"
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs text-neutral-400">
+        <label className="mb-1 block text-xs text-slate-500">
           비밀번호 (8자 이상)
         </label>
         <input
@@ -57,10 +57,10 @@ export default function SetupForm() {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-white outline-none focus:border-blue-500"
+          className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-blue-500"
         />
       </div>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"
         disabled={loading}

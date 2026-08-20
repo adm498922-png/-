@@ -49,8 +49,8 @@ export function dealToForm(d: DealView): DealFormValues {
 }
 
 const inputClass =
-  "w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-blue-500";
-const labelClass = "mb-1 block text-xs text-neutral-400";
+  "w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500";
+const labelClass = "mb-1 block text-xs text-slate-500";
 
 export default function DealForm({
   values,
@@ -102,7 +102,7 @@ export default function DealForm({
         {!values.productId && (
           <div>
             <label className={labelClass}>
-              상품명 <span className="ml-1 text-neutral-600">직접 입력</span>
+              상품명 <span className="ml-1 text-slate-400">직접 입력</span>
             </label>
             <input
               className={inputClass}
@@ -166,7 +166,7 @@ export default function DealForm({
         </div>
         <div>
           <label className={labelClass}>
-            크리에이터 지급액 <span className="ml-1 text-neutral-600">정산</span>
+            크리에이터 지급액 <span className="ml-1 text-slate-400">정산</span>
           </label>
           <input
             className={inputClass}
@@ -188,21 +188,21 @@ export default function DealForm({
       </div>
 
       {error && (
-        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300">{error}</p>
+        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-700">{error}</p>
       )}
 
       <div className="flex items-center gap-2">
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-neutral-700 disabled:text-neutral-400"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
         >
           {saving ? "저장 중…" : submitLabel}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg px-3 py-2 text-sm text-neutral-400 hover:text-white"
+          className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:text-slate-900"
         >
           취소
         </button>

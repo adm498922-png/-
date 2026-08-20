@@ -38,8 +38,8 @@ function toForm(p: ProductView): FormValues {
 }
 
 const inputClass =
-  "w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-blue-500";
-const labelClass = "mb-1 block text-xs text-neutral-400";
+  "w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500";
+const labelClass = "mb-1 block text-xs text-slate-500";
 
 export default function ProductList({
   initialProducts,
@@ -125,14 +125,14 @@ export default function ProductList({
       <div className="flex justify-end">
         <button
           onClick={() => (open ? setOpen(false) : openNew())}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-neutral-200"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
         >
           {open ? "닫기" : "＋ 상품 추가"}
         </button>
       </div>
 
       {notice && (
-        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
           {notice}
         </p>
       )}
@@ -143,15 +143,15 @@ export default function ProductList({
             e.preventDefault();
             handleSave();
           }}
-          className="space-y-3 rounded-xl border border-neutral-800 bg-neutral-900 p-5"
+          className="space-y-3 rounded-xl border border-slate-200 bg-white p-5"
         >
-          <h2 className="font-semibold text-white">
+          <h2 className="font-semibold text-slate-900">
             {editingId ? "상품 수정" : "새 상품 추가"}
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className={labelClass}>
-                상품명 <span className="ml-1 text-neutral-600">필수</span>
+                상품명 <span className="ml-1 text-slate-400">필수</span>
               </label>
               <input
                 className={inputClass}
@@ -191,7 +191,7 @@ export default function ProductList({
             </div>
             <div>
               <label className={labelClass}>
-                크리에이터 수수료 <span className="ml-1 text-neutral-600">%</span>
+                크리에이터 수수료 <span className="ml-1 text-slate-400">%</span>
               </label>
               <input
                 className={inputClass}
@@ -221,7 +221,7 @@ export default function ProductList({
             />
           </div>
           {error && (
-            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-700">
               {error}
             </p>
           )}
@@ -229,14 +229,14 @@ export default function ProductList({
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-neutral-700 disabled:text-neutral-400"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
             >
               {saving ? "저장 중…" : editingId ? "수정 저장" : "추가하기"}
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-lg px-3 py-2 text-sm text-neutral-400 hover:text-white"
+              className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:text-slate-900"
             >
               취소
             </button>
@@ -245,9 +245,9 @@ export default function ProductList({
       )}
 
       {products.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-neutral-800 px-6 py-14 text-center">
-          <p className="text-sm text-neutral-400">아직 등록한 상품이 없습니다.</p>
-          <p className="mt-1 text-xs text-neutral-600">
+        <div className="rounded-xl border border-dashed border-slate-200 px-6 py-14 text-center">
+          <p className="text-sm text-slate-500">아직 등록한 상품이 없습니다.</p>
+          <p className="mt-1 text-xs text-slate-400">
             공구 기록을 남길 때 여기 등록한 상품을 골라 쓸 수 있습니다.
           </p>
         </div>
@@ -256,38 +256,38 @@ export default function ProductList({
           {products.map((p) => (
             <li
               key={p.id}
-              className={`rounded-xl border border-neutral-800 bg-neutral-900 p-4 ${
+              className={`rounded-xl border border-slate-200 bg-white p-4 ${
                 p.isActive ? "" : "opacity-60"
               }`}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-white">{p.name}</span>
-                {p.brand && <span className="text-xs text-neutral-500">{p.brand}</span>}
+                <span className="font-semibold text-slate-900">{p.name}</span>
+                {p.brand && <span className="text-xs text-slate-500">{p.brand}</span>}
                 <span
                   className={`rounded px-1.5 py-0.5 text-[11px] ${
                     p.isActive
-                      ? "bg-green-500/15 text-green-300"
-                      : "bg-neutral-800 text-neutral-400"
+                      ? "bg-green-500/15 text-green-700"
+                      : "bg-slate-100 text-slate-500"
                   }`}
                 >
                   {p.isActive ? "공구 가능" : "판매 종료"}
                 </span>
-                <span className="ml-auto flex gap-2 text-[11px] text-neutral-500">
-                  <button onClick={() => openEdit(p)} className="hover:text-white">
+                <span className="ml-auto flex gap-2 text-[11px] text-slate-500">
+                  <button onClick={() => openEdit(p)} className="hover:text-slate-900">
                     수정
                   </button>
-                  <button onClick={() => toggleActive(p)} className="hover:text-white">
+                  <button onClick={() => toggleActive(p)} className="hover:text-slate-900">
                     {p.isActive ? "판매 종료" : "다시 열기"}
                   </button>
                   <button
                     onClick={() => handleDelete(p)}
-                    className="hover:text-red-300"
+                    className="hover:text-red-700"
                   >
                     삭제
                   </button>
                 </span>
               </div>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-400">
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                 <span>소비자가 {formatWon(p.retailPrice)}</span>
                 <span>공급가 {formatWon(p.supplyPrice)}</span>
                 <span>
@@ -296,7 +296,7 @@ export default function ProductList({
                 <span>진행 {p.deals?.length ?? 0}건</span>
               </div>
               {p.memo && (
-                <p className="mt-1.5 whitespace-pre-wrap text-xs text-neutral-500">
+                <p className="mt-1.5 whitespace-pre-wrap text-xs text-slate-500">
                   {p.memo}
                 </p>
               )}

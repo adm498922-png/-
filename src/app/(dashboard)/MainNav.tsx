@@ -104,7 +104,7 @@ export function SidebarNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
         return (
           <div key={item.href}>
             {isNewGroup && (
-              <p className="px-3 pt-3 pb-1 text-[11px] font-semibold text-neutral-600">
+              <p className="px-3 pt-3 pb-1 text-[11px] font-semibold text-slate-400">
                 {item.group}
               </p>
             )}
@@ -112,8 +112,8 @@ export function SidebarNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
             href={item.href}
             className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm ${
               active
-                ? "bg-neutral-800 text-white"
-                : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                ? "bg-blue-50 font-semibold text-blue-700"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
             <item.Icon active={active} />
@@ -129,7 +129,7 @@ export function SidebarNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
 export function BottomNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-neutral-800 bg-neutral-900 sm:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white sm:hidden">
       {itemsFor(mode).map((item) => {
         const active = isActive(pathname, item.href);
         return (
@@ -137,7 +137,7 @@ export function BottomNav({ mode }: { mode: "full" | "threads" | "gonggu" }) {
             key={item.href}
             href={item.href}
             className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
-              active ? "text-blue-400" : "text-neutral-500"
+              active ? "text-blue-600" : "text-slate-500"
             }`}
           >
             <item.Icon active={active} />

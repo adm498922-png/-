@@ -26,11 +26,11 @@ export default function InsightsRefreshButton() {
       <button
         onClick={handleClick}
         disabled={loading}
-        className="rounded-lg border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 hover:bg-neutral-800 disabled:opacity-50"
+        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-50"
       >
         {loading ? "확인 중..." : "조회수 새로고침"}
       </button>
-      {result && <span className="text-xs text-neutral-500">{result}</span>}
+      {result && <span className="text-xs text-slate-500">{result}</span>}
     </div>
   );
 }

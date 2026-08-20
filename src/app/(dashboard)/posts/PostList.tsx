@@ -63,10 +63,10 @@ const POST_STATUS_LABEL: Record<string, string> = {
 };
 
 function statusColor(status: string) {
-  if (status === "DONE" || status === "PUBLISHED") return "text-green-400";
-  if (status === "FAILED") return "text-red-400";
-  if (status === "PENDING") return "text-neutral-500";
-  return "text-amber-400";
+  if (status === "DONE" || status === "PUBLISHED") return "text-green-700";
+  if (status === "FAILED") return "text-red-600";
+  if (status === "PENDING") return "text-slate-500";
+  return "text-amber-700";
 }
 
 export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
@@ -146,7 +146,7 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
   }
 
   if (posts.length === 0) {
-    return <p className="text-sm text-neutral-500">아직 작성한 글이 없습니다.</p>;
+    return <p className="text-sm text-slate-500">아직 작성한 글이 없습니다.</p>;
   }
 
   return (
@@ -154,7 +154,7 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
       {posts.map((post) => (
         <div
           key={post.id}
-          className="rounded-xl border border-neutral-800 bg-neutral-900 p-4"
+          className="rounded-xl border border-slate-200 bg-white p-4"
         >
           {editingId === post.id ? (
             <div className="space-y-3">
@@ -162,40 +162,40 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                 value={editBody}
                 onChange={(e) => setEditBody(e.target.value)}
                 rows={4}
-                className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
               />
               <div>
-                <label className="mb-1 block text-xs text-neutral-500">
+                <label className="mb-1 block text-xs text-slate-500">
                   댓글 (선택)
                 </label>
                 <textarea
                   value={editCommentBody}
                   onChange={(e) => setEditCommentBody(e.target.value)}
                   rows={2}
-                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
                 />
               </div>
               {post.status === "SCHEDULED" && (
                 <div>
-                  <label className="mb-1 block text-xs text-neutral-500">
+                  <label className="mb-1 block text-xs text-slate-500">
                     예약 시간
                   </label>
                   <input
                     type="datetime-local"
                     value={editScheduledAt}
                     onChange={(e) => setEditScheduledAt(e.target.value)}
-                    className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-sm text-white outline-none focus:border-blue-500"
+                    className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-blue-500"
                   />
                 </div>
               )}
               {post.targets.length > 1 && (
                 <div className="space-y-2">
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-slate-500">
                     계정별 문구 (비워두면 위 본문 사용)
                   </p>
                   {post.targets.map((t) => (
                     <div key={t.id}>
-                      <label className="mb-1 block text-xs text-neutral-400">
+                      <label className="mb-1 block text-xs text-slate-500">
                         {t.threadsAccount.label}
                       </label>
                       <textarea
@@ -207,13 +207,13 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                           }))
                         }
                         rows={2}
-                        className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none focus:border-blue-500"
                       />
                     </div>
                   ))}
                 </div>
               )}
-              {editError && <p className="text-sm text-red-400">{editError}</p>}
+              {editError && <p className="text-sm text-red-600">{editError}</p>}
               <div className="flex gap-2">
                 <button
                   onClick={() => handleSaveEdit(post.id)}
@@ -225,7 +225,7 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                 <button
                   onClick={handleCancelEdit}
                   disabled={savingEdit}
-                  className="rounded-lg bg-neutral-800 px-3 py-1.5 text-xs text-neutral-200 hover:bg-neutral-700"
+                  className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-200"
                 >
                   취소
                 </button>
@@ -243,7 +243,7 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                       className="h-10 w-10 shrink-0 rounded-md object-cover"
                     />
                   )}
-                  <p className="whitespace-pre-wrap text-sm text-neutral-200">
+                  <p className="whitespace-pre-wrap text-sm text-slate-700">
                     {post.body}
                   </p>
                 </div>
@@ -256,7 +256,7 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                   <button
                     onClick={() => handlePublishNow(post.id)}
                     disabled={publishingId === post.id}
-                    className="rounded-lg bg-neutral-800 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-700 disabled:opacity-50"
+                    className="rounded-lg bg-slate-100 px-3 py-1 text-xs text-slate-700 hover:bg-slate-200 disabled:opacity-50"
                   >
                     {publishingId === post.id
                       ? "처리 중..."
@@ -269,14 +269,14 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                   <>
                     <button
                       onClick={() => handleStartEdit(post)}
-                      className="rounded-lg bg-neutral-800 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-700"
+                      className="rounded-lg bg-slate-100 px-3 py-1 text-xs text-slate-700 hover:bg-slate-200"
                     >
                       수정
                     </button>
                     <button
                       onClick={() => handleDelete(post.id)}
                       disabled={deletingId === post.id}
-                      className="rounded-lg bg-neutral-800 px-3 py-1 text-xs text-red-400 hover:bg-neutral-700 disabled:opacity-50"
+                      className="rounded-lg bg-slate-100 px-3 py-1 text-xs text-red-600 hover:bg-slate-200 disabled:opacity-50"
                     >
                       {deletingId === post.id ? "삭제 중..." : "삭제"}
                     </button>
@@ -298,7 +298,7 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
                         : undefined
                     }
                     className={`rounded-full border px-2 py-0.5 text-xs ${statusColor(t.status)} ${
-                      t.body || t.commentBody ? "border-purple-700" : "border-neutral-700"
+                      t.body || t.commentBody ? "border-purple-700" : "border-slate-300"
                     }`}
                   >
                     {t.threadsAccount.label}
@@ -310,7 +310,7 @@ export default function PostList({ initialPosts }: { initialPosts: Post[] }) {
               {post.targets
                 .filter((t) => t.errorMessage)
                 .map((t) => (
-                  <p key={t.id} className="mt-1 text-xs text-red-400">
+                  <p key={t.id} className="mt-1 text-xs text-red-600">
                     {t.threadsAccount.label}: {t.errorMessage}
                   </p>
                 ))}

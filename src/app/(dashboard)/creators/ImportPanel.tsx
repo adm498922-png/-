@@ -6,7 +6,7 @@ import type { CreatorFormValues } from "./CreatorForm";
 type Prefill = Partial<Record<keyof CreatorFormValues, string>>;
 
 const inputClass =
-  "w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-blue-500";
+  "w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500";
 
 export default function ImportPanel({
   onPrefill,
@@ -132,11 +132,11 @@ export default function ImportPanel({
   }, [autoHandle, autoPaste, instagramConfigured, handleLookup, handlePaste, onPrefill]);
 
   return (
-    <div className="mb-5 rounded-lg border border-neutral-800 bg-neutral-950 p-4">
-      <p className="mb-1 text-sm font-semibold text-white">
+    <div className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <p className="mb-1 text-sm font-semibold text-slate-900">
         인스타그램에서 정보 가져오기
       </p>
-      <p className="mb-3 text-xs text-neutral-500">
+      <p className="mb-3 text-xs text-slate-500">
         {instagramConfigured
           ? "아이디나 프로필 주소를 넣으면 이름 · 소개글 · 팔로워 수 · 참여율까지 아래 칸에 자동으로 채워집니다."
           : "아이디나 프로필 주소를 넣으면 아이디와 채널이 채워집니다. 이름 · 팔로워 수까지 자동으로 채우려면 아래 붙여넣기를 쓰거나, 연결 설정 화면에서 인스타그램을 연결하세요."}
@@ -159,35 +159,35 @@ export default function ImportPanel({
           type="button"
           onClick={() => handleLookup()}
           disabled={loading || !handle.trim()}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-neutral-700 disabled:text-neutral-400"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
         >
           {loading ? "가져오는 중…" : "가져오기"}
         </button>
       </div>
 
       {notice && (
-        <p className="mt-2 rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-300">
+        <p className="mt-2 rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-700">
           {notice}
         </p>
       )}
       {warn && (
-        <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
           {warn}
         </p>
       )}
 
-      <div className="mt-3 border-t border-neutral-800 pt-3">
+      <div className="mt-3 border-t border-slate-200 pt-3">
         {!pasteOpen ? (
           <button
             type="button"
             onClick={() => setPasteOpen(true)}
-            className="text-xs text-neutral-400 underline underline-offset-4 hover:text-neutral-200"
+            className="text-xs text-slate-500 underline underline-offset-4 hover:text-slate-700"
           >
             자동으로 안 될 때 — 프로필 화면 복사해서 붙여넣기
           </button>
         ) : (
           <div>
-            <p className="mb-1 text-xs text-neutral-400">
+            <p className="mb-1 text-xs text-slate-500">
               인스타 프로필 화면의 글자를 드래그해서 복사한 뒤 그대로 붙여넣으세요.
               이름 · 팔로워 수 · 소개글을 알아서 나눠 담습니다.
             </p>
@@ -202,14 +202,14 @@ export default function ImportPanel({
                 type="button"
                 onClick={() => handlePaste()}
                 disabled={pasteLoading || !pasteText.trim()}
-                className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-neutral-900 hover:bg-neutral-200 disabled:bg-neutral-700 disabled:text-neutral-400"
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
               >
                 {pasteLoading ? "읽는 중…" : "붙여넣은 내용 정리하기"}
               </button>
               <button
                 type="button"
                 onClick={() => setPasteOpen(false)}
-                className="text-xs text-neutral-500 hover:text-white"
+                className="text-xs text-slate-500 hover:text-slate-900"
               >
                 닫기
               </button>

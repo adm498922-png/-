@@ -43,9 +43,9 @@ export default function AccountRow({
   }
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/15 text-xs font-semibold text-blue-400">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/15 text-xs font-semibold text-blue-600">
           {index}
         </span>
         <div>
@@ -54,12 +54,12 @@ export default function AccountRow({
               <input
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-                className="rounded border border-neutral-700 bg-neutral-950 px-2 py-1 text-sm text-white outline-none"
+                className="rounded border border-slate-300 bg-slate-50 px-2 py-1 text-sm text-slate-900 outline-none"
               />
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="text-xs text-blue-400 hover:underline"
+                className="text-xs text-blue-600 hover:underline"
               >
                 저장
               </button>
@@ -68,7 +68,7 @@ export default function AccountRow({
                   setEditing(false);
                   setLabel(account.label);
                 }}
-                className="text-xs text-neutral-500 hover:underline"
+                className="text-xs text-slate-500 hover:underline"
               >
                 취소
               </button>
@@ -76,16 +76,16 @@ export default function AccountRow({
           ) : (
             <button
               onClick={() => setEditing(true)}
-              className="text-sm font-medium text-white hover:underline"
+              className="text-sm font-medium text-slate-900 hover:underline"
               title="이름 수정"
             >
               {account.label}
             </button>
           )}
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-slate-500">
             @{account.username ?? "unknown"}
             {account.isActive && daysLeft !== null && (
-              <span className={daysLeft < 7 ? "text-amber-400" : ""}>
+              <span className={daysLeft < 7 ? "text-amber-700" : ""}>
                 {" "}
                 · 토큰 만료 {daysLeft}일 남음
               </span>
@@ -93,7 +93,7 @@ export default function AccountRow({
           </p>
         </div>
         {!account.isActive && (
-          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-medium text-red-400">
+          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-medium text-red-600">
             재연결 필요
           </span>
         )}
@@ -102,14 +102,14 @@ export default function AccountRow({
         {!account.isActive && (
           <a
             href="/api/threads/oauth/start"
-            className="text-xs text-blue-400 hover:underline"
+            className="text-xs text-blue-600 hover:underline"
           >
             다시 연결하기
           </a>
         )}
         <button
           onClick={handleDelete}
-          className="text-xs text-neutral-500 hover:text-red-400"
+          className="text-xs text-slate-500 hover:text-red-600"
         >
           연결 해제
         </button>
