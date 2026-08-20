@@ -27,6 +27,16 @@ export type CreatorFormValues = {
   lastContactAt: string;
   tags: string;
   memo: string;
+  // 인스타에서 자동으로 불러온 값. 화면에서 직접 고치는 항목은 아니다.
+  bio: string;
+  linkInBio: string;
+  profileImageUrl: string;
+  igUserId: string;
+  postCount: string;
+  avgLikes: string;
+  avgComments: string;
+  engagementRate: string;
+  syncedAt: string;
 };
 
 export function emptyCreatorForm(): CreatorFormValues {
@@ -46,6 +56,15 @@ export function emptyCreatorForm(): CreatorFormValues {
     lastContactAt: "",
     tags: "",
     memo: "",
+    bio: "",
+    linkInBio: "",
+    profileImageUrl: "",
+    igUserId: "",
+    postCount: "",
+    avgLikes: "",
+    avgComments: "",
+    engagementRate: "",
+    syncedAt: "",
   };
 }
 
@@ -66,6 +85,16 @@ export function creatorToForm(c: CreatorView): CreatorFormValues {
     lastContactAt: toDateInput(c.lastContactAt),
     tags: c.tags ?? "",
     memo: c.memo ?? "",
+    bio: c.bio ?? "",
+    linkInBio: c.linkInBio ?? "",
+    profileImageUrl: c.profileImageUrl ?? "",
+    igUserId: c.igUserId ?? "",
+    postCount: c.postCount === null ? "" : String(c.postCount),
+    avgLikes: c.avgLikes === null ? "" : String(c.avgLikes),
+    avgComments: c.avgComments === null ? "" : String(c.avgComments),
+    engagementRate:
+      c.engagementRate === null ? "" : String(c.engagementRate),
+    syncedAt: c.syncedAt ? new Date(c.syncedAt).toISOString() : "",
   };
 }
 
@@ -259,6 +288,14 @@ export default function CreatorForm({
               onChange={(e) => set("lastContactAt")(e.target.value)}
             />
           </Field>
+          <Field label="프로필에 걸린 링크" hint="인포크링크 등 — 공구 일정이 여기 있습니다">
+            <input
+              className={inputClass}
+              value={values.linkInBio}
+              onChange={(e) => set("linkInBio")(e.target.value)}
+              placeholder="https://link.inpock.co.kr/…"
+            />
+          </Field>
           <Field label="프로필 링크">
             <input
               className={inputClass}
@@ -275,6 +312,16 @@ export default function CreatorForm({
               placeholder="반응좋음, 재진행희망"
             />
           </Field>
+          <div className="sm:col-span-2">
+            <Field label="소개글" hint="인스타 프로필 소개">
+              <textarea
+                className={`${inputClass} min-h-16 resize-y`}
+                value={values.bio}
+                onChange={(e) => set("bio")(e.target.value)}
+                placeholder="불러오기를 쓰면 자동으로 채워집니다"
+              />
+            </Field>
+          </div>
           <div className="sm:col-span-2">
             <Field label="메모">
               <textarea

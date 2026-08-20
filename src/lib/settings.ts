@@ -10,6 +10,8 @@ export type DecryptedSettings = {
   openaiApiKey: string | null;
   naverClientId: string | null;
   naverClientSecret: string | null;
+  igBusinessAccountId: string | null;
+  igAccessToken: string | null;
   autoDailyPostEnabled: boolean;
   autoDailyPostIncludeProducts: boolean;
 };
@@ -41,6 +43,8 @@ export async function getDecryptedSettings(): Promise<DecryptedSettings> {
     naverClientSecret: row.naverClientSecretEnc
       ? decrypt(row.naverClientSecretEnc)
       : null,
+    igBusinessAccountId: row.igBusinessAccountId,
+    igAccessToken: row.igAccessTokenEnc ? decrypt(row.igAccessTokenEnc) : null,
     autoDailyPostEnabled: row.autoDailyPostEnabled,
     autoDailyPostIncludeProducts: row.autoDailyPostIncludeProducts,
   };
@@ -55,6 +59,8 @@ export type SettingsStatus = {
   coupangAccessKeyPreview: string | null;
   naverConfigured: boolean;
   naverClientId: string | null;
+  instagramConfigured: boolean;
+  igBusinessAccountId: string | null;
   autoDailyPostEnabled: boolean;
   autoDailyPostIncludeProducts: boolean;
 };
@@ -74,6 +80,8 @@ export async function getSettingsStatus(): Promise<SettingsStatus> {
       : null,
     naverConfigured: Boolean(s.naverClientId && s.naverClientSecret),
     naverClientId: s.naverClientId,
+    instagramConfigured: Boolean(s.igBusinessAccountId && s.igAccessToken),
+    igBusinessAccountId: s.igBusinessAccountId,
     autoDailyPostEnabled: s.autoDailyPostEnabled,
     autoDailyPostIncludeProducts: s.autoDailyPostIncludeProducts,
   };
@@ -88,6 +96,8 @@ export async function updateSettings(input: {
   openaiApiKey?: string;
   naverClientId?: string;
   naverClientSecret?: string;
+  igBusinessAccountId?: string;
+  igAccessToken?: string;
   autoDailyPostEnabled?: boolean;
   autoDailyPostIncludeProducts?: boolean;
 }) {
@@ -101,6 +111,9 @@ export async function updateSettings(input: {
   if (input.openaiApiKey) data.openaiApiKeyEnc = encrypt(input.openaiApiKey);
   if (input.naverClientId !== undefined) data.naverClientId = input.naverClientId;
   if (input.naverClientSecret) data.naverClientSecretEnc = encrypt(input.naverClientSecret);
+  if (input.igBusinessAccountId !== undefined)
+    data.igBusinessAccountId = input.igBusinessAccountId;
+  if (input.igAccessToken) data.igAccessTokenEnc = encrypt(input.igAccessToken);
   if (input.autoDailyPostEnabled !== undefined)
     data.autoDailyPostEnabled = input.autoDailyPostEnabled;
   if (input.autoDailyPostIncludeProducts !== undefined)

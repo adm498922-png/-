@@ -56,6 +56,10 @@ export async function PATCH(
   assign("contact", data.contact);
   assign("tags", data.tags);
   assign("memo", data.memo);
+  assign("bio", data.bio);
+  assign("linkInBio", data.linkInBio);
+  assign("profileImageUrl", data.profileImageUrl);
+  assign("igUserId", data.igUserId);
   assign("platform", data.platform);
   assign("status", data.status);
   if ("followers" in input) patch.followers = data.followers;
@@ -63,6 +67,11 @@ export async function PATCH(
   if ("commissionRate" in input) patch.commissionRate = data.commissionRate;
   if ("rating" in input) patch.rating = data.rating;
   if (data.hasLastContactField) patch.lastContactAt = data.lastContactAt;
+  if ("postCount" in input) patch.postCount = data.postCount;
+  if ("avgLikes" in input) patch.avgLikes = data.avgLikes;
+  if ("avgComments" in input) patch.avgComments = data.avgComments;
+  if ("engagementRate" in input) patch.engagementRate = data.engagementRate;
+  if (data.hasSyncedAtField) patch.syncedAt = data.syncedAt;
 
   const creator = await prisma.creator.update({
     where: { id },

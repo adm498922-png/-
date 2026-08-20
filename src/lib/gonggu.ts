@@ -163,6 +163,15 @@ export type CreatorView = {
   tags: string | null;
   memo: string | null;
   lastContactAt: string | Date | null;
+  bio: string | null;
+  linkInBio: string | null;
+  profileImageUrl: string | null;
+  postCount: number | null;
+  avgLikes: number | null;
+  avgComments: number | null;
+  engagementRate: number | null;
+  igUserId: string | null;
+  syncedAt: string | Date | null;
   createdAt: string | Date;
   updatedAt: string | Date;
   deals: DealView[];
@@ -203,4 +212,18 @@ export function summarizeDeals(deals: DealView[]) {
     units,
     lastDealAt: lastDate ? new Date(lastDate) : null,
   };
+}
+
+// 참여율 표시. 공구에서는 팔로워 수보다 이 숫자가 실제 판매량에 더 가깝다.
+export function formatEngagement(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "-";
+  return `${value}%`;
+}
+
+// 참여율 색깔 기준 — 인스타 기준으로 3% 넘으면 좋은 편, 1% 아래면 낮은 편.
+export function engagementClass(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "text-neutral-400";
+  if (value >= 3) return "text-green-300";
+  if (value >= 1) return "text-amber-300";
+  return "text-neutral-400";
 }

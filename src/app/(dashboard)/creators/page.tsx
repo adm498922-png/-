@@ -1,14 +1,35 @@
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import CreatorList from "./CreatorList";
 import type { CreatorView } from "@/lib/gonggu";
 
 export const dynamic = "force-dynamic";
 
-export default async function CreatorsPage() {
-  const creators = await prisma.creator.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: { deals: true },
-  });
+export default async function CreatorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [creators, params, headerList] = await Promise.all([
+    prisma.creator.findMany({
+      orderBy: { updatedAt: "desc" },
+      include: { deals: true },
+    }),
+    searchParams,
+    headers(),
+  ]);
+
+  const one = (key: string) => {
+    const v = params[key];
+    return typeof v === "string" ? v : undefined;
+  };
+
+  // 즐겨찾기 버튼(북마클릿)이 쓸 이 사이트의 주소
+  const host = headerList.get("host") ?? "";
+  const proto =
+    headerList.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
+  const origin = host ? `${proto}://${host}` : "";
 
   return (
     <div className="max-w-4xl">
@@ -17,7 +38,13 @@ export default async function CreatorsPage() {
         공동구매를 함께할 크리에이터를 한곳에 모아두고, 어디까지 이야기가
         진행됐는지와 실제 성과를 기록합니다.
       </p>
-      <CreatorList initialCreators={creators as unknown as CreatorView[]} />
+      <CreatorList
+        initialCreators={creators as unknown as CreatorView[]}
+        origin={origin}
+        autoOpen={Boolean(one("add"))}
+        autoHandle={one("handle")}
+        autoPaste={one("paste")}
+      />
     </div>
   );
 }

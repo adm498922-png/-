@@ -25,6 +25,14 @@ export function normalizeCreatorInput(input: Record<string, unknown>) {
   const feeKrw = parseNumber(input.feeKrw);
   const commissionRate = parseNumber(input.commissionRate);
   const rating = parseNumber(input.rating);
+  const postCount = parseNumber(input.postCount);
+  const avgLikes = parseNumber(input.avgLikes);
+  const avgComments = parseNumber(input.avgComments);
+  const engagementRate = parseNumber(input.engagementRate);
+  const synced =
+    typeof input.syncedAt === "string" && input.syncedAt.trim()
+      ? new Date(input.syncedAt)
+      : null;
   const lastContact =
     typeof input.lastContactAt === "string" && input.lastContactAt.trim()
       ? new Date(input.lastContactAt)
@@ -39,6 +47,10 @@ export function normalizeCreatorInput(input: Record<string, unknown>) {
     contact: text("contact"),
     tags: text("tags"),
     memo: text("memo"),
+    bio: text("bio"),
+    linkInBio: text("linkInBio"),
+    profileImageUrl: text("profileImageUrl"),
+    igUserId: text("igUserId"),
     platform,
     status,
     followers: followers === null ? null : Math.round(followers),
@@ -48,5 +60,11 @@ export function normalizeCreatorInput(input: Record<string, unknown>) {
     lastContactAt:
       lastContact && !Number.isNaN(lastContact.getTime()) ? lastContact : null,
     hasLastContactField: typeof input.lastContactAt === "string",
+    postCount: postCount === null ? null : Math.round(postCount),
+    avgLikes: avgLikes === null ? null : Math.round(avgLikes),
+    avgComments: avgComments === null ? null : Math.round(avgComments),
+    engagementRate,
+    syncedAt: synced && !Number.isNaN(synced.getTime()) ? synced : null,
+    hasSyncedAtField: typeof input.syncedAt === "string",
   };
 }

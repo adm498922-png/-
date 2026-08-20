@@ -19,7 +19,9 @@ import {
   DEAL_STATUS_CLASS,
   DEAL_STATUS_LABEL,
   PLATFORM_LABEL,
+  engagementClass,
   formatDate,
+  formatEngagement,
   formatFollowers,
   formatWon,
   summarizeDeals,
@@ -59,6 +61,10 @@ export default function CreatorDetail({
   const [dealSaving, setDealSaving] = useState(false);
   const [dealError, setDealError] = useState<string | null>(null);
 
+  const [syncing, setSyncing] = useState(false);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const [syncWarn, setSyncWarn] = useState<string | null>(null);
+
   const summary = summarizeDeals(creator.deals);
 
   async function patchCreator(patch: Record<string, unknown>) {
@@ -83,6 +89,24 @@ export default function CreatorDetail({
   async function handleSaveInfo() {
     const ok = await patchCreator(form);
     if (ok) setEditing(false);
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncNotice(null);
+    setSyncWarn(null);
+    const res = await fetch(`/api/creators/${creator.id}/sync`, {
+      method: "POST",
+    });
+    const data = await res.json().catch(() => null);
+    setSyncing(false);
+    if (!res.ok || !data?.ok) {
+      setSyncWarn(data?.error ?? "새로고침하지 못했습니다.");
+      return;
+    }
+    setCreator(data.creator);
+    setForm(creatorToForm(data.creator));
+    setSyncNotice("인스타그램에서 최신 정보를 다시 가져왔습니다.");
   }
 
   async function handleDelete() {
@@ -153,22 +177,62 @@ export default function CreatorDetail({
         <Link href="/creators" className="text-xs text-neutral-500 hover:text-white">
           ← 크리에이터 목록
         </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold text-white">{creator.name}</h1>
-          {creator.handle && (
-            <span className="text-sm text-neutral-500">@{creator.handle}</span>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          {creator.profileImageUrl && (
+            /* 인스타에서 준 주소를 그대로 쓰므로 next/image 최적화 대상이 아니다 */
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={creator.profileImageUrl}
+              alt=""
+              className="h-12 w-12 rounded-full object-cover"
+            />
           )}
-          {creator.profileUrl && (
-            <a
-              href={creator.profileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-blue-400 underline underline-offset-4 hover:text-blue-300"
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold text-white">{creator.name}</h1>
+            {creator.handle && (
+              <span className="text-sm text-neutral-500">@{creator.handle}</span>
+            )}
+            {creator.profileUrl && (
+              <a
+                href={creator.profileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-blue-400 underline underline-offset-4 hover:text-blue-300"
+              >
+                채널 열기
+              </a>
+            )}
+          </div>
+          {creator.platform === "INSTAGRAM" && creator.handle && (
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="ml-auto rounded-lg border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 hover:text-white disabled:opacity-60"
             >
-              채널 열기
-            </a>
+              {syncing ? "새로고침 중…" : "↻ 인스타 정보 새로고침"}
+            </button>
           )}
         </div>
+        {creator.bio && (
+          <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-400">
+            {creator.bio}
+          </p>
+        )}
+        {creator.syncedAt && (
+          <p className="mt-1 text-[11px] text-neutral-600">
+            인스타 정보 기준 {formatDate(creator.syncedAt)}
+          </p>
+        )}
+        {syncNotice && (
+          <p className="mt-2 rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-300">
+            {syncNotice}
+          </p>
+        )}
+        {syncWarn && (
+          <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+            {syncWarn}
+          </p>
+        )}
       </div>
 
       <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
@@ -193,6 +257,46 @@ export default function CreatorDetail({
           })}
         </div>
       </section>
+
+      {(creator.engagementRate !== null || creator.avgLikes !== null) && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+            <p className="text-xs text-neutral-500">팔로워</p>
+            <p className="mt-1 text-lg font-bold text-white">
+              {formatFollowers(creator.followers)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+            <p className="text-xs text-neutral-500">참여율</p>
+            <p
+              className={`mt-1 text-lg font-bold ${engagementClass(
+                creator.engagementRate
+              )}`}
+            >
+              {formatEngagement(creator.engagementRate)}
+            </p>
+            <p className="mt-0.5 text-[11px] text-neutral-600">
+              3% 이상이면 좋은 편
+            </p>
+          </div>
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+            <p className="text-xs text-neutral-500">평균 좋아요</p>
+            <p className="mt-1 text-lg font-bold text-white">
+              {creator.avgLikes === null
+                ? "-"
+                : creator.avgLikes.toLocaleString("ko-KR")}
+            </p>
+          </div>
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+            <p className="text-xs text-neutral-500">평균 댓글</p>
+            <p className="mt-1 text-lg font-bold text-white">
+              {creator.avgComments === null
+                ? "-"
+                : creator.avgComments.toLocaleString("ko-KR")}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
@@ -244,6 +348,11 @@ export default function CreatorDetail({
               {PLATFORM_LABEL[creator.platform] ?? creator.platform}
             </InfoRow>
             <InfoRow label="팔로워">{formatFollowers(creator.followers)}</InfoRow>
+            <InfoRow label="게시물 수">
+              {creator.postCount === null
+                ? "-"
+                : creator.postCount.toLocaleString("ko-KR") + "개"}
+            </InfoRow>
             <InfoRow label="분야">{creator.category ?? "-"}</InfoRow>
             <InfoRow label="연락처">
               {creator.contact ? (
@@ -267,6 +376,20 @@ export default function CreatorDetail({
               {creator.rating === null ? "-" : "★".repeat(creator.rating)}
             </InfoRow>
             <InfoRow label="마지막 연락">{formatDate(creator.lastContactAt)}</InfoRow>
+            <InfoRow label="프로필 링크">
+              {creator.linkInBio ? (
+                <a
+                  href={creator.linkInBio}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-400 underline underline-offset-4 hover:text-blue-300"
+                >
+                  {creator.linkInBio}
+                </a>
+              ) : (
+                "-"
+              )}
+            </InfoRow>
             <InfoRow label="태그">{creator.tags ?? "-"}</InfoRow>
             <InfoRow label="메모">
               <span className="whitespace-pre-wrap">{creator.memo ?? "-"}</span>

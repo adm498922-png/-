@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CreatorForm, {
   emptyCreatorForm,
   type CreatorFormValues,
 } from "./CreatorForm";
+import ImportPanel from "./ImportPanel";
+import BookmarkletBox from "./BookmarkletBox";
 import {
   CREATOR_STATUSES,
   CREATOR_STATUS_CLASS,
   CREATOR_STATUS_LABEL,
   PLATFORM_LABEL,
   formatDate,
+  formatEngagement,
   formatFollowers,
   formatWon,
   summarizeDeals,
@@ -39,17 +42,31 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 
 export default function CreatorList({
   initialCreators,
+  origin,
+  autoOpen,
+  autoHandle,
+  autoPaste,
 }: {
   initialCreators: CreatorView[];
+  origin: string;
+  /** 즐겨찾기 버튼(북마클릿)으로 넘어왔는지 */
+  autoOpen?: boolean;
+  autoHandle?: string;
+  autoPaste?: string;
 }) {
   const [creators, setCreators] = useState(initialCreators);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [sort, setSort] = useState<SortKey>("recent");
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(Boolean(autoOpen));
   const [form, setForm] = useState<CreatorFormValues>(emptyCreatorForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 새로고침해도 같은 값이 다시 실행되지 않게 주소창만 깔끔히 되돌린다.
+  useEffect(() => {
+    if (!autoOpen) return;
+    window.history.replaceState(null, "", "/creators");
+  }, [autoOpen]);
 
   const stats = useMemo(() => {
     const byStatus: Record<string, number> = {};
@@ -177,6 +194,23 @@ export default function CreatorList({
       {adding && (
         <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
           <h2 className="mb-4 font-semibold text-white">새 크리에이터 추가</h2>
+          <ImportPanel
+            autoHandle={autoHandle}
+            autoPaste={autoPaste}
+            onPrefill={(prefill) =>
+              setForm((prev) => {
+                const next = { ...prev };
+                // 가져온 값 중 내용이 있는 것만 덮어쓴다.
+                for (const [key, value] of Object.entries(prefill)) {
+                  if (value) next[key as keyof CreatorFormValues] = value;
+                }
+                return next;
+              })
+            }
+          />
+          <div className="mb-5">
+            <BookmarkletBox origin={origin} />
+          </div>
           <CreatorForm
             values={form}
             onChange={setForm}
@@ -236,6 +270,9 @@ export default function CreatorList({
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-400">
                     <span>{PLATFORM_LABEL[c.platform] ?? c.platform}</span>
                     <span>팔로워 {formatFollowers(c.followers)}</span>
+                    {c.engagementRate !== null && (
+                      <span>참여율 {formatEngagement(c.engagementRate)}</span>
+                    )}
                     {c.category && <span>{c.category}</span>}
                     <span>
                       공구 {s.count}건 · 매출 {formatWon(s.revenue)}

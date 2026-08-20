@@ -24,6 +24,9 @@ model Settings {
   openaiApiKeyEnc     String?
   naverClientId       String?
   naverClientSecretEnc String?
+  // 인스타그램 프로필 자동 불러오기(Business Discovery)용
+  igBusinessAccountId String?
+  igAccessTokenEnc    String?
   autoDailyPostEnabled Boolean @default(false)
   autoDailyPostIncludeProducts Boolean @default(false)
   updatedAt           DateTime @updatedAt
@@ -155,6 +158,18 @@ model Creator {
   tags           String? // 쉼표로 구분
   memo           String?
   lastContactAt  DateTime?
+
+  // 인스타그램에서 자동으로 불러온 정보
+  bio            String? // 프로필 소개글
+  linkInBio      String? // 프로필에 걸어둔 링크 (인포크링크·링크트리 등 — 공구 일정이 여기 있다)
+  profileImageUrl String?
+  postCount      Int?
+  avgLikes       Int? // 최근 게시물 평균 좋아요
+  avgComments    Int? // 최근 게시물 평균 댓글
+  engagementRate Float? // 참여율 %  (평균 반응 ÷ 팔로워 × 100)
+  igUserId       String?
+  syncedAt       DateTime? // 마지막으로 불러온 시각
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

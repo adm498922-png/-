@@ -17,6 +17,8 @@ export async function POST(req: NextRequest) {
     openaiApiKey: body.openaiApiKey || undefined,
     naverClientId: body.naverClientId,
     naverClientSecret: body.naverClientSecret || undefined,
+    igBusinessAccountId: body.igBusinessAccountId,
+    igAccessToken: body.igAccessToken || undefined,
     autoDailyPostEnabled:
       typeof body.autoDailyPostEnabled === "boolean"
         ? body.autoDailyPostEnabled

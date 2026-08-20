@@ -32,6 +32,10 @@ export default function SettingsForm({
     status.threadsRedirectUri ?? suggestedRedirectUri
   );
   const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [igBusinessAccountId, setIgBusinessAccountId] = useState(
+    status.igBusinessAccountId ?? ""
+  );
+  const [igAccessToken, setIgAccessToken] = useState("");
   const [autoDailyPostEnabled, setAutoDailyPostEnabled] = useState(
     status.autoDailyPostEnabled
   );
@@ -78,6 +82,8 @@ export default function SettingsForm({
         threadsAppSecret,
         threadsRedirectUri,
         openaiApiKey,
+        igBusinessAccountId,
+        igAccessToken,
         autoDailyPostEnabled,
         autoDailyPostIncludeProducts,
       }),
@@ -93,6 +99,7 @@ export default function SettingsForm({
     setCoupangSecretKey("");
     setThreadsAppSecret("");
     setOpenaiApiKey("");
+    setIgAccessToken("");
     setMessage("저장되었습니다.");
   }
 
@@ -222,6 +229,57 @@ export default function SettingsForm({
             }
             className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
           />
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="font-semibold text-white">
+            인스타그램 프로필 자동 불러오기
+          </h2>
+          <StatusBadge ok={current.instagramConfigured} />
+        </div>
+        <p className="mb-4 text-xs text-neutral-500">
+          연결하면 &quot;공동구매 › 크리에이터&quot; 화면에서 인스타 아이디만
+          넣어도 이름 · 소개글 · 팔로워 수 · 최근 게시물 반응(참여율)이 자동으로
+          채워집니다. 선택 사항 — 연결하지 않아도 프로필 화면을 복사해
+          붙여넣는 방법으로 쓸 수 있습니다.
+        </p>
+        <p className="mb-4 rounded-lg bg-neutral-950 px-3 py-2 text-xs text-neutral-500">
+          연결하려면 <strong className="text-neutral-300">내 인스타 계정이
+          프로페셔널(비즈니스·크리에이터) 계정</strong>이어야 하고, 페이스북
+          페이지와 연결되어 있어야 합니다. 상대방도 프로페셔널 계정일 때만
+          정보를 가져올 수 있습니다(개인 계정은 인스타그램이 아예 내주지
+          않습니다). 값을 어디서 받는지는 대화창에서 한 단계씩 알려드릴게요.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs text-neutral-400">
+              인스타그램 비즈니스 계정 ID
+            </label>
+            <input
+              value={igBusinessAccountId}
+              onChange={(e) => setIgBusinessAccountId(e.target.value)}
+              placeholder="17841400000000000"
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-neutral-400">
+              액세스 토큰
+            </label>
+            <input
+              type="password"
+              value={igAccessToken}
+              onChange={(e) => setIgAccessToken(e.target.value)}
+              placeholder={
+                current.instagramConfigured
+                  ? "저장되어 있음 (변경하려면 입력)"
+                  : "EAAG..."
+              }
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+            />
+          </div>
         </div>
       </section>
 
