@@ -11,6 +11,8 @@ type Item = {
   endDate?: string;
   done?: boolean;
   href?: string;
+  memo?: string;
+  editable?: boolean;
   colorClass: string;
   barClass: string;
 };
@@ -114,7 +116,16 @@ export default function CalendarPage() {
   const [kind, setKind] = useState<"EVENT" | "TODO">("EVENT");
   const [title, setTitle] = useState("");
   const [memo, setMemo] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editKind, setEditKind] = useState<"event" | "todo">("event");
+  const [editTitle, setEditTitle] = useState("");
+  const [editMemo, setEditMemo] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   const gridStart = useMemo(() => {
     const start = new Date(cursor);
@@ -154,6 +165,16 @@ export default function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursor]);
 
+  async function refreshItems() {
+    const from = days[0];
+    const to = days[days.length - 1];
+    const res = await fetch(
+      `/api/calendar/combined?from=${from.toISOString()}&to=${to.toISOString()}`
+    );
+    const data = await res.json().catch(() => null);
+    if (Array.isArray(data)) setItems(data);
+  }
+
   // 기간이 있는 일정(여러 날에 걸친 것)은 막대로, 하루짜리는 칸 안에 작은 항목으로 나눠서 그린다.
   const rangedItems = useMemo(() => items.filter(isRanged), [items]);
   const pointItems = useMemo(() => items.filter((it) => !isRanged(it)), [items]);
@@ -187,6 +208,7 @@ export default function CalendarPage() {
   async function deleteItem(item: Item) {
     if (!confirm(`'${item.title}' 항목을 지울까요?`)) return;
     setItems((prev) => prev.filter((i) => i.id !== item.id));
+    if (editingId === item.id) setEditingId(null);
     await fetch(`/api/calendar/events/${item.id}`, { method: "DELETE" });
   }
 
@@ -196,27 +218,55 @@ export default function CalendarPage() {
     const res = await fetch("/api/calendar/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, kind, date: selected, memo }),
+      body: JSON.stringify({
+        title,
+        kind,
+        date: selected,
+        memo,
+        endDate: endDate || null,
+      }),
     });
     setSaving(false);
     if (!res.ok) return;
-    const created = await res.json();
-    setItems((prev) => [
-      ...prev,
-      {
-        id: created.id,
-        source: kind === "TODO" ? "todo" : "event",
-        title: created.title,
-        date: created.date,
-        done: created.done,
-        colorClass:
-          kind === "TODO" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-700",
-        barClass: kind === "TODO" ? "bg-amber-500" : "bg-blue-600",
-      },
-    ]);
     setTitle("");
     setMemo("");
+    setEndDate("");
     setFormOpen(false);
+    await refreshItems();
+  }
+
+  function openEdit(item: Item) {
+    if (!item.editable) return; // 공구 기록에서 자동으로 뽑힌 항목은 판매일보에서 고친다
+    setFormOpen(false);
+    setEditingId(item.id);
+    setEditKind(item.source === "todo" ? "todo" : "event");
+    setEditTitle(item.title);
+    setEditMemo(item.memo ?? "");
+    setEditDate(toKey(new Date(item.date)));
+    setEditEndDate(item.endDate ? toKey(new Date(item.endDate)) : "");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit() {
+    if (!editingId || !editTitle.trim()) return;
+    setEditSaving(true);
+    const res = await fetch(`/api/calendar/events/${editingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: editTitle,
+        memo: editMemo,
+        date: editDate,
+        endDate: editEndDate || null,
+      }),
+    });
+    setEditSaving(false);
+    if (!res.ok) return;
+    setEditingId(null);
+    await refreshItems();
   }
 
   const today = toKey(new Date());
@@ -340,25 +390,51 @@ export default function CalendarPage() {
                     })}
 
                     {lanes.map((lane, li) =>
-                      lane.map((bar) => (
-                        <div
-                          key={bar.item.id}
-                          style={{
-                            gridColumn: `${bar.colStart + 1} / span ${bar.span}`,
-                            gridRow: li + 2,
-                          }}
-                          title={bar.item.title}
-                          className={`pointer-events-none mx-px flex items-center truncate px-1.5 text-[11px] font-medium text-white ${
-                            bar.item.barClass
-                          } ${bar.continuesFromPrev ? "" : "rounded-l"} ${
-                            bar.continuesToNext ? "" : "rounded-r"
-                          } ${bar.item.done ? "line-through opacity-60" : ""}`}
-                        >
-                          {bar.continuesFromPrev ? "◂ " : ""}
-                          {bar.item.title}
-                          {bar.continuesToNext ? " ▸" : ""}
-                        </div>
-                      ))
+                      lane.map((bar) => {
+                        const barClassName = `mx-px flex items-center truncate px-1.5 text-[11px] font-medium text-white ${
+                          bar.item.barClass
+                        } ${bar.continuesFromPrev ? "" : "rounded-l"} ${
+                          bar.continuesToNext ? "" : "rounded-r"
+                        } ${bar.item.done ? "line-through opacity-60" : ""} ${
+                          bar.item.editable || bar.item.href ? "cursor-pointer hover:opacity-90" : ""
+                        }`;
+                        const style = {
+                          gridColumn: `${bar.colStart + 1} / span ${bar.span}`,
+                          gridRow: li + 2,
+                        };
+                        const label = (
+                          <>
+                            {bar.continuesFromPrev ? "◂ " : ""}
+                            {bar.item.title}
+                            {bar.continuesToNext ? " ▸" : ""}
+                          </>
+                        );
+                        if (bar.item.href) {
+                          return (
+                            <Link
+                              key={bar.item.id}
+                              href={bar.item.href}
+                              style={style}
+                              title={bar.item.title}
+                              className={barClassName}
+                            >
+                              {label}
+                            </Link>
+                          );
+                        }
+                        return (
+                          <button
+                            key={bar.item.id}
+                            type="button"
+                            onClick={() => openEdit(bar.item)}
+                            style={style}
+                            title={bar.item.editable ? `${bar.item.title} (눌러서 수정)` : bar.item.title}
+                            className={barClassName}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })
                     )}
 
                     {week.map((d, di) => {
@@ -370,16 +446,37 @@ export default function CalendarPage() {
                           style={{ gridColumn: di + 1, gridRow: lanes.length + 2 }}
                           className="pointer-events-none space-y-1 px-2 pb-2 pt-1"
                         >
-                          {list.slice(0, 4).map((it) => (
-                            <div
-                              key={it.id}
-                              className={`truncate rounded px-1.5 py-1 text-xs ${it.colorClass} ${
-                                it.done ? "line-through opacity-60" : ""
-                              }`}
-                            >
-                              {it.title}
-                            </div>
-                          ))}
+                          {list.slice(0, 4).map((it) => {
+                            const chipClass = `block w-full truncate rounded px-1.5 py-1 text-left text-xs ${
+                              it.colorClass
+                            } ${it.done ? "line-through opacity-60" : ""} ${
+                              it.editable || it.href ? "pointer-events-auto cursor-pointer hover:opacity-80" : ""
+                            }`;
+                            if (it.href) {
+                              return (
+                                <Link key={it.id} href={it.href} className={chipClass}>
+                                  {it.title}
+                                </Link>
+                              );
+                            }
+                            if (it.editable) {
+                              return (
+                                <button
+                                  key={it.id}
+                                  type="button"
+                                  onClick={() => openEdit(it)}
+                                  className={chipClass}
+                                >
+                                  {it.title}
+                                </button>
+                              );
+                            }
+                            return (
+                              <div key={it.id} className={chipClass}>
+                                {it.title}
+                              </div>
+                            );
+                          })}
                           {list.length > 4 && (
                             <div className="text-[11px] text-slate-400">
                               +{list.length - 4}개 더
@@ -399,7 +496,10 @@ export default function CalendarPage() {
                 {selected.replaceAll("-", ". ")}
               </h3>
               <button
-                onClick={() => setFormOpen((v) => !v)}
+                onClick={() => {
+                  setEditingId(null);
+                  setFormOpen((v) => !v);
+                }}
                 className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900"
               >
                 {formOpen ? "닫기" : "＋ 추가"}
@@ -431,6 +531,20 @@ export default function CalendarPage() {
                   placeholder={kind === "EVENT" ? "예: 사라님 미팅" : "예: 정산 처리하기"}
                   onKeyDown={(e) => e.key === "Enter" && submit()}
                 />
+                {kind === "EVENT" && (
+                  <div>
+                    <label className="mb-1 block text-[11px] text-slate-500">
+                      종료일 (여러 날에 걸치면)
+                    </label>
+                    <input
+                      type="date"
+                      className={inputClass}
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={selected}
+                    />
+                  </div>
+                )}
                 <input
                   className={inputClass}
                   value={memo}
@@ -443,6 +557,66 @@ export default function CalendarPage() {
                   className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
                 >
                   {saving ? "저장 중…" : "저장"}
+                </button>
+              </div>
+            )}
+
+            {editingId && (
+              <div className="mb-3 space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-blue-700">
+                    {editKind === "todo" ? "할일" : "일정"} 수정
+                  </span>
+                  <button
+                    onClick={cancelEdit}
+                    className="text-xs text-slate-500 hover:text-slate-900"
+                  >
+                    취소
+                  </button>
+                </div>
+                <input
+                  className={inputClass}
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="mb-1 block text-[11px] text-slate-500">시작일</label>
+                    <input
+                      type="date"
+                      className={inputClass}
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                    />
+                  </div>
+                  {editKind === "event" && (
+                    <div>
+                      <label className="mb-1 block text-[11px] text-slate-500">
+                        종료일 (선택)
+                      </label>
+                      <input
+                        type="date"
+                        className={inputClass}
+                        value={editEndDate}
+                        onChange={(e) => setEditEndDate(e.target.value)}
+                        min={editDate}
+                      />
+                    </div>
+                  )}
+                </div>
+                <input
+                  className={inputClass}
+                  value={editMemo}
+                  onChange={(e) => setEditMemo(e.target.value)}
+                  placeholder="메모 (선택)"
+                />
+                <button
+                  onClick={saveEdit}
+                  disabled={editSaving || !editTitle.trim()}
+                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
+                >
+                  {editSaving ? "저장 중…" : "수정 저장"}
                 </button>
               </div>
             )}
@@ -487,6 +661,14 @@ export default function CalendarPage() {
                       >
                         {it.title}
                       </span>
+                    )}
+                    {it.editable && (
+                      <button
+                        onClick={() => openEdit(it)}
+                        className="text-xs text-slate-400 hover:text-blue-600"
+                      >
+                        수정
+                      </button>
                     )}
                     {it.source !== "deal" && (
                       <button

@@ -27,6 +27,8 @@ type CalItem = {
   endDate?: string;
   done?: boolean;
   href?: string;
+  memo?: string;
+  editable?: boolean; // 직접 수정 가능한 항목인지 (공구 기록에서 자동으로 뽑힌 건 여기서 못 고침)
   colorClass: string; // 하루짜리 항목 칩 색
   barClass: string; // 여러 날 막대 색
 };
@@ -96,6 +98,8 @@ export async function GET(req: NextRequest) {
       date: e.date.toISOString(),
       endDate: sameDay ? undefined : e.endDate!.toISOString(),
       done: e.done,
+      memo: e.memo ?? undefined,
+      editable: true,
       colorClass: colorKey
         ? CREATOR_COLOR_CHIP[colorKey]
         : DEFAULT_CHIP[e.kind === "TODO" ? "todo" : "event"],
