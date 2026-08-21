@@ -180,6 +180,7 @@ model Creator {
   updatedAt      DateTime      @updatedAt
 
   deals          Deal[]
+  calendarEvents CalendarEvent[]
 
   @@index([status])
 }
@@ -241,4 +242,29 @@ model Deal {
   updatedAt   DateTime   @updatedAt
 
   @@index([creatorId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 일정 · 할일
+// ─────────────────────────────────────────────────────────────
+
+enum CalendarEventKind {
+  EVENT // 일정
+  TODO  // 할일
+}
+
+model CalendarEvent {
+  id         String            @id @default(cuid())
+  kind       CalendarEventKind @default(EVENT)
+  title      String
+  date       DateTime // 시작일(할일이면 마감일로 씀)
+  endDate    DateTime? // 여러 날짜에 걸친 일정일 때
+  done       Boolean           @default(false) // 할일 완료 여부
+  memo       String?
+  creatorId  String? // 특정 크리에이터와 관련된 일정이면 연결
+  creator    Creator?          @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([date])
 }

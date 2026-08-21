@@ -61,12 +61,34 @@ function ProductsIcon({ active }: { active: boolean }) {
   );
 }
 
+function LedgerIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+      <rect x="4" y="3.5" width="16" height="17" rx="2" />
+      <path d="M8 8.5h8M8 12h8M8 15.5h5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CalendarIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M4 9.5h16M8 3.5v3M16 3.5v3" strokeLinecap="round" />
+      <circle cx="9" cy="13.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="13.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 const NAV_ITEMS = [
   { href: "/", label: "대시보드", short: "홈", Icon: DashboardIcon, group: "스레드 발행" },
   { href: "/compose", label: "글쓰기", short: "글쓰기", Icon: ComposeIcon, group: "스레드 발행" },
   { href: "/posts", label: "전체 글", short: "글목록", Icon: PostsIcon, group: "스레드 발행" },
   { href: "/creators", label: "크리에이터", short: "크리에이터", Icon: CreatorsIcon, group: "공동구매" },
   { href: "/products", label: "공구 상품", short: "상품", Icon: ProductsIcon, group: "공동구매" },
+  { href: "/ledger", label: "판매일보", short: "판매일보", Icon: LedgerIcon, group: "공동구매" },
+  { href: "/calendar", label: "일정 · 할일", short: "일정", Icon: CalendarIcon, group: "공동구매" },
   { href: "/settings", label: "연결 설정", short: "설정", Icon: ConnectionsIcon, group: "설정" },
 ];
 

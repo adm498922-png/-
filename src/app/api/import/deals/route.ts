@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseSalesSheet, type ImportRow } from "@/lib/sales-import";
 import { getDecryptedSettings, updateSettings } from "@/lib/settings";
+import { keyOf } from "@/lib/match-or-create";
 
 /**
  * 판매일보 붙여넣기 → 공구 기록 만들기.
@@ -16,8 +17,6 @@ type Matched = {
   productId: string | null;
   duplicate: boolean;
 };
-
-const keyOf = (name: string) => name.trim().toLowerCase();
 
 async function matchAll(rows: ImportRow[]): Promise<{
   matched: Matched[];
