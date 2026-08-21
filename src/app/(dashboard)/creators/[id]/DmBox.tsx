@@ -130,6 +130,24 @@ export default function DmBox({
               브라우저가 복사를 막았습니다. 위 문구를 직접 드래그해서 복사해주세요.
             </div>
           )}
+
+          {product?.proposalFileUrl && (
+            <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5">
+              <p className="text-xs text-blue-900">
+                이 상품에는 업체 제안서 파일이 있습니다. 인스타그램은 파일을 프로그램으로
+                자동 첨부하는 걸 막아두어서, 아래에서 내려받은 뒤 DM 창에 직접
+                끌어다 놓아(드래그) 함께 보내주세요.
+              </p>
+              <a
+                href={`${product.proposalFileUrl}?download=${encodeURIComponent(
+                  product.proposalFileName || "제안서.xlsx"
+                )}`}
+                className="mt-1.5 inline-block text-xs font-semibold text-blue-700 underline underline-offset-4 hover:text-blue-800"
+              >
+                📄 {product.proposalFileName || "제안서 파일"} 다운로드
+              </a>
+            </div>
+          )}
         </div>
       )}
     </section>

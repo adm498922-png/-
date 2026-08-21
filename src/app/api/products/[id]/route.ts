@@ -28,11 +28,27 @@ export async function PATCH(
   assign("name", data.name);
   assign("brand", data.brand);
   assign("imageUrl", data.imageUrl);
+  assign("images", data.images);
   assign("memo", data.memo);
   assign("retailPrice", data.retailPrice);
   assign("supplyPrice", data.supplyPrice);
   assign("commissionRate", data.commissionRate);
   assign("isActive", data.isActive);
+  assign("vendorCompany", data.vendorCompany);
+  assign("vendorContact", data.vendorContact);
+  assign("vendorPhone", data.vendorPhone);
+  assign("vendorEmail", data.vendorEmail);
+  assign("shippingFee", data.shippingFee);
+  assign("returnPolicy", data.returnPolicy);
+  assign("asInfo", data.asInfo);
+  assign("settlementSchedule", data.settlementSchedule);
+  assign("origin", data.origin);
+  assign("composition", data.composition);
+  assign("material", data.material);
+  assign("sizeWeight", data.sizeWeight);
+  assign("noticeExtra", data.noticeExtra);
+  assign("proposalFileUrl", data.proposalFileUrl);
+  assign("proposalFileName", data.proposalFileName);
 
   const product = await prisma.product.update({
     where: { id },

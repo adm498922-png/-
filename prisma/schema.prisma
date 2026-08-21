@@ -189,12 +189,33 @@ model Product {
   id             String   @id @default(cuid())
   name           String
   brand          String?
-  imageUrl       String?
-  retailPrice    Int? // 소비자가(원)
-  supplyPrice    Int? // 공급가(원)
+  imageUrl       String? // 대표 이미지
+  images         String? // 나머지 이미지 주소들. 쉼표로 구분해 저장
+  retailPrice    Int? // 소비자가(원) = 공구 판매가
+  supplyPrice    Int? // 공급가(원) — 셀러/벤더 공급가 중 나와 관련된 쪽
   commissionRate Float? // 크리에이터에게 줄 수수료 %
   memo           String?
   isActive       Boolean  @default(true) // 지금 공구 가능한 상품인지
+
+  // 업체 제안서에서 가져온 항목들. 업체마다 양식이 달라 자유 텍스트로 둔다.
+  vendorCompany       String? // 업체(브랜드사) 상호명
+  vendorContact       String? // 담당자 이름
+  vendorPhone         String?
+  vendorEmail         String?
+  shippingFee         String? // 배송비 (예: "개당 4,000원 · 도서산간 별도")
+  returnPolicy        String? // 교환/반품 정책
+  asInfo              String? // A/S 정보
+  settlementSchedule  String? // 정산 일정
+  origin              String? // 원산지
+  composition         String? // 구성품
+  material            String? // 소재/재질
+  sizeWeight          String? // 크기/중량
+  noticeExtra         String? // 그 외 상품정보고시 등 자유 메모
+
+  // 원본 제안서 파일 — DM 보낼 때 다운로드해서 직접 첨부할 수 있게 보관
+  proposalFileUrl     String?
+  proposalFileName    String?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { formatWon, type ProductView } from "@/lib/gonggu";
 
 type FormValues = {
@@ -10,7 +10,23 @@ type FormValues = {
   supplyPrice: string;
   commissionRate: string;
   imageUrl: string;
+  images: string;
   memo: string;
+  vendorCompany: string;
+  vendorContact: string;
+  vendorPhone: string;
+  vendorEmail: string;
+  shippingFee: string;
+  returnPolicy: string;
+  asInfo: string;
+  settlementSchedule: string;
+  origin: string;
+  composition: string;
+  material: string;
+  sizeWeight: string;
+  noticeExtra: string;
+  proposalFileUrl: string;
+  proposalFileName: string;
 };
 
 function emptyForm(): FormValues {
@@ -21,7 +37,23 @@ function emptyForm(): FormValues {
     supplyPrice: "",
     commissionRate: "",
     imageUrl: "",
+    images: "",
     memo: "",
+    vendorCompany: "",
+    vendorContact: "",
+    vendorPhone: "",
+    vendorEmail: "",
+    shippingFee: "",
+    returnPolicy: "",
+    asInfo: "",
+    settlementSchedule: "",
+    origin: "",
+    composition: "",
+    material: "",
+    sizeWeight: "",
+    noticeExtra: "",
+    proposalFileUrl: "",
+    proposalFileName: "",
   };
 }
 
@@ -33,9 +65,28 @@ function toForm(p: ProductView): FormValues {
     supplyPrice: p.supplyPrice === null ? "" : String(p.supplyPrice),
     commissionRate: p.commissionRate === null ? "" : String(p.commissionRate),
     imageUrl: p.imageUrl ?? "",
+    images: p.images ?? "",
     memo: p.memo ?? "",
+    vendorCompany: p.vendorCompany ?? "",
+    vendorContact: p.vendorContact ?? "",
+    vendorPhone: p.vendorPhone ?? "",
+    vendorEmail: p.vendorEmail ?? "",
+    shippingFee: p.shippingFee ?? "",
+    returnPolicy: p.returnPolicy ?? "",
+    asInfo: p.asInfo ?? "",
+    settlementSchedule: p.settlementSchedule ?? "",
+    origin: p.origin ?? "",
+    composition: p.composition ?? "",
+    material: p.material ?? "",
+    sizeWeight: p.sizeWeight ?? "",
+    noticeExtra: p.noticeExtra ?? "",
+    proposalFileUrl: p.proposalFileUrl ?? "",
+    proposalFileName: p.proposalFileName ?? "",
   };
 }
+
+const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 const inputClass =
   "w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500";
@@ -53,6 +104,9 @@ export default function ProductList({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [vendorOpen, setVendorOpen] = useState(false);
+  const [proposalLoading, setProposalLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = (key: keyof FormValues) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -61,6 +115,7 @@ export default function ProductList({
     setEditingId(null);
     setForm(emptyForm());
     setError(null);
+    setVendorOpen(false);
     setOpen(true);
   }
 
@@ -68,6 +123,7 @@ export default function ProductList({
     setEditingId(p.id);
     setForm(toForm(p));
     setError(null);
+    setVendorOpen(Boolean(p.vendorCompany || p.proposalFileUrl));
     setOpen(true);
   }
 
@@ -120,9 +176,89 @@ export default function ProductList({
     setProducts((prev) => prev.filter((x) => x.id !== p.id));
   }
 
+  async function handleProposalFile(file: File) {
+    setProposalLoading(true);
+    setError(null);
+    setNotice(null);
+    const buf = await file.arrayBuffer();
+    const res = await fetch("/api/products/import-proposal", {
+      method: "POST",
+      headers: {
+        "Content-Type": XLSX_MIME,
+        "X-File-Name": encodeURIComponent(file.name),
+      },
+      body: buf,
+    });
+    const data = await res.json().catch(() => null);
+    setProposalLoading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    if (!res.ok) {
+      setError(data?.error ?? "제안서를 읽지 못했습니다.");
+      setOpen(true);
+      return;
+    }
+
+    const draft = data.draft ?? {};
+    setEditingId(null);
+    setForm({
+      ...emptyForm(),
+      name: draft.name ?? "",
+      brand: draft.brand ?? "",
+      retailPrice: draft.retailPrice != null ? String(draft.retailPrice) : "",
+      supplyPrice: draft.supplyPrice != null ? String(draft.supplyPrice) : "",
+      imageUrl: data.images?.[0] ?? "",
+      images: (data.images ?? []).join(","),
+      vendorCompany: draft.vendorCompany ?? "",
+      vendorContact: draft.vendorContact ?? "",
+      vendorPhone: draft.vendorPhone ?? "",
+      vendorEmail: draft.vendorEmail ?? "",
+      shippingFee: draft.shippingFee ?? "",
+      returnPolicy: draft.returnPolicy ?? "",
+      asInfo: draft.asInfo ?? "",
+      settlementSchedule: draft.settlementSchedule ?? "",
+      origin: draft.origin ?? "",
+      composition: draft.composition ?? "",
+      material: draft.material ?? "",
+      sizeWeight: draft.sizeWeight ?? "",
+      noticeExtra: draft.noticeExtra ?? "",
+      proposalFileUrl: data.proposalFileUrl ?? "",
+      proposalFileName: data.proposalFileName ?? "",
+    });
+    setVendorOpen(true);
+    setOpen(true);
+    setNotice(
+      "제안서 내용을 아래 칸에 채웠습니다. 틀린 곳이 있으면 고친 뒤 저장하세요."
+    );
+  }
+
+  const imageList = (p: ProductView) =>
+    (p.images ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleProposalFile(file);
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={proposalLoading}
+          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-60"
+        >
+          {proposalLoading ? "제안서 읽는 중…" : "📄 제안서로 상품 추가"}
+        </button>
         <button
           onClick={() => (open ? setOpen(false) : openNew())}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
@@ -130,6 +266,10 @@ export default function ProductList({
           {open ? "닫기" : "＋ 상품 추가"}
         </button>
       </div>
+
+      <p className="-mt-2 text-right text-xs text-slate-400">
+        업체에서 받은 상품제안서 엑셀 파일을 올리면 AI가 내용을 읽어 아래 칸에 채워줍니다.
+      </p>
 
       {notice && (
         <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
@@ -220,6 +360,162 @@ export default function ProductList({
               placeholder="재고, 배송 조건, 주의할 점 등"
             />
           </div>
+
+          {form.images.trim() && (
+            <div>
+              <label className={labelClass}>제안서에서 가져온 상품 사진</label>
+              <div className="flex flex-wrap gap-2">
+                {form.images
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((src) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={src}
+                      src={src}
+                      alt="상품 사진"
+                      className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
+                    />
+                  ))}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-lg border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setVendorOpen((v) => !v)}
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              <span>업체 제안서 정보 (배송 · 교환/반품 · A/S · 정산일정 등)</span>
+              <span className="text-slate-400">{vendorOpen ? "접기 ▲" : "펼치기 ▼"}</span>
+            </button>
+            {vendorOpen && (
+              <div className="space-y-3 border-t border-slate-200 p-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>업체(상호명)</label>
+                    <input
+                      className={inputClass}
+                      value={form.vendorCompany}
+                      onChange={(e) => set("vendorCompany")(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>담당자</label>
+                    <input
+                      className={inputClass}
+                      value={form.vendorContact}
+                      onChange={(e) => set("vendorContact")(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>담당자 전화</label>
+                    <input
+                      className={inputClass}
+                      value={form.vendorPhone}
+                      onChange={(e) => set("vendorPhone")(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>담당자 이메일</label>
+                    <input
+                      className={inputClass}
+                      value={form.vendorEmail}
+                      onChange={(e) => set("vendorEmail")(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>원산지</label>
+                    <input
+                      className={inputClass}
+                      value={form.origin}
+                      onChange={(e) => set("origin")(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>소재/재질</label>
+                    <input
+                      className={inputClass}
+                      value={form.material}
+                      onChange={(e) => set("material")(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>크기/중량</label>
+                    <input
+                      className={inputClass}
+                      value={form.sizeWeight}
+                      onChange={(e) => set("sizeWeight")(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>구성품</label>
+                    <input
+                      className={inputClass}
+                      value={form.composition}
+                      onChange={(e) => set("composition")(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>배송비</label>
+                  <textarea
+                    className={`${inputClass} min-h-12 resize-y`}
+                    value={form.shippingFee}
+                    onChange={(e) => set("shippingFee")(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>교환/반품 정책</label>
+                  <textarea
+                    className={`${inputClass} min-h-12 resize-y`}
+                    value={form.returnPolicy}
+                    onChange={(e) => set("returnPolicy")(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>A/S 정보</label>
+                  <textarea
+                    className={`${inputClass} min-h-12 resize-y`}
+                    value={form.asInfo}
+                    onChange={(e) => set("asInfo")(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>정산 일정</label>
+                  <textarea
+                    className={`${inputClass} min-h-12 resize-y`}
+                    value={form.settlementSchedule}
+                    onChange={(e) => set("settlementSchedule")(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>그 외 상품정보고시</label>
+                  <textarea
+                    className={`${inputClass} min-h-16 resize-y`}
+                    value={form.noticeExtra}
+                    onChange={(e) => set("noticeExtra")(e.target.value)}
+                  />
+                </div>
+                {form.proposalFileUrl && (
+                  <p className="text-xs text-slate-500">
+                    원본 제안서 파일:{" "}
+                    <a
+                      href={`${form.proposalFileUrl}?download=${encodeURIComponent(
+                        form.proposalFileName || "제안서.xlsx"
+                      )}`}
+                      className="text-blue-600 underline underline-offset-4 hover:text-blue-700"
+                    >
+                      {form.proposalFileName || "다운로드"}
+                    </a>
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
           {error && (
             <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-700">
               {error}
@@ -294,11 +590,37 @@ export default function ProductList({
                   수수료 {p.commissionRate === null ? "-" : `${p.commissionRate}%`}
                 </span>
                 <span>진행 {p.deals?.length ?? 0}건</span>
+                {p.vendorCompany && <span>업체 {p.vendorCompany}</span>}
               </div>
               {p.memo && (
                 <p className="mt-1.5 whitespace-pre-wrap text-xs text-slate-500">
                   {p.memo}
                 </p>
+              )}
+              {(imageList(p).length > 0 || p.proposalFileUrl) && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {imageList(p)
+                    .slice(0, 6)
+                    .map((src) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={src}
+                        src={src}
+                        alt="상품 사진"
+                        className="h-12 w-12 rounded-lg border border-slate-200 object-cover"
+                      />
+                    ))}
+                  {p.proposalFileUrl && (
+                    <a
+                      href={`${p.proposalFileUrl}?download=${encodeURIComponent(
+                        p.proposalFileName || "제안서.xlsx"
+                      )}`}
+                      className="ml-1 text-xs text-blue-600 underline underline-offset-4 hover:text-blue-700"
+                    >
+                      📄 제안서 원본 다운로드
+                    </a>
+                  )}
+                </div>
               )}
             </li>
           ))}
