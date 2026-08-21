@@ -29,6 +29,8 @@ model Settings {
   igAccessTokenEnc    String?
   // 판매일보 가져오기에서 마지막으로 쓴 제목 줄 (JSON 배열 문자열)
   salesSheetHeader    String?
+  // 공구 제안 DM 고정 틀
+  dmTemplate          String?
   autoDailyPostEnabled Boolean @default(false)
   autoDailyPostIncludeProducts Boolean @default(false)
   updatedAt           DateTime @updatedAt

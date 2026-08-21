@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     naverClientSecret: body.naverClientSecret || undefined,
     igBusinessAccountId: body.igBusinessAccountId,
     igAccessToken: body.igAccessToken || undefined,
+    dmTemplate: typeof body.dmTemplate === "string" ? body.dmTemplate : undefined,
     autoDailyPostEnabled:
       typeof body.autoDailyPostEnabled === "boolean"
         ? body.autoDailyPostEnabled

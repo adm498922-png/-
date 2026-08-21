@@ -13,6 +13,7 @@ export type DecryptedSettings = {
   igBusinessAccountId: string | null;
   igAccessToken: string | null;
   salesSheetHeader: string | null;
+  dmTemplate: string | null;
   autoDailyPostEnabled: boolean;
   autoDailyPostIncludeProducts: boolean;
 };
@@ -47,6 +48,7 @@ export async function getDecryptedSettings(): Promise<DecryptedSettings> {
     igBusinessAccountId: row.igBusinessAccountId,
     igAccessToken: row.igAccessTokenEnc ? decrypt(row.igAccessTokenEnc) : null,
     salesSheetHeader: row.salesSheetHeader,
+    dmTemplate: row.dmTemplate,
     autoDailyPostEnabled: row.autoDailyPostEnabled,
     autoDailyPostIncludeProducts: row.autoDailyPostIncludeProducts,
   };
@@ -63,6 +65,7 @@ export type SettingsStatus = {
   naverClientId: string | null;
   instagramConfigured: boolean;
   igBusinessAccountId: string | null;
+  dmTemplate: string | null;
   autoDailyPostEnabled: boolean;
   autoDailyPostIncludeProducts: boolean;
 };
@@ -84,6 +87,7 @@ export async function getSettingsStatus(): Promise<SettingsStatus> {
     naverClientId: s.naverClientId,
     instagramConfigured: Boolean(s.igBusinessAccountId && s.igAccessToken),
     igBusinessAccountId: s.igBusinessAccountId,
+    dmTemplate: s.dmTemplate,
     autoDailyPostEnabled: s.autoDailyPostEnabled,
     autoDailyPostIncludeProducts: s.autoDailyPostIncludeProducts,
   };
@@ -101,6 +105,7 @@ export async function updateSettings(input: {
   igBusinessAccountId?: string;
   igAccessToken?: string;
   salesSheetHeader?: string;
+  dmTemplate?: string;
   autoDailyPostEnabled?: boolean;
   autoDailyPostIncludeProducts?: boolean;
 }) {
@@ -118,6 +123,7 @@ export async function updateSettings(input: {
     data.igBusinessAccountId = input.igBusinessAccountId;
   if (input.igAccessToken) data.igAccessTokenEnc = encrypt(input.igAccessToken);
   if (input.salesSheetHeader !== undefined) data.salesSheetHeader = input.salesSheetHeader;
+  if (input.dmTemplate !== undefined) data.dmTemplate = input.dmTemplate;
   if (input.autoDailyPostEnabled !== undefined)
     data.autoDailyPostEnabled = input.autoDailyPostEnabled;
   if (input.autoDailyPostIncludeProducts !== undefined)

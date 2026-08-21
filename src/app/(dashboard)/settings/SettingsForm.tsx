@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SettingsStatus } from "@/lib/settings";
+import { DEFAULT_DM_TEMPLATE, DM_PLACEHOLDERS } from "@/lib/dm-template";
 
 function StatusBadge({ ok }: { ok: boolean }) {
   return (
@@ -39,6 +40,9 @@ export default function SettingsForm({
     status.igBusinessAccountId ?? ""
   );
   const [igAccessToken, setIgAccessToken] = useState("");
+  const [dmTemplate, setDmTemplate] = useState(
+    status.dmTemplate ?? DEFAULT_DM_TEMPLATE
+  );
   const [autoDailyPostEnabled, setAutoDailyPostEnabled] = useState(
     status.autoDailyPostEnabled
   );
@@ -87,6 +91,7 @@ export default function SettingsForm({
         openaiApiKey,
         igBusinessAccountId,
         igAccessToken,
+        dmTemplate,
         autoDailyPostEnabled,
         autoDailyPostIncludeProducts,
       }),
@@ -153,6 +158,43 @@ export default function SettingsForm({
           </div>
         </section>
       )}
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="font-semibold text-slate-900">공구 제안 DM 문구</h2>
+        </div>
+        <p className="mb-3 text-xs text-slate-500">
+          크리에이터 화면에서 상품을 고르면 이 틀에 값이 채워져 문구가 만들어집니다.
+          중괄호 자리에는 그 사람·그 상품의 값이 들어갑니다.
+        </p>
+        <p className="mb-3 text-xs text-slate-500">
+          쓸 수 있는 자리:{" "}
+          {DM_PLACEHOLDERS.map((k) => (
+            <code
+              key={k}
+              className="mr-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700"
+            >
+              {"{" + k + "}"}
+            </code>
+          ))}
+        </p>
+        <p className="mb-3 text-xs text-slate-500">
+          값이 없는 자리는 자동으로 비워지고, 그 줄에 다른 값도 없으면 줄째 빠집니다.
+          (가격을 안 적어둔 상품이면 &quot;소비자가&quot; 줄이 통째로 사라집니다)
+        </p>
+        <textarea
+          value={dmTemplate}
+          onChange={(e) => setDmTemplate(e.target.value)}
+          className="min-h-56 w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm whitespace-pre-wrap text-slate-900 outline-none focus:border-blue-500"
+        />
+        <button
+          type="button"
+          onClick={() => setDmTemplate(DEFAULT_DM_TEMPLATE)}
+          className="mt-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900"
+        >
+          기본 문구로 되돌리기
+        </button>
+      </section>
 
       {gongguOnly ? (
         <>

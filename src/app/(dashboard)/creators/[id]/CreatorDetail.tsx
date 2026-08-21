@@ -7,6 +7,7 @@ import CreatorForm, {
   creatorToForm,
   type CreatorFormValues,
 } from "../CreatorForm";
+import DmBox from "./DmBox";
 import DealForm, {
   dealToForm,
   emptyDealForm,
@@ -45,9 +46,12 @@ export default function CreatorDetail({
   initialCreator,
   products,
   today,
+  dmTemplate,
 }: {
   initialCreator: CreatorView;
   products: ProductView[];
+  /** 설정 화면에 저장해 둔 공구 제안 DM 문구 틀 */
+  dmTemplate: string | null;
   /** 서버가 알려준 오늘 날짜(YYYY-MM-DD). 정산 예정일이 지났는지 판단에 쓴다. */
   today: string;
 }) {
@@ -457,6 +461,8 @@ export default function CreatorDetail({
           </div>
         )}
       </section>
+
+      <DmBox creator={creator} products={products} template={dmTemplate} />
 
       <section className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="mb-3 flex items-center justify-between">
