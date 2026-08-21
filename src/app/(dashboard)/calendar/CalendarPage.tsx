@@ -12,6 +12,7 @@ type Item = {
   done?: boolean;
   href?: string;
   colorClass: string;
+  barClass: string;
 };
 
 type Bar = {
@@ -50,14 +51,7 @@ function overlapsDay(it: Item, day: Date): boolean {
   const d = dateOnly(day);
   return d >= s && d <= e;
 }
-function barColorClass(source: Item["source"]): string {
-  if (source === "todo") return "bg-amber-500";
-  if (source === "deal") return "bg-sky-600";
-  return "bg-blue-600";
-}
-
 const BAR_LANE_HEIGHT = 21;
-const BAR_AREA_TOP = 34; // 날짜 숫자 배지 아래 여백
 
 /** 이번 주(7일) 안에서 기간이 있는 일정들을 겹치지 않게 줄(레인)로 나눈다 — 구글 캘린더 막대 방식 */
 function layoutWeekBars(week: Date[], rangedItems: Item[]): Bar[][] {
@@ -217,6 +211,7 @@ export default function CalendarPage() {
         done: created.done,
         colorClass:
           kind === "TODO" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-700",
+        barClass: kind === "TODO" ? "bg-amber-500" : "bg-blue-600",
       },
     ]);
     setTitle("");
@@ -286,25 +281,48 @@ export default function CalendarPage() {
               </div>
               {weeks.map((week, wi) => {
                 const lanes = layoutWeekBars(week, rangedItems);
-                const barsHeight = lanes.length * BAR_LANE_HEIGHT;
+                // 날짜 숫자 줄 + 막대 레인 줄들 + 하루짜리 항목 줄, 전부 한 grid 안에 명시적인 행으로 둔다.
+                // (막대를 절대위치로 겹쳐 그리던 예전 방식은 화면 크기·글꼴에 따라 숫자를 가리는
+                // 문제가 있어서, 애초에 겹칠 수 없게 grid 행으로 자리를 나눴다)
+                const rowTemplate = [
+                  "2.25rem",
+                  ...lanes.map(() => `${BAR_LANE_HEIGHT}px`),
+                  "minmax(5.5rem, auto)",
+                ].join(" ");
                 return (
                   <div
                     key={wi}
-                    className="relative grid grid-cols-7 border-b border-slate-100 last:border-b-0"
+                    className="grid border-b border-slate-100 last:border-b-0"
+                    style={{
+                      gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+                      gridTemplateRows: rowTemplate,
+                    }}
                   >
-                    {week.map((d) => {
+                    {week.map((d, di) => {
                       const key = toKey(d);
-                      const inMonth = d.getMonth() === cursor.getMonth();
-                      const list = pointByDay.get(key) ?? [];
                       const isSelected = key === selected;
-                      const isToday = key === today;
                       return (
                         <button
-                          key={key}
+                          key={`bg-${key}`}
                           onClick={() => setSelected(key)}
-                          className={`min-h-32 border-r border-slate-100 p-2 text-left align-top last:border-r-0 ${
+                          aria-label={`${key} 선택`}
+                          style={{ gridColumn: di + 1, gridRow: `1 / span ${lanes.length + 2}` }}
+                          className={`${di < 6 ? "border-r border-slate-100" : ""} ${
                             isSelected ? "bg-blue-50" : "hover:bg-slate-50"
                           }`}
+                        />
+                      );
+                    })}
+
+                    {week.map((d, di) => {
+                      const key = toKey(d);
+                      const inMonth = d.getMonth() === cursor.getMonth();
+                      const isToday = key === today;
+                      return (
+                        <div
+                          key={`num-${key}`}
+                          style={{ gridColumn: di + 1, gridRow: 1 }}
+                          className="pointer-events-none p-2"
                         >
                           <span
                             className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-sm ${
@@ -317,59 +335,59 @@ export default function CalendarPage() {
                           >
                             {d.getDate()}
                           </span>
-                          {barsHeight > 0 && <div style={{ height: barsHeight + 4 }} />}
-                          <div className="mt-1.5 space-y-1">
-                            {list.slice(0, 4).map((it) => (
-                              <div
-                                key={it.id}
-                                className={`truncate rounded px-1.5 py-1 text-xs ${it.colorClass} ${
-                                  it.done ? "line-through opacity-60" : ""
-                                }`}
-                              >
-                                {it.title}
-                              </div>
-                            ))}
-                            {list.length > 4 && (
-                              <div className="text-[11px] text-slate-400">
-                                +{list.length - 4}개 더
-                              </div>
-                            )}
-                          </div>
-                        </button>
+                        </div>
                       );
                     })}
-                    {lanes.length > 0 && (
-                      <div
-                        className="pointer-events-none absolute inset-x-0 grid grid-cols-7"
-                        style={{
-                          top: BAR_AREA_TOP,
-                          gridAutoRows: BAR_LANE_HEIGHT - 3,
-                          rowGap: 3,
-                        }}
-                      >
-                        {lanes.map((lane, li) =>
-                          lane.map((bar) => (
-                            <div
-                              key={bar.item.id}
-                              style={{
-                                gridColumn: `${bar.colStart + 1} / span ${bar.span}`,
-                                gridRow: li + 1,
-                              }}
-                              title={bar.item.title}
-                              className={`flex items-center truncate px-1.5 text-[11px] font-medium text-white ${barColorClass(
-                                bar.item.source
-                              )} ${bar.continuesFromPrev ? "" : "rounded-l"} ${
-                                bar.continuesToNext ? "" : "rounded-r"
-                              } ${bar.item.done ? "line-through opacity-60" : ""}`}
-                            >
-                              {bar.continuesFromPrev ? "◂ " : ""}
-                              {bar.item.title}
-                              {bar.continuesToNext ? " ▸" : ""}
-                            </div>
-                          ))
-                        )}
-                      </div>
+
+                    {lanes.map((lane, li) =>
+                      lane.map((bar) => (
+                        <div
+                          key={bar.item.id}
+                          style={{
+                            gridColumn: `${bar.colStart + 1} / span ${bar.span}`,
+                            gridRow: li + 2,
+                          }}
+                          title={bar.item.title}
+                          className={`pointer-events-none mx-px flex items-center truncate px-1.5 text-[11px] font-medium text-white ${
+                            bar.item.barClass
+                          } ${bar.continuesFromPrev ? "" : "rounded-l"} ${
+                            bar.continuesToNext ? "" : "rounded-r"
+                          } ${bar.item.done ? "line-through opacity-60" : ""}`}
+                        >
+                          {bar.continuesFromPrev ? "◂ " : ""}
+                          {bar.item.title}
+                          {bar.continuesToNext ? " ▸" : ""}
+                        </div>
+                      ))
                     )}
+
+                    {week.map((d, di) => {
+                      const key = toKey(d);
+                      const list = pointByDay.get(key) ?? [];
+                      return (
+                        <div
+                          key={`pts-${key}`}
+                          style={{ gridColumn: di + 1, gridRow: lanes.length + 2 }}
+                          className="pointer-events-none space-y-1 px-2 pb-2 pt-1"
+                        >
+                          {list.slice(0, 4).map((it) => (
+                            <div
+                              key={it.id}
+                              className={`truncate rounded px-1.5 py-1 text-xs ${it.colorClass} ${
+                                it.done ? "line-through opacity-60" : ""
+                              }`}
+                            >
+                              {it.title}
+                            </div>
+                          ))}
+                          {list.length > 4 && (
+                            <div className="text-[11px] text-slate-400">
+                              +{list.length - 4}개 더
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}

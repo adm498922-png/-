@@ -10,6 +10,7 @@ import ImportPanel from "./ImportPanel";
 import BookmarkletBox from "./BookmarkletBox";
 import SalesImportPanel from "./SalesImportPanel";
 import {
+  CREATOR_COLOR_SWATCH,
   CREATOR_GRADE_CLASS,
   CREATOR_GRADE_LABEL,
   CREATOR_STATUSES,
@@ -21,6 +22,7 @@ import {
   formatFollowers,
   formatWon,
   getCreatorGrade,
+  resolveCreatorColor,
   summarizeDeals,
   type CreatorView,
 } from "@/lib/gonggu";
@@ -470,6 +472,12 @@ export default function CreatorList({
                   className="block flex-1 rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-400"
                 >
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span
+                      className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                        CREATOR_COLOR_SWATCH[resolveCreatorColor(c.name, c.color)]
+                      }`}
+                      title="캘린더 색상"
+                    />
                     <span className="font-semibold text-slate-900">{c.name}</span>
                     {c.handle && (
                       <span className="text-xs text-slate-500">@{c.handle}</span>

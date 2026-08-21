@@ -3,10 +3,13 @@
 import { useState } from "react";
 import {
   CONTACT_TYPES,
+  CREATOR_COLORS,
+  CREATOR_COLOR_SWATCH,
   CREATOR_STATUSES,
   CREATOR_STATUS_LABEL,
   PLATFORMS,
   PLATFORM_LABEL,
+  autoCreatorColor,
   toDateInput,
   type CreatorView,
 } from "@/lib/gonggu";
@@ -28,6 +31,7 @@ export type CreatorFormValues = {
   lastContactAt: string;
   tags: string;
   memo: string;
+  color: string;
   // 인스타에서 자동으로 불러온 값. 화면에서 직접 고치는 항목은 아니다.
   bio: string;
   linkInBio: string;
@@ -58,6 +62,7 @@ export function emptyCreatorForm(): CreatorFormValues {
     lastContactAt: "",
     tags: "",
     memo: "",
+    color: "",
     bio: "",
     linkInBio: "",
     profileImageUrl: "",
@@ -88,6 +93,7 @@ export function creatorToForm(c: CreatorView): CreatorFormValues {
     lastContactAt: toDateInput(c.lastContactAt),
     tags: c.tags ?? "",
     memo: c.memo ?? "",
+    color: c.color ?? "",
     bio: c.bio ?? "",
     linkInBio: c.linkInBio ?? "",
     profileImageUrl: c.profileImageUrl ?? "",
@@ -228,6 +234,36 @@ export default function CreatorForm({
               </option>
             ))}
           </select>
+        </Field>
+        <Field label="캘린더 색상" hint="안 고르면 이름으로 자동 배정">
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {values.color && (
+              <button
+                type="button"
+                onClick={() => set("color")("")}
+                title="자동 배정으로"
+                className="mr-1 flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-slate-300 text-[10px] text-slate-400 hover:border-slate-400"
+              >
+                ✕
+              </button>
+            )}
+            {CREATOR_COLORS.map((c) => {
+              const active =
+                values.color === c ||
+                (!values.color && values.name && autoCreatorColor(values.name) === c);
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => set("color")(c)}
+                  title={c}
+                  className={`h-6 w-6 rounded-full ${CREATOR_COLOR_SWATCH[c]} ${
+                    active ? "ring-2 ring-offset-2 ring-slate-400" : "opacity-70 hover:opacity-100"
+                  }`}
+                />
+              );
+            })}
+          </div>
         </Field>
         <Field label="연락처" hint="오픈채팅 주소 · 이메일 등">
           <input

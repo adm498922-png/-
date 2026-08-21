@@ -54,6 +54,72 @@ export const CREATOR_GRADE_CLASS: Record<CreatorGrade, string> = {
   mega: "bg-amber-50 text-amber-700",
 };
 
+// 크리에이터별 캘린더 색상. 안 고르면 이름으로 자동 배정해서 계정마다 달라 보이게 한다.
+export const CREATOR_COLORS = [
+  "rose",
+  "orange",
+  "amber",
+  "green",
+  "teal",
+  "blue",
+  "indigo",
+  "purple",
+] as const;
+export type CreatorColorKey = (typeof CREATOR_COLORS)[number];
+
+// 하루짜리 항목 칩(연한 배경)
+export const CREATOR_COLOR_CHIP: Record<CreatorColorKey, string> = {
+  rose: "bg-rose-100 text-rose-700",
+  orange: "bg-orange-100 text-orange-700",
+  amber: "bg-amber-100 text-amber-800",
+  green: "bg-green-100 text-green-700",
+  teal: "bg-teal-100 text-teal-700",
+  blue: "bg-blue-100 text-blue-700",
+  indigo: "bg-indigo-100 text-indigo-700",
+  purple: "bg-purple-100 text-purple-700",
+};
+
+// 여러 날 막대(진한 배경)
+export const CREATOR_COLOR_BAR: Record<CreatorColorKey, string> = {
+  rose: "bg-rose-500",
+  orange: "bg-orange-500",
+  amber: "bg-amber-500",
+  green: "bg-green-500",
+  teal: "bg-teal-500",
+  blue: "bg-blue-600",
+  indigo: "bg-indigo-500",
+  purple: "bg-purple-500",
+};
+
+// 색상 고르기용 스와치(동그라미) 미리보기 배경
+export const CREATOR_COLOR_SWATCH: Record<CreatorColorKey, string> = {
+  rose: "bg-rose-500",
+  orange: "bg-orange-500",
+  amber: "bg-amber-500",
+  green: "bg-green-500",
+  teal: "bg-teal-500",
+  blue: "bg-blue-500",
+  indigo: "bg-indigo-500",
+  purple: "bg-purple-500",
+};
+
+/** 색을 직접 고르지 않았으면 이름 글자로 항상 같은 색이 나오게 계산한다. */
+export function autoCreatorColor(name: string): CreatorColorKey {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return CREATOR_COLORS[hash % CREATOR_COLORS.length];
+}
+
+export function resolveCreatorColor(
+  name: string,
+  color?: string | null
+): CreatorColorKey {
+  if (color && (CREATOR_COLORS as readonly string[]).includes(color)) {
+    return color as CreatorColorKey;
+  }
+  return autoCreatorColor(name);
+}
+
 export const PLATFORMS = [
   "INSTAGRAM",
   "THREADS",
@@ -195,6 +261,7 @@ export type CreatorView = {
   rating: number | null;
   tags: string | null;
   memo: string | null;
+  color: string | null;
   lastContactAt: string | Date | null;
   isBusiness: boolean | null;
   bio: string | null;

@@ -57,6 +57,7 @@ export async function PATCH(
   assign("contact", data.contact);
   assign("tags", data.tags);
   assign("memo", data.memo);
+  assign("color", data.color);
   if (data.bio !== undefined) {
     // 소개글을 다듬을 때는 이번에 같이 안 보낸 아이디·링크도 저장된 값으로 채워서 본다
     patch.bio = tidyBio(

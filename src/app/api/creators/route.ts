@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       rating: data.rating,
       tags: data.tags ?? null,
       memo: data.memo ?? null,
+      color: data.color ?? null,
       lastContactAt: data.lastContactAt,
       bio: tidyBio(data.bio, data.handle ?? null, data.linkInBio ?? null),
       linkInBio: data.linkInBio ?? null,

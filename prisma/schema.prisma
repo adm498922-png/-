@@ -163,6 +163,7 @@ model Creator {
   isBusiness     Boolean? // 사업자 여부 (사업자면 3.3% 원천징수 없이 세금계산서)
   tags           String? // 쉼표로 구분
   memo           String?
+  color          String? // 캘린더에 쓸 색상 (안 고르면 이름으로 자동 배정)
   lastContactAt  DateTime?
 
   // 인스타그램에서 자동으로 불러온 정보

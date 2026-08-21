@@ -52,6 +52,7 @@ export function normalizeCreatorInput(input: Record<string, unknown>) {
     contact: text("contact"),
     tags: text("tags"),
     memo: text("memo"),
+    color: text("color"),
     bio: bioValue,
     linkInBio: linkValue,
     profileImageUrl: text("profileImageUrl"),
