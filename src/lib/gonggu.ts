@@ -32,6 +32,28 @@ export const CREATOR_STATUS_CLASS: Record<string, string> = {
   REJECTED: "bg-red-100 text-red-700",
 };
 
+// 팔로워 수로 매긴 등급 (마이크로/매크로/메가). 저장하는 값이 아니라 그때그때 계산.
+export type CreatorGrade = "micro" | "macro" | "mega";
+
+export function getCreatorGrade(followers: number | null | undefined): CreatorGrade {
+  const f = followers ?? 0;
+  if (f >= 100000) return "mega";
+  if (f >= 10000) return "macro";
+  return "micro";
+}
+
+export const CREATOR_GRADE_LABEL: Record<CreatorGrade, string> = {
+  micro: "마이크로",
+  macro: "매크로",
+  mega: "메가",
+};
+
+export const CREATOR_GRADE_CLASS: Record<CreatorGrade, string> = {
+  micro: "bg-blue-50 text-blue-700",
+  macro: "bg-green-50 text-green-700",
+  mega: "bg-amber-50 text-amber-700",
+};
+
 export const PLATFORMS = [
   "INSTAGRAM",
   "THREADS",

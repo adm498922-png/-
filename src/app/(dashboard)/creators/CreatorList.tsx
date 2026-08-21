@@ -10,6 +10,8 @@ import ImportPanel from "./ImportPanel";
 import BookmarkletBox from "./BookmarkletBox";
 import SalesImportPanel from "./SalesImportPanel";
 import {
+  CREATOR_GRADE_CLASS,
+  CREATOR_GRADE_LABEL,
   CREATOR_STATUSES,
   CREATOR_STATUS_CLASS,
   CREATOR_STATUS_LABEL,
@@ -18,6 +20,7 @@ import {
   formatEngagement,
   formatFollowers,
   formatWon,
+  getCreatorGrade,
   summarizeDeals,
   type CreatorView,
 } from "@/lib/gonggu";
@@ -41,8 +44,11 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
+type CampaignOption = { id: string; name: string; brand: string; type: string };
+
 export default function CreatorList({
   initialCreators,
+  campaigns = [],
   origin,
   autoOpen,
   autoHandle,
@@ -51,6 +57,7 @@ export default function CreatorList({
   instagramConfigured,
 }: {
   initialCreators: CreatorView[];
+  campaigns?: CampaignOption[];
   origin: string;
   /** 즐겨찾기 버튼(북마클릿)으로 넘어왔는지 */
   autoOpen?: boolean;
@@ -71,6 +78,14 @@ export default function CreatorList({
   }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [bulkCsv, setBulkCsv] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkNotice, setBulkNotice] = useState<string | null>(null);
+  const [assignCampaignId, setAssignCampaignId] = useState("");
+  const [assigning, setAssigning] = useState(false);
+  const [assignNotice, setAssignNotice] = useState<string | null>(null);
   // 새로고침해도 같은 값이 다시 실행되지 않게 주소창만 깔끔히 되돌린다.
   useEffect(() => {
     if (!autoOpen) return;
@@ -132,6 +147,88 @@ export default function CreatorList({
     setAdding(false);
   }
 
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAllVisible() {
+    const allSelected = visible.length > 0 && visible.every((c) => selected.has(c.id));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) visible.forEach((c) => next.delete(c.id));
+      else visible.forEach((c) => next.add(c.id));
+      return next;
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (selected.size === 0) return;
+    if (!confirm(`선택한 ${selected.size}명을 삭제할까요?`)) return;
+    const ids = Array.from(selected);
+    const res = await fetch("/api/creators/bulk-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      alert(data?.error ?? "삭제하지 못했습니다.");
+      return;
+    }
+    setCreators((prev) => prev.filter((c) => !selected.has(c.id)));
+    setSelected(new Set());
+  }
+
+  async function handleAssignToCampaign() {
+    if (selected.size === 0 || !assignCampaignId) return;
+    setAssigning(true);
+    const res = await fetch(`/api/campaigns/${assignCampaignId}/assignments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ creatorIds: Array.from(selected) }),
+    });
+    const data = await res.json().catch(() => null);
+    setAssigning(false);
+    if (!res.ok) {
+      alert(data?.error ?? "배정하지 못했습니다.");
+      return;
+    }
+    const camp = campaigns.find((c) => c.id === assignCampaignId);
+    setAssignNotice(`${data.added}명을 "${camp?.name ?? "캠페인"}"에 배정했습니다.`);
+    setSelected(new Set());
+  }
+
+  async function handleBulkImport() {
+    if (!bulkCsv.trim()) return;
+    setBulkLoading(true);
+    setBulkNotice(null);
+    const res = await fetch("/api/creators/bulk-import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ csv: bulkCsv }),
+    });
+    const data = await res.json().catch(() => null);
+    setBulkLoading(false);
+    if (!res.ok) {
+      setBulkNotice(data?.error ?? "가져오지 못했습니다.");
+      return;
+    }
+    setBulkNotice(
+      `${data.added}명 추가됨${data.skipped ? ` · ${data.skipped}명 건너뜀(중복/빈 핸들)` : ""}`
+    );
+    setBulkCsv("");
+    if (data.added > 0) {
+      const res2 = await fetch("/api/creators");
+      const list = await res2.json().catch(() => null);
+      if (Array.isArray(list)) setCreators(list);
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -172,12 +269,59 @@ export default function CreatorList({
           ))}
         </select>
         <button
+          onClick={() => setBulkImportOpen((v) => !v)}
+          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+        >
+          {bulkImportOpen ? "닫기" : "CSV 일괄 추가"}
+        </button>
+        <button
           onClick={() => setAdding((v) => !v)}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
         >
           {adding ? "닫기" : "＋ 크리에이터 추가"}
         </button>
       </div>
+
+      {bulkImportOpen && (
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="mb-2 font-semibold text-slate-900">CSV로 여러 명 한번에 추가</h2>
+          <p className="mb-3 text-xs text-slate-500">
+            한 줄에 한 명씩, 쉼표로 구분해서 붙여넣으세요. 형식:{" "}
+            <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px]">
+              핸들,팔로워,게시물수,카테고리,소개글,메모
+            </code>{" "}
+            (핸들만 필수, 나머지는 비워도 됩니다. 헤더 줄이 있어도 됩니다. 이미 있는 핸들은 건너뜁니다.)
+          </p>
+          <textarea
+            className="w-full min-h-32 resize-y rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"
+            value={bulkCsv}
+            onChange={(e) => setBulkCsv(e.target.value)}
+            placeholder={
+              "handle,followers,postCount,category,bio,notes\ntech_reviewer,15000,320,IT,테크 리뷰와 가젯 소개,빠른 답장\nbeauty_daily,48000,890,뷰티,데일리 메이크업,"
+            }
+          />
+          {bulkNotice && (
+            <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
+              {bulkNotice}
+            </p>
+          )}
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={handleBulkImport}
+              disabled={bulkLoading || !bulkCsv.trim()}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
+            >
+              {bulkLoading ? "추가하는 중…" : "일괄 추가"}
+            </button>
+            <button
+              onClick={() => setBulkImportOpen(false)}
+              className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:text-slate-900"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         {["ALL", ...CREATOR_STATUSES].map((s) => {
@@ -238,6 +382,62 @@ export default function CreatorList({
 
       <SalesImportPanel />
 
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2.5">
+          <span className="text-sm font-semibold text-blue-700">{selected.size}명 선택됨</span>
+          {campaigns.length > 0 && (
+            <>
+              <select
+                value={assignCampaignId}
+                onChange={(e) => setAssignCampaignId(e.target.value)}
+                className="rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none"
+              >
+                <option value="">캠페인에 배정...</option>
+                {campaigns.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.type === "AD" ? "📢" : "🛒"} {c.name} ({c.brand})
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleAssignToCampaign}
+                disabled={!assignCampaignId || assigning}
+                className="rounded-lg bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50"
+              >
+                {assigning ? "배정 중…" : "배정"}
+              </button>
+            </>
+          )}
+          <button
+            onClick={handleBulkDelete}
+            className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+          >
+            선택 삭제
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="text-xs text-slate-500 hover:text-slate-900"
+          >
+            선택 해제
+          </button>
+        </div>
+      )}
+      {assignNotice && (
+        <p className="rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-700">{assignNotice}</p>
+      )}
+
+      {visible.length > 0 && (
+        <label className="flex w-fit items-center gap-2 text-xs text-slate-500">
+          <input
+            type="checkbox"
+            checked={visible.length > 0 && visible.every((c) => selected.has(c.id))}
+            onChange={toggleSelectAllVisible}
+            className="h-4 w-4 cursor-pointer accent-blue-600"
+          />
+          보이는 {visible.length}명 전체 선택
+        </label>
+      )}
+
       {visible.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 px-6 py-14 text-center">
           <p className="text-sm text-slate-500">
@@ -255,11 +455,19 @@ export default function CreatorList({
         <ul className="space-y-2">
           {visible.map((c) => {
             const s = summarizeDeals(c.deals);
+            const grade = getCreatorGrade(c.followers);
             return (
-              <li key={c.id}>
+              <li key={c.id} className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={selected.has(c.id)}
+                  onChange={() => toggleSelect(c.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-5 h-4 w-4 shrink-0 cursor-pointer accent-blue-600"
+                />
                 <Link
                   href={`/creators/${c.id}`}
-                  className="block rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-400"
+                  className="block flex-1 rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-400"
                 >
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-semibold text-slate-900">{c.name}</span>
@@ -272,6 +480,9 @@ export default function CreatorList({
                       }`}
                     >
                       {CREATOR_STATUS_LABEL[c.status] ?? c.status}
+                    </span>
+                    <span className={`rounded px-1.5 py-0.5 text-[11px] ${CREATOR_GRADE_CLASS[grade]}`}>
+                      {CREATOR_GRADE_LABEL[grade]}
                     </span>
                     {c.rating !== null && (
                       <span className="text-[11px] text-amber-700">

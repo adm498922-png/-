@@ -181,6 +181,7 @@ model Creator {
 
   deals          Deal[]
   calendarEvents CalendarEvent[]
+  campaignAssignments CampaignAssignment[]
 
   @@index([status])
 }
@@ -288,4 +289,84 @@ model CalendarEvent {
   updatedAt  DateTime          @updatedAt
 
   @@index([date])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 캠페인 — 광고 캠페인 / 공구·협업 캠페인을 만들어 여러 크리에이터에게
+// 한 번에 제안(매칭 + DM 발송)하는 기능. 공구 상품(Product)·공구 기록(Deal)과는
+// 별개로, "이 건으로 크리에이터를 모집한다"는 캠페인 자체를 관리한다.
+// ─────────────────────────────────────────────────────────────
+
+enum CampaignType {
+  AD     // 광고 캠페인
+  COLLAB // 공구/협업
+}
+
+enum CampaignStatus {
+  DRAFT     // 준비 중
+  ACTIVE    // 진행 중
+  COMPLETED // 완료
+}
+
+model Campaign {
+  id       String         @id @default(cuid())
+  type     CampaignType   @default(AD)
+  brand    String
+  name     String
+  category String?
+  desc     String?
+
+  // 광고 캠페인 전용
+  microTarget  Int?
+  macroTarget  Int?
+  megaTarget   Int?
+  budget       Int?
+  period       String?
+  productShip  Boolean?
+  secondaryUse Boolean?
+
+  // 공구/협업 캠페인 전용
+  salePrice      Int?
+  listPrice      Int?
+  commissionRate Float?
+  targetQty      Int?
+  collabStart    DateTime?
+  collabEnd      DateTime?
+  promo          String?
+
+  status    CampaignStatus @default(DRAFT)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  assignments CampaignAssignment[]
+}
+
+enum DmSendStatus {
+  PENDING
+  SENT
+}
+
+// 캠페인에 배정된 크리에이터 한 명 = 매칭 결과이자 DM 발송 큐의 한 줄
+model CampaignAssignment {
+  id         String       @id @default(cuid())
+  campaignId String
+  campaign   Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creatorId  String
+  creator    Creator      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  status     DmSendStatus @default(PENDING)
+  sentAt     DateTime?
+  createdAt  DateTime     @default(now())
+
+  @@unique([campaignId, creatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+}
+
+// 사장님이 저장해두고 골라 쓰는 DM 문구 (캠페인 DM 발송 큐 전용, 여러 개 저장 가능)
+model DmTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

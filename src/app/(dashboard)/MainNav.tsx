@@ -70,6 +70,24 @@ function LedgerIcon({ active }: { active: boolean }) {
   );
 }
 
+function CampaignIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+      <path d="M4 10.5 20 5v13.5L4 13.5z" strokeLinejoin="round" />
+      <path d="M7.5 13.5V19a1.5 1.5 0 0 0 3 0v-4.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DmQueueIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+      <path d="M4 5.5h16v11H9l-4 3.5v-3.5H4z" strokeLinejoin="round" />
+      <path d="M8 9.5h8M8 13h5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function CalendarIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
@@ -87,6 +105,8 @@ const NAV_ITEMS = [
   { href: "/posts", label: "전체 글", short: "글목록", Icon: PostsIcon, group: "스레드 발행" },
   { href: "/creators", label: "크리에이터", short: "크리에이터", Icon: CreatorsIcon, group: "공동구매" },
   { href: "/products", label: "공구 상품", short: "상품", Icon: ProductsIcon, group: "공동구매" },
+  { href: "/campaigns", label: "캠페인", short: "캠페인", Icon: CampaignIcon, group: "공동구매" },
+  { href: "/dm-queue", label: "DM 발송", short: "DM 발송", Icon: DmQueueIcon, group: "공동구매" },
   { href: "/calendar", label: "일정 · 할일", short: "일정", Icon: CalendarIcon, group: "공동구매" },
   { href: "/ledger", label: "판매일보", short: "판매일보", Icon: LedgerIcon, group: "공동구매" },
   { href: "/settings", label: "연결 설정", short: "설정", Icon: ConnectionsIcon, group: "설정" },
@@ -100,7 +120,7 @@ const NAV_ITEMS = [
 function itemsFor(mode: "full" | "threads" | "gonggu") {
   if (mode === "gonggu") {
     return NAV_ITEMS.filter(
-      (item) => item.group === "공동구매" || item.href === "/settings"
+      (item) => item.group === "공동구매" || item.href === "/settings" || item.href === "/"
     );
   }
   if (mode === "threads") {

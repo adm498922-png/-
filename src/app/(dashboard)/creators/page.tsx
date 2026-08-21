@@ -16,10 +16,15 @@ export default async function CreatorsPage({
   // 스레드 전용 사이트에서는 공동구매 화면을 열지 않는다.
   if (hidesGonggu()) redirect("/");
 
-  const [creators, params, headerList, settings] = await Promise.all([
+  const [creators, campaigns, params, headerList, settings] = await Promise.all([
     prisma.creator.findMany({
       orderBy: { updatedAt: "desc" },
       include: { deals: true },
+    }),
+    prisma.campaign.findMany({
+      where: { status: { not: "COMPLETED" } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, name: true, brand: true, type: true },
     }),
     searchParams,
     headers(),
@@ -47,6 +52,7 @@ export default async function CreatorsPage({
       </p>
       <CreatorList
         initialCreators={creators as unknown as CreatorView[]}
+        campaigns={campaigns}
         origin={origin}
         autoOpen={Boolean(one("add"))}
         autoHandle={one("handle")}
