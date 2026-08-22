@@ -48,6 +48,13 @@ export const CREATOR_GRADE_LABEL: Record<CreatorGrade, string> = {
   mega: "메가",
 };
 
+// 목록 화면 색 점: 이름별로 제각각이던 색 대신 등급별로 통일된 색을 쓴다
+export const CREATOR_GRADE_DOT: Record<CreatorGrade, string> = {
+  micro: "bg-blue-500",
+  macro: "bg-green-500",
+  mega: "bg-amber-500",
+};
+
 export const CREATOR_GRADE_CLASS: Record<CreatorGrade, string> = {
   micro: "bg-blue-50 text-blue-700",
   macro: "bg-green-50 text-green-700",
