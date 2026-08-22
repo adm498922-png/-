@@ -19,7 +19,7 @@ export default async function CreatorDetailPage({
         deals: { include: { product: true }, orderBy: { createdAt: "desc" } },
       },
     }),
-    prisma.product.findMany({ orderBy: [{ isActive: "desc" }, { name: "asc" }] }),
+    prisma.product.findMany({ orderBy: { name: "asc" } }),
     getDecryptedSettings(),
   ]);
 

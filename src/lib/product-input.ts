@@ -1,4 +1,4 @@
-import { parseNumber } from "@/lib/gonggu";
+import { parseNumber, PRODUCT_STATUSES } from "@/lib/gonggu";
 
 export function normalizeProductInput(input: Record<string, unknown>) {
   const text = (key: string) => {
@@ -23,7 +23,11 @@ export function normalizeProductInput(input: Record<string, unknown>) {
     supplyPrice: int("supplyPrice"),
     commissionRate:
       "commissionRate" in input ? parseNumber(input.commissionRate) : undefined,
-    isActive: typeof input.isActive === "boolean" ? input.isActive : undefined,
+    status:
+      typeof input.status === "string" &&
+      (PRODUCT_STATUSES as readonly string[]).includes(input.status)
+        ? input.status
+        : undefined,
 
     // 업체 제안서에서 가져온 항목들
     vendorCompany: text("vendorCompany"),

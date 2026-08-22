@@ -10,7 +10,7 @@ export default async function ProductsPage() {
   if (hidesGonggu()) redirect("/");
 
   const products = await prisma.product.findMany({
-    orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
+    orderBy: { updatedAt: "desc" },
     include: { deals: { select: { id: true } } },
   });
 

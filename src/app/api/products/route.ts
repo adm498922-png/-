@@ -4,7 +4,7 @@ import { normalizeProductInput } from "@/lib/product-input";
 
 export async function GET() {
   const products = await prisma.product.findMany({
-    orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
+    orderBy: { updatedAt: "desc" },
     include: { deals: true },
   });
   return NextResponse.json(products);
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       supplyPrice: data.supplyPrice ?? null,
       commissionRate: data.commissionRate ?? null,
       memo: data.memo ?? null,
-      isActive: data.isActive ?? true,
+      status: (data.status ?? "SOURCING") as never,
       vendorCompany: data.vendorCompany ?? null,
       vendorContact: data.vendorContact ?? null,
       vendorPhone: data.vendorPhone ?? null,

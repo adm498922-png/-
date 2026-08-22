@@ -285,6 +285,22 @@ export type CreatorView = {
   deals: DealView[];
 };
 
+// 상품이 지금 어느 단계인지: 소싱중(컨택·미팅) → 공구 가능 → 판매 종료
+export const PRODUCT_STATUSES = ["SOURCING", "ACTIVE", "ENDED"] as const;
+export type ProductStatusKey = (typeof PRODUCT_STATUSES)[number];
+
+export const PRODUCT_STATUS_LABEL: Record<string, string> = {
+  SOURCING: "소싱중",
+  ACTIVE: "공구 가능",
+  ENDED: "판매 종료",
+};
+
+export const PRODUCT_STATUS_CLASS: Record<string, string> = {
+  SOURCING: "bg-sky-100 text-sky-700",
+  ACTIVE: "bg-green-500/15 text-green-700",
+  ENDED: "bg-slate-100 text-slate-500",
+};
+
 export type ProductView = {
   id: string;
   name: string;
@@ -295,7 +311,7 @@ export type ProductView = {
   supplyPrice: number | null;
   commissionRate: number | null;
   memo: string | null;
-  isActive: boolean;
+  status: string;
   vendorCompany: string | null;
   vendorContact: string | null;
   vendorPhone: string | null;

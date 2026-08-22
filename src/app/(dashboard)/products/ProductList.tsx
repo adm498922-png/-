@@ -1,11 +1,18 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { formatWon, type ProductView } from "@/lib/gonggu";
+import {
+  formatWon,
+  PRODUCT_STATUSES,
+  PRODUCT_STATUS_CLASS,
+  PRODUCT_STATUS_LABEL,
+  type ProductView,
+} from "@/lib/gonggu";
 
 type FormValues = {
   name: string;
   brand: string;
+  status: string;
   retailPrice: string;
   supplyPrice: string;
   commissionRate: string;
@@ -33,6 +40,7 @@ function emptyForm(): FormValues {
   return {
     name: "",
     brand: "",
+    status: "SOURCING",
     retailPrice: "",
     supplyPrice: "",
     commissionRate: "",
@@ -61,6 +69,7 @@ function toForm(p: ProductView): FormValues {
   return {
     name: p.name,
     brand: p.brand ?? "",
+    status: p.status,
     retailPrice: p.retailPrice === null ? "" : String(p.retailPrice),
     supplyPrice: p.supplyPrice === null ? "" : String(p.supplyPrice),
     commissionRate: p.commissionRate === null ? "" : String(p.commissionRate),
@@ -151,11 +160,11 @@ export default function ProductList({
     setEditingId(null);
   }
 
-  async function toggleActive(p: ProductView) {
+  async function changeStatus(p: ProductView, status: string) {
     const res = await fetch(`/api/products/${p.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !p.isActive }),
+      body: JSON.stringify({ status }),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) return;
@@ -169,7 +178,7 @@ export default function ProductList({
     if (data?.softDeleted) {
       setNotice(data.message);
       setProducts((prev) =>
-        prev.map((x) => (x.id === p.id ? { ...x, isActive: false } : x))
+        prev.map((x) => (x.id === p.id ? { ...x, status: "ENDED" } : x))
       );
       return;
     }
@@ -231,6 +240,13 @@ export default function ProductList({
       "제안서 내용을 아래 칸에 채웠습니다. 틀린 곳이 있으면 고친 뒤 저장하세요."
     );
   }
+
+  // 판매 종료 상품만 맨 아래로 내리고, 그 안에서는 최근 등록·수정순 그대로 둔다.
+  const sortedProducts = [...products].sort((a, b) => {
+    const aEnded = a.status === "ENDED" ? 1 : 0;
+    const bEnded = b.status === "ENDED" ? 1 : 0;
+    return aEnded - bEnded;
+  });
 
   const imageList = (p: ProductView) =>
     (p.images ?? "")
@@ -308,6 +324,20 @@ export default function ProductList({
                 value={form.brand}
                 onChange={(e) => set("brand")(e.target.value)}
               />
+            </div>
+            <div>
+              <label className={labelClass}>진행 단계</label>
+              <select
+                className={inputClass}
+                value={form.status}
+                onChange={(e) => set("status")(e.target.value)}
+              >
+                {PRODUCT_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {PRODUCT_STATUS_LABEL[s]}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>소비자가</label>
@@ -549,11 +579,11 @@ export default function ProductList({
         </div>
       ) : (
         <ul className="space-y-2">
-          {products.map((p) => (
+          {sortedProducts.map((p) => (
             <li
               key={p.id}
               className={`rounded-xl border border-slate-200 bg-white p-4 ${
-                p.isActive ? "" : "opacity-60"
+                p.status === "ENDED" ? "opacity-60" : ""
               }`}
             >
               <div className="flex flex-wrap items-center gap-2">
@@ -561,20 +591,39 @@ export default function ProductList({
                 {p.brand && <span className="text-xs text-slate-500">{p.brand}</span>}
                 <span
                   className={`rounded px-1.5 py-0.5 text-[11px] ${
-                    p.isActive
-                      ? "bg-green-500/15 text-green-700"
-                      : "bg-slate-100 text-slate-500"
+                    PRODUCT_STATUS_CLASS[p.status] ?? "bg-slate-100 text-slate-500"
                   }`}
                 >
-                  {p.isActive ? "공구 가능" : "판매 종료"}
+                  {PRODUCT_STATUS_LABEL[p.status] ?? p.status}
                 </span>
                 <span className="ml-auto flex gap-2 text-[11px] text-slate-500">
                   <button onClick={() => openEdit(p)} className="hover:text-slate-900">
                     수정
                   </button>
-                  <button onClick={() => toggleActive(p)} className="hover:text-slate-900">
-                    {p.isActive ? "판매 종료" : "다시 열기"}
-                  </button>
+                  {p.status === "SOURCING" && (
+                    <button
+                      onClick={() => changeStatus(p, "ACTIVE")}
+                      className="hover:text-slate-900"
+                    >
+                      공구 가능으로 전환
+                    </button>
+                  )}
+                  {p.status !== "ENDED" && (
+                    <button
+                      onClick={() => changeStatus(p, "ENDED")}
+                      className="hover:text-slate-900"
+                    >
+                      판매 종료
+                    </button>
+                  )}
+                  {p.status === "ENDED" && (
+                    <button
+                      onClick={() => changeStatus(p, "ACTIVE")}
+                      className="hover:text-slate-900"
+                    >
+                      다시 열기
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(p)}
                     className="hover:text-red-700"

@@ -197,7 +197,7 @@ model Product {
   supplyPrice    Int? // 공급가(원) — 셀러/벤더 공급가 중 나와 관련된 쪽
   commissionRate Float? // 크리에이터에게 줄 수수료 %
   memo           String?
-  isActive       Boolean  @default(true) // 지금 공구 가능한 상품인지
+  status         ProductStatus @default(SOURCING) // 소싱중(컨택·미팅) → 공구 가능 → 판매 종료
 
   // 업체 제안서에서 가져온 항목들. 업체마다 양식이 달라 자유 텍스트로 둔다.
   vendorCompany       String? // 업체(브랜드사) 상호명
@@ -222,6 +222,12 @@ model Product {
   updatedAt      DateTime @updatedAt
 
   deals          Deal[]
+}
+
+enum ProductStatus {
+  SOURCING // 소싱중 — 업체 컨택·미팅 진행 중
+  ACTIVE   // 공구 가능
+  ENDED    // 판매 종료
 }
 
 enum DealStatus {
