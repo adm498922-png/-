@@ -88,7 +88,7 @@ export default async function GongguDashboard() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">대시보드</h1>
-          <p className="mt-1 text-sm text-slate-500">공구 허브 현황 한눈에 보기</p>
+          <p className="mt-1 text-sm text-slate-500">Y글로벌 현황 한눈에 보기</p>
         </div>
         <Link
           href="/creators"
