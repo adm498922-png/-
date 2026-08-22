@@ -129,6 +129,25 @@ export default function CreatorList({
     return sorted;
   }, [creators, query, statusFilter, sort]);
 
+  // 카테고리(주방/육아/리빙 …)별로 묶어서, 한눈에 어떤 분야 크리에이터가 몇 명인지 보이게 한다.
+  // 카테고리를 안 적었으면 "미분류"로 모아서 맨 뒤에 둔다.
+  const groupedByCategory = useMemo(() => {
+    const map = new Map<string, CreatorView[]>();
+    for (const c of visible) {
+      const key = c.category?.trim() || "미분류";
+      const list = map.get(key) ?? [];
+      list.push(c);
+      map.set(key, list);
+    }
+    const groups = Array.from(map.entries(), ([category, items]) => ({ category, items }));
+    groups.sort((a, b) => {
+      if (a.category === "미분류") return 1;
+      if (b.category === "미분류") return -1;
+      return a.category.localeCompare(b.category, "ko-KR");
+    });
+    return groups;
+  }, [visible]);
+
   async function handleCreate() {
     setSaving(true);
     setError(null);
@@ -453,65 +472,74 @@ export default function CreatorList({
           )}
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {visible.map((c) => {
-            const s = summarizeDeals(c.deals);
-            const grade = getCreatorGrade(c.followers);
-            return (
-              <li key={c.id} className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  checked={selected.has(c.id)}
-                  onChange={() => toggleSelect(c.id)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-5 h-4 w-4 shrink-0 cursor-pointer accent-blue-600"
-                />
-                <Link
-                  href={`/creators/${c.id}`}
-                  className="block flex-1 rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-400"
-                >
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span
-                      className={`h-2.5 w-2.5 shrink-0 rounded-full ${CREATOR_GRADE_DOT[grade]}`}
-                      title={`${CREATOR_GRADE_LABEL[grade]} 등급`}
-                    />
-                    <span className="font-semibold text-slate-900">{c.name}</span>
-                    {c.handle && (
-                      <span className="text-xs text-slate-500">@{c.handle}</span>
-                    )}
-                    <span
-                      className={`rounded px-1.5 py-0.5 text-[11px] ${
-                        CREATOR_STATUS_CLASS[c.status] ?? "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {CREATOR_STATUS_LABEL[c.status] ?? c.status}
-                    </span>
-                    <span className={`rounded px-1.5 py-0.5 text-[11px] ${CREATOR_GRADE_CLASS[grade]}`}>
-                      {CREATOR_GRADE_LABEL[grade]}
-                    </span>
-                    {c.rating !== null && (
-                      <span className="text-[11px] text-amber-700">
-                        {"★".repeat(c.rating)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                    <span>{PLATFORM_LABEL[c.platform] ?? c.platform}</span>
-                    <span>팔로워 {formatFollowers(c.followers)}</span>
-                    {c.engagementRate !== null && (
-                      <span>참여율 {formatEngagement(c.engagementRate)}</span>
-                    )}
-                    {c.category && <span>{c.category}</span>}
-                    <span>
-                      공구 {s.count}건 · 매출 {formatWon(s.revenue)}
-                    </span>
-                    {s.lastDealAt && <span>최근 {formatDate(s.lastDealAt)}</span>}
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="space-y-6">
+          {groupedByCategory.map((group) => (
+            <div key={group.category}>
+              <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                {group.category}
+                <span className="font-normal text-slate-400">· {group.items.length}명</span>
+              </h3>
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {group.items.map((c) => {
+                  const s = summarizeDeals(c.deals);
+                  const grade = getCreatorGrade(c.followers);
+                  return (
+                    <li key={c.id} className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(c.id)}
+                        onChange={() => toggleSelect(c.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-5 h-4 w-4 shrink-0 cursor-pointer accent-blue-600"
+                      />
+                      <Link
+                        href={`/creators/${c.id}`}
+                        className="block flex-1 rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-400"
+                      >
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span
+                            className={`h-2.5 w-2.5 shrink-0 rounded-full ${CREATOR_GRADE_DOT[grade]}`}
+                            title={`${CREATOR_GRADE_LABEL[grade]} 등급`}
+                          />
+                          <span className="font-semibold text-slate-900">{c.name}</span>
+                          {c.handle && (
+                            <span className="text-xs text-slate-500">@{c.handle}</span>
+                          )}
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[11px] ${
+                              CREATOR_STATUS_CLASS[c.status] ?? "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {CREATOR_STATUS_LABEL[c.status] ?? c.status}
+                          </span>
+                          <span className={`rounded px-1.5 py-0.5 text-[11px] ${CREATOR_GRADE_CLASS[grade]}`}>
+                            {CREATOR_GRADE_LABEL[grade]}
+                          </span>
+                          {c.rating !== null && (
+                            <span className="text-[11px] text-amber-700">
+                              {"★".repeat(c.rating)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                          <span>{PLATFORM_LABEL[c.platform] ?? c.platform}</span>
+                          <span>팔로워 {formatFollowers(c.followers)}</span>
+                          {c.engagementRate !== null && (
+                            <span>참여율 {formatEngagement(c.engagementRate)}</span>
+                          )}
+                          <span>
+                            공구 {s.count}건 · 매출 {formatWon(s.revenue)}
+                          </span>
+                          {s.lastDealAt && <span>최근 {formatDate(s.lastDealAt)}</span>}
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
