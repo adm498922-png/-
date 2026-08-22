@@ -101,6 +101,7 @@ const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 const inputClass =
   "w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 outline-none focus:border-blue-500";
+const textareaClass = `${inputClass} resize-y`;
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(() => {
@@ -641,8 +642,9 @@ export default function CalendarPage() {
                     />
                   </div>
                 )}
-                <input
-                  className={inputClass}
+                <textarea
+                  className={textareaClass}
+                  rows={3}
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
                   placeholder="메모 (선택)"
@@ -700,8 +702,9 @@ export default function CalendarPage() {
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] text-slate-500">메모</label>
-                  <input
-                    className={inputClass}
+                  <textarea
+                    className={textareaClass}
+                    rows={3}
                     value={editMemo}
                     onChange={(e) => setEditMemo(e.target.value)}
                     placeholder="메모 (선택)"
@@ -806,8 +809,9 @@ export default function CalendarPage() {
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] text-slate-500">메모</label>
-                  <input
-                    className={inputClass}
+                  <textarea
+                    className={textareaClass}
+                    rows={3}
                     value={newTodoMemo}
                     onChange={(e) => setNewTodoMemo(e.target.value)}
                     placeholder="메모 (선택)"
@@ -878,8 +882,9 @@ export default function CalendarPage() {
                       </div>
                       <div>
                         <label className="mb-1 block text-[11px] text-slate-500">메모</label>
-                        <input
-                          className={inputClass}
+                        <textarea
+                          className={textareaClass}
+                          rows={4}
                           value={todoDraft.memo}
                           onChange={(e) => updateTodoDraft(it.id, { memo: e.target.value })}
                           placeholder="메모 (선택)"
