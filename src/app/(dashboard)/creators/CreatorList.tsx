@@ -10,8 +10,8 @@ import ImportPanel from "./ImportPanel";
 import BookmarkletBox from "./BookmarkletBox";
 import SalesImportPanel from "./SalesImportPanel";
 import {
-  CREATOR_COLOR_SWATCH,
   CREATOR_GRADE_CLASS,
+  CREATOR_GRADE_DOT,
   CREATOR_GRADE_LABEL,
   CREATOR_STATUSES,
   CREATOR_STATUS_CLASS,
@@ -22,7 +22,6 @@ import {
   formatFollowers,
   formatWon,
   getCreatorGrade,
-  resolveCreatorColor,
   summarizeDeals,
   type CreatorView,
 } from "@/lib/gonggu";
@@ -71,7 +70,7 @@ export default function CreatorList({
   const [creators, setCreators] = useState(initialCreators);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [sort, setSort] = useState<SortKey>("recent");
+  const [sort, setSort] = useState<SortKey>("name");
   const [adding, setAdding] = useState(Boolean(autoOpen));
   const [form, setForm] = useState<CreatorFormValues>(() => ({
     ...emptyCreatorForm(),
@@ -454,7 +453,7 @@ export default function CreatorList({
           )}
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {visible.map((c) => {
             const s = summarizeDeals(c.deals);
             const grade = getCreatorGrade(c.followers);
@@ -473,10 +472,8 @@ export default function CreatorList({
                 >
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span
-                      className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                        CREATOR_COLOR_SWATCH[resolveCreatorColor(c.name, c.color)]
-                      }`}
-                      title="캘린더 색상"
+                      className={`h-2.5 w-2.5 shrink-0 rounded-full ${CREATOR_GRADE_DOT[grade]}`}
+                      title={`${CREATOR_GRADE_LABEL[grade]} 등급`}
                     />
                     <span className="font-semibold text-slate-900">{c.name}</span>
                     {c.handle && (
