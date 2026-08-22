@@ -29,5 +29,5 @@ export function hidesGonggu(): boolean {
 export const APP_TITLE: Record<AppMode, string> = {
   full: "Threads Hub",
   threads: "Threads Hub",
-  gonggu: "공구 허브",
+  gonggu: "Y글로벌",
 };
