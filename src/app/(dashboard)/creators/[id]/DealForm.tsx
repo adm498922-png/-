@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   DEAL_STATUSES,
   DEAL_STATUS_LABEL,
+  PRODUCT_STATUS_LABEL,
   toDateInput,
   type DealView,
   type ProductView,
@@ -128,7 +129,7 @@ export default function DealForm({
             {products.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
-                {p.isActive ? "" : " (판매종료)"}
+                {p.status === "ACTIVE" ? "" : ` (${PRODUCT_STATUS_LABEL[p.status] ?? p.status})`}
               </option>
             ))}
           </select>

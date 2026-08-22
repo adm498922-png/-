@@ -28,7 +28,7 @@ export default function DmBox({
   products: ProductView[];
   template: string | null;
 }) {
-  const usable = products.filter((p) => p.isActive);
+  const usable = products.filter((p) => p.status === "ACTIVE");
   const [productId, setProductId] = useState(usable[0]?.id ?? "");
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);

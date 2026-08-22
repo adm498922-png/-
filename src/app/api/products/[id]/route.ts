@@ -33,7 +33,7 @@ export async function PATCH(
   assign("retailPrice", data.retailPrice);
   assign("supplyPrice", data.supplyPrice);
   assign("commissionRate", data.commissionRate);
-  assign("isActive", data.isActive);
+  assign("status", data.status);
   assign("vendorCompany", data.vendorCompany);
   assign("vendorContact", data.vendorContact);
   assign("vendorPhone", data.vendorPhone);
@@ -66,7 +66,7 @@ export async function DELETE(
   // 진행 기록이 남아 있는 상품은 지우지 않고 "판매 종료"로만 내린다.
   const dealCount = await prisma.deal.count({ where: { productId: id } });
   if (dealCount > 0) {
-    await prisma.product.update({ where: { id }, data: { isActive: false } });
+    await prisma.product.update({ where: { id }, data: { status: "ENDED" } });
     return NextResponse.json({
       ok: true,
       softDeleted: true,
