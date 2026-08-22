@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 type Item = {
@@ -120,12 +120,24 @@ export default function CalendarPage() {
   const [saving, setSaving] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editKind, setEditKind] = useState<"event" | "todo">("event");
   const [editTitle, setEditTitle] = useState("");
   const [editMemo, setEditMemo] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+
+  // 할일은 오른쪽 "오늘 할일" 패널에서 직접 고친다(가로 배치 대신 세로 배치,
+  // 아래쪽 대신 옆으로, 저장 버튼 없이 바로바로 저장).
+  const todoPanelRef = useRef<HTMLDivElement | null>(null);
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const [todoDraft, setTodoDraft] = useState({ title: "", date: "", memo: "" });
+  const [todoSaveState, setTodoSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const todoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [todoAddOpen, setTodoAddOpen] = useState(false);
+  const [newTodoTitle, setNewTodoTitle] = useState("");
+  const [newTodoMemo, setNewTodoMemo] = useState("");
+  const [todoAddSaving, setTodoAddSaving] = useState(false);
 
   const gridStart = useMemo(() => {
     const start = new Date(cursor);
@@ -190,8 +202,8 @@ export default function CalendarPage() {
     return map;
   }, [pointItems]);
 
-  const todosAll = items
-    .filter((i) => i.source === "todo")
+  const todosToday = items
+    .filter((i) => i.source === "todo" && toKey(new Date(i.date)) === toKey(new Date()))
     .sort((a, b) => a.date.localeCompare(b.date));
 
   async function toggleTodo(item: Item) {
@@ -237,9 +249,12 @@ export default function CalendarPage() {
 
   function openEdit(item: Item) {
     if (!item.editable) return; // 공구 기록에서 자동으로 뽑힌 항목은 판매일보에서 고친다
+    if (item.source === "todo") {
+      openTodoEdit(item);
+      return;
+    }
     setFormOpen(false);
     setEditingId(item.id);
-    setEditKind(item.source === "todo" ? "todo" : "event");
     setEditTitle(item.title);
     setEditMemo(item.memo ?? "");
     setEditDate(toKey(new Date(item.date)));
@@ -266,6 +281,87 @@ export default function CalendarPage() {
     setEditSaving(false);
     if (!res.ok) return;
     setEditingId(null);
+    await refreshItems();
+  }
+
+  function openTodoEdit(item: Item) {
+    if (todoSaveTimer.current) {
+      clearTimeout(todoSaveTimer.current);
+      todoSaveTimer.current = null;
+    }
+    setTodoAddOpen(false);
+    setEditingTodoId(item.id);
+    setTodoDraft({ title: item.title, date: toKey(new Date(item.date)), memo: item.memo ?? "" });
+    setTodoSaveState("idle");
+    requestAnimationFrame(() => {
+      todoPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
+
+  function closeTodoEdit() {
+    if (todoSaveTimer.current) {
+      clearTimeout(todoSaveTimer.current);
+      todoSaveTimer.current = null;
+      if (editingTodoId) flushTodoSave(editingTodoId, todoDraft);
+    }
+    setEditingTodoId(null);
+  }
+
+  async function flushTodoSave(
+    id: string,
+    draft: { title: string; date: string; memo: string }
+  ) {
+    if (!draft.title.trim()) return;
+    setTodoSaveState("saving");
+    const res = await fetch(`/api/calendar/events/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: draft.title, date: draft.date, memo: draft.memo }),
+    });
+    if (res.ok) {
+      setTodoSaveState("saved");
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === id
+            ? { ...i, title: draft.title, date: keyToDate(draft.date).toISOString(), memo: draft.memo }
+            : i
+        )
+      );
+    }
+  }
+
+  // 입력할 때마다 잠깐 멈추면(0.6초) 자동으로 저장 — 수정 저장 버튼 없이 바로바로 반영
+  function updateTodoDraft(
+    id: string,
+    patch: Partial<{ title: string; date: string; memo: string }>
+  ) {
+    const next = { ...todoDraft, ...patch };
+    setTodoDraft(next);
+    if (todoSaveTimer.current) clearTimeout(todoSaveTimer.current);
+    setTodoSaveState("saving");
+    todoSaveTimer.current = setTimeout(() => flushTodoSave(id, next), 600);
+  }
+
+  function openTodoAdd() {
+    setEditingTodoId(null);
+    setNewTodoTitle("");
+    setNewTodoMemo("");
+    setTodoAddOpen((v) => !v);
+  }
+
+  async function submitTodo() {
+    if (!newTodoTitle.trim()) return;
+    setTodoAddSaving(true);
+    const res = await fetch("/api/calendar/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: newTodoTitle, kind: "TODO", date: toKey(new Date()), memo: newTodoMemo }),
+    });
+    setTodoAddSaving(false);
+    if (!res.ok) return;
+    setNewTodoTitle("");
+    setNewTodoMemo("");
+    setTodoAddOpen(false);
     await refreshItems();
   }
 
@@ -564,9 +660,7 @@ export default function CalendarPage() {
             {editingId && (
               <div className="mb-3 space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-blue-700">
-                    {editKind === "todo" ? "할일" : "일정"} 수정
-                  </span>
+                  <span className="text-xs font-semibold text-blue-700">일정 수정</span>
                   <button
                     onClick={cancelEdit}
                     className="text-xs text-slate-500 hover:text-slate-900"
@@ -574,43 +668,45 @@ export default function CalendarPage() {
                     취소
                   </button>
                 </div>
-                <input
-                  className={inputClass}
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && saveEdit()}
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="mb-1 block text-[11px] text-slate-500">시작일</label>
-                    <input
-                      type="date"
-                      className={inputClass}
-                      value={editDate}
-                      onChange={(e) => setEditDate(e.target.value)}
-                    />
-                  </div>
-                  {editKind === "event" && (
-                    <div>
-                      <label className="mb-1 block text-[11px] text-slate-500">
-                        종료일 (선택)
-                      </label>
-                      <input
-                        type="date"
-                        className={inputClass}
-                        value={editEndDate}
-                        onChange={(e) => setEditEndDate(e.target.value)}
-                        min={editDate}
-                      />
-                    </div>
-                  )}
+                <div>
+                  <label className="mb-1 block text-[11px] text-slate-500">제목</label>
+                  <input
+                    className={inputClass}
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+                  />
                 </div>
-                <input
-                  className={inputClass}
-                  value={editMemo}
-                  onChange={(e) => setEditMemo(e.target.value)}
-                  placeholder="메모 (선택)"
-                />
+                <div>
+                  <label className="mb-1 block text-[11px] text-slate-500">시작일</label>
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] text-slate-500">
+                    종료일 (선택)
+                  </label>
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={editEndDate}
+                    onChange={(e) => setEditEndDate(e.target.value)}
+                    min={editDate}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] text-slate-500">메모</label>
+                  <input
+                    className={inputClass}
+                    value={editMemo}
+                    onChange={(e) => setEditMemo(e.target.value)}
+                    placeholder="메모 (선택)"
+                  />
+                </div>
                 <button
                   onClick={saveEdit}
                   disabled={editSaving || !editTitle.trim()}
@@ -685,37 +781,153 @@ export default function CalendarPage() {
           </div>
         </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
-            <h3 className="mb-3 font-semibold text-slate-900">이번 달 할일</h3>
-            {todosAll.length === 0 ? (
-              <p className="text-xs text-slate-400">이번 달 할일이 없습니다.</p>
+          <div ref={todoPanelRef} className="rounded-xl border border-slate-200 bg-white p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">오늘 할일</h3>
+              <button
+                onClick={openTodoAdd}
+                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900"
+              >
+                {todoAddOpen ? "닫기" : "＋ 추가"}
+              </button>
+            </div>
+
+            {todoAddOpen && (
+              <div className="mb-3 space-y-2 rounded-lg bg-slate-50 p-3">
+                <div>
+                  <label className="mb-1 block text-[11px] text-slate-500">제목</label>
+                  <input
+                    className={inputClass}
+                    value={newTodoTitle}
+                    onChange={(e) => setNewTodoTitle(e.target.value)}
+                    placeholder="예: 정산 처리하기"
+                    onKeyDown={(e) => e.key === "Enter" && submitTodo()}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] text-slate-500">메모</label>
+                  <input
+                    className={inputClass}
+                    value={newTodoMemo}
+                    onChange={(e) => setNewTodoMemo(e.target.value)}
+                    placeholder="메모 (선택)"
+                  />
+                </div>
+                <button
+                  onClick={submitTodo}
+                  disabled={todoAddSaving || !newTodoTitle.trim()}
+                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
+                >
+                  {todoAddSaving ? "저장 중…" : "저장"}
+                </button>
+              </div>
+            )}
+
+            {todosToday.length === 0 ? (
+              <p className="text-xs text-slate-400">오늘 할일이 없습니다.</p>
             ) : (
-              <ul className="space-y-2">
-                {todosAll.map((it) => (
-                  <li key={it.id} className="flex items-start gap-2.5">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(it.done)}
-                      onChange={() => toggleTodo(it)}
-                      className="mt-0.5"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={`truncate text-sm text-slate-800 ${
-                          it.done ? "text-slate-400 line-through" : ""
-                        }`}
+              <ul className="max-h-[70vh] space-y-2 overflow-y-auto pr-1">
+                {todosToday.map((it) =>
+                  editingTodoId === it.id ? (
+                    <li
+                      key={it.id}
+                      className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-blue-700">할일 수정</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-slate-400">
+                            {todoSaveState === "saving"
+                              ? "저장 중…"
+                              : todoSaveState === "saved"
+                                ? "저장됨"
+                                : ""}
+                          </span>
+                          <button
+                            onClick={closeTodoEdit}
+                            className="text-xs text-slate-500 hover:text-slate-900"
+                          >
+                            닫기
+                          </button>
+                        </div>
+                      </div>
+                      <label className="flex items-center gap-2 text-xs text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(it.done)}
+                          onChange={() => toggleTodo(it)}
+                        />
+                        완료
+                      </label>
+                      <div>
+                        <label className="mb-1 block text-[11px] text-slate-500">제목</label>
+                        <input
+                          className={inputClass}
+                          value={todoDraft.title}
+                          onChange={(e) => updateTodoDraft(it.id, { title: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-[11px] text-slate-500">날짜</label>
+                        <input
+                          type="date"
+                          className={inputClass}
+                          value={todoDraft.date}
+                          onChange={(e) => updateTodoDraft(it.id, { date: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-[11px] text-slate-500">메모</label>
+                        <input
+                          className={inputClass}
+                          value={todoDraft.memo}
+                          onChange={(e) => updateTodoDraft(it.id, { memo: e.target.value })}
+                          placeholder="메모 (선택)"
+                        />
+                      </div>
+                      <button
+                        onClick={() => deleteItem(it)}
+                        className="text-xs text-slate-400 hover:text-red-500"
                       >
-                        {it.title}
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        {new Date(it.date).toLocaleDateString("ko-KR", {
-                          month: "2-digit",
-                          day: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </li>
-                ))}
+                        삭제
+                      </button>
+                    </li>
+                  ) : (
+                    <li
+                      key={it.id}
+                      className="group flex items-start gap-2.5 rounded-lg px-1 py-1 hover:bg-slate-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={Boolean(it.done)}
+                        onChange={() => toggleTodo(it)}
+                        className="mt-1"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openTodoEdit(it)}
+                        className="min-w-0 flex-1 text-left"
+                      >
+                        <p
+                          className={`truncate text-sm text-slate-800 ${
+                            it.done ? "text-slate-400 line-through" : ""
+                          }`}
+                        >
+                          {it.title}
+                        </p>
+                        {it.memo && (
+                          <p className="truncate text-[11px] text-slate-400">{it.memo}</p>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => deleteItem(it)}
+                        className="text-xs text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500"
+                      >
+                        삭제
+                      </button>
+                    </li>
+                  )
+                )}
               </ul>
             )}
           </div>
