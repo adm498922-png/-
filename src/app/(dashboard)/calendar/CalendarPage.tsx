@@ -126,7 +126,7 @@ export default function CalendarPage() {
   const [editEndDate, setEditEndDate] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
-  // 할일은 오른쪽 "이번 달 할일" 패널에서 직접 고친다(가로 배치 대신 세로 배치,
+  // 할일은 오른쪽 "오늘 할일" 패널에서 직접 고친다(가로 배치 대신 세로 배치,
   // 아래쪽 대신 옆으로, 저장 버튼 없이 바로바로 저장).
   const todoPanelRef = useRef<HTMLDivElement | null>(null);
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
@@ -136,7 +136,6 @@ export default function CalendarPage() {
 
   const [todoAddOpen, setTodoAddOpen] = useState(false);
   const [newTodoTitle, setNewTodoTitle] = useState("");
-  const [newTodoDate, setNewTodoDate] = useState("");
   const [newTodoMemo, setNewTodoMemo] = useState("");
   const [todoAddSaving, setTodoAddSaving] = useState(false);
 
@@ -203,8 +202,8 @@ export default function CalendarPage() {
     return map;
   }, [pointItems]);
 
-  const todosAll = items
-    .filter((i) => i.source === "todo")
+  const todosToday = items
+    .filter((i) => i.source === "todo" && toKey(new Date(i.date)) === toKey(new Date()))
     .sort((a, b) => a.date.localeCompare(b.date));
 
   async function toggleTodo(item: Item) {
@@ -347,17 +346,16 @@ export default function CalendarPage() {
     setEditingTodoId(null);
     setNewTodoTitle("");
     setNewTodoMemo("");
-    setNewTodoDate(selected);
     setTodoAddOpen((v) => !v);
   }
 
   async function submitTodo() {
-    if (!newTodoTitle.trim() || !newTodoDate) return;
+    if (!newTodoTitle.trim()) return;
     setTodoAddSaving(true);
     const res = await fetch("/api/calendar/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newTodoTitle, kind: "TODO", date: newTodoDate, memo: newTodoMemo }),
+      body: JSON.stringify({ title: newTodoTitle, kind: "TODO", date: toKey(new Date()), memo: newTodoMemo }),
     });
     setTodoAddSaving(false);
     if (!res.ok) return;
@@ -785,7 +783,7 @@ export default function CalendarPage() {
 
           <div ref={todoPanelRef} className="rounded-xl border border-slate-200 bg-white p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900">이번 달 할일</h3>
+              <h3 className="font-semibold text-slate-900">오늘 할일</h3>
               <button
                 onClick={openTodoAdd}
                 className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900"
@@ -807,15 +805,6 @@ export default function CalendarPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] text-slate-500">날짜</label>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={newTodoDate}
-                    onChange={(e) => setNewTodoDate(e.target.value)}
-                  />
-                </div>
-                <div>
                   <label className="mb-1 block text-[11px] text-slate-500">메모</label>
                   <input
                     className={inputClass}
@@ -834,11 +823,11 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {todosAll.length === 0 ? (
-              <p className="text-xs text-slate-400">이번 달 할일이 없습니다.</p>
+            {todosToday.length === 0 ? (
+              <p className="text-xs text-slate-400">오늘 할일이 없습니다.</p>
             ) : (
               <ul className="max-h-[70vh] space-y-2 overflow-y-auto pr-1">
-                {todosAll.map((it) =>
+                {todosToday.map((it) =>
                   editingTodoId === it.id ? (
                     <li
                       key={it.id}
@@ -926,12 +915,9 @@ export default function CalendarPage() {
                         >
                           {it.title}
                         </p>
-                        <p className="text-[11px] text-slate-400">
-                          {new Date(it.date).toLocaleDateString("ko-KR", {
-                            month: "2-digit",
-                            day: "2-digit",
-                          })}
-                        </p>
+                        {it.memo && (
+                          <p className="truncate text-[11px] text-slate-400">{it.memo}</p>
+                        )}
                       </button>
                       <button
                         onClick={() => deleteItem(it)}
