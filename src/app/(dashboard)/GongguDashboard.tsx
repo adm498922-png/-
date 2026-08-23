@@ -94,12 +94,22 @@ export default async function GongguDashboard() {
           <h1 className="text-2xl font-bold text-slate-900">대시보드</h1>
           <p className="mt-1 text-sm text-slate-500">Y글로벌 현황 한눈에 보기</p>
         </div>
-        <Link
-          href="/creators"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-        >
-          크리에이터 보러가기
-        </Link>
+        <div className="flex flex-col items-end gap-2">
+          <Link
+            href="/creators"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+          >
+            크리에이터 보러가기
+          </Link>
+          <a
+            href="https://app.notion.com/p/3bc0af65ac928063ad4decf636c6439d"
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue-300"
+          >
+            노션 정리목록 보러가기
+          </a>
+        </div>
       </div>
 
       <WeeklyRoutine initialItems={routineItems} />
