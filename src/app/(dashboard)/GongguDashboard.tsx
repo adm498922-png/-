@@ -7,6 +7,7 @@ import {
   getCreatorGrade,
   type CreatorGrade,
 } from "@/lib/gonggu";
+import WeeklyRoutine from "./WeeklyRoutine";
 
 function Bar({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
   const pct = total ? Math.round((value / total) * 100) : 0;
@@ -59,12 +60,15 @@ function buildRecentDmDays(sentAssignments: { sentAt: Date | string | null }[]) 
 }
 
 export default async function GongguDashboard() {
-  const [creators, activeCampaignCount, sentAssignments] = await Promise.all([
+  const [creators, activeCampaignCount, sentAssignments, routineItems] = await Promise.all([
     prisma.creator.findMany({ select: { followers: true, status: true } }),
     prisma.campaign.count({ where: { status: "ACTIVE" } }),
     prisma.campaignAssignment.findMany({
       where: { status: "SENT" },
       select: { sentAt: true },
+    }),
+    prisma.routineItem.findMany({
+      orderBy: [{ weekday: "asc" }, { time: "asc" }, { createdAt: "asc" }],
     }),
   ]);
 
@@ -97,6 +101,8 @@ export default async function GongguDashboard() {
           크리에이터 보러가기
         </Link>
       </div>
+
+      <WeeklyRoutine initialItems={routineItems} />
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-center">
