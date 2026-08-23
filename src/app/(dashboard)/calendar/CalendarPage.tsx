@@ -203,8 +203,18 @@ export default function CalendarPage() {
     return map;
   }, [pointItems]);
 
-  const todosToday = items
-    .filter((i) => i.source === "todo" && toKey(new Date(i.date)) === toKey(new Date()))
+  const today = toKey(new Date());
+
+  // 오늘 할일 + 아직 안 끝난 지난 할일(날짜 지났는데 미완료)까지 같이 보여준다.
+  // 완료한 지난 할일까지 계속 남아있으면 목록이 지저분해지니 그건 빼고,
+  // 못 끝낸 건 날짜가 지나도 계속 눈에 띄게 둔다.
+  const todosTodayAndOverdue = items
+    .filter((i) => {
+      if (i.source !== "todo") return false;
+      const key = toKey(new Date(i.date));
+      if (key === today) return true;
+      return key < today && !i.done;
+    })
     .sort((a, b) => a.date.localeCompare(b.date));
 
   async function toggleTodo(item: Item) {
@@ -366,7 +376,6 @@ export default function CalendarPage() {
     await refreshItems();
   }
 
-  const today = toKey(new Date());
   const selectedItems = useMemo(() => {
     const selDate = keyToDate(selected);
     const point = pointByDay.get(selected) ?? [];
@@ -827,18 +836,22 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {todosToday.length === 0 ? (
-              <p className="text-xs text-slate-400">오늘 할일이 없습니다.</p>
+            {todosTodayAndOverdue.length === 0 ? (
+              <p className="text-xs text-slate-400">오늘·지난 할일이 없습니다.</p>
             ) : (
               <ul className="max-h-[70vh] space-y-2 overflow-y-auto pr-1">
-                {todosToday.map((it) =>
-                  editingTodoId === it.id ? (
+                {todosTodayAndOverdue.map((it) => {
+                  const itemKey = toKey(new Date(it.date));
+                  const isOverdue = itemKey !== today;
+                  return editingTodoId === it.id ? (
                     <li
                       key={it.id}
                       className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-blue-700">할일 수정</span>
+                        <span className="text-xs font-semibold text-blue-700">
+                          할일 수정{isOverdue ? " · 지난 항목" : ""}
+                        </span>
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] text-slate-400">
                             {todoSaveState === "saving"
@@ -918,6 +931,15 @@ export default function CalendarPage() {
                             it.done ? "text-slate-400 line-through" : ""
                           }`}
                         >
+                          {isOverdue && (
+                            <span className="mr-1.5 rounded bg-red-100 px-1 py-0.5 text-[10px] font-medium text-red-600">
+                              {new Date(it.date).toLocaleDateString("ko-KR", {
+                                month: "2-digit",
+                                day: "2-digit",
+                              })}{" "}
+                              지남
+                            </span>
+                          )}
                           {it.title}
                         </p>
                         {it.memo && (
@@ -931,8 +953,8 @@ export default function CalendarPage() {
                         삭제
                       </button>
                     </li>
-                  )
-                )}
+                  );
+                })}
               </ul>
             )}
           </div>
