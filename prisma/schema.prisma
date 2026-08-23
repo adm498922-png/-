@@ -13,6 +13,19 @@ model AdminUser {
   createdAt    DateTime @default(now())
 }
 
+// 대시보드 맨 위에 두는 나만의 일주일 루틴표 (날짜가 아니라 요일 기준, 매주 반복)
+model RoutineItem {
+  id        String   @id @default(cuid())
+  weekday   Int // 0=일 1=월 2=화 3=수 4=목 5=금 6=토
+  time      String? // "06:00" 같은 시간 표시, 자유 입력이라 없어도 됨
+  title     String
+  memo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([weekday])
+}
+
 // 앱 전역 설정: 쿠팡파트너스 / Threads 개발자 앱 키 (값은 암호화되어 저장됨)
 model Settings {
   id                  String   @id @default("singleton")
