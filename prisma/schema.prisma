@@ -26,6 +26,17 @@ model RoutineItem {
   @@index([weekday])
 }
 
+// 대시보드에서 정산 등 날짜별로 남겨두는 개인 메모
+model SettlementNote {
+  id        String   @id @default(cuid())
+  date      String? // "YYYY-MM-DD", 날짜 없이 자유 메모도 가능
+  memo      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+}
+
 // 앱 전역 설정: 쿠팡파트너스 / Threads 개발자 앱 키 (값은 암호화되어 저장됨)
 model Settings {
   id                  String   @id @default("singleton")
