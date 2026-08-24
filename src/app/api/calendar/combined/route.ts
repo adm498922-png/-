@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
+  CREATOR_COLORS,
   CREATOR_COLOR_BAR,
   CREATOR_COLOR_CHIP,
   resolveCreatorColor,
+  type CreatorColorKey,
 } from "@/lib/gonggu";
 
 /**
@@ -29,6 +31,7 @@ type CalItem = {
   href?: string;
   memo?: string;
   editable?: boolean; // 직접 수정 가능한 항목인지 (공구 기록에서 자동으로 뽑힌 건 여기서 못 고침)
+  color?: string; // 직접 고른 색상 키 (수정 폼에서 그대로 보여주기 위함)
   colorClass: string; // 하루짜리 항목 칩 색
   barClass: string; // 여러 날 막대 색
 };
@@ -90,7 +93,12 @@ export async function GET(req: NextRequest) {
   for (const e of events) {
     const sameDay =
       !e.endDate || e.endDate.toDateString() === e.date.toDateString();
-    const colorKey = e.creator ? resolveCreatorColor(e.creator.name, e.creator.color) : null;
+    const ownColorKey: CreatorColorKey | null =
+      e.color && (CREATOR_COLORS as readonly string[]).includes(e.color)
+        ? (e.color as CreatorColorKey)
+        : null;
+    const colorKey =
+      ownColorKey ?? (e.creator ? resolveCreatorColor(e.creator.name, e.creator.color) : null);
     items.push({
       id: e.id,
       source: e.kind === "TODO" ? "todo" : "event",
@@ -100,6 +108,7 @@ export async function GET(req: NextRequest) {
       done: e.done,
       memo: e.memo ?? undefined,
       editable: true,
+      color: ownColorKey ?? undefined,
       colorClass: colorKey
         ? CREATOR_COLOR_CHIP[colorKey]
         : DEFAULT_CHIP[e.kind === "TODO" ? "todo" : "event"],

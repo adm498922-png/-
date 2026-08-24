@@ -314,6 +314,7 @@ model CalendarEvent {
   endDate    DateTime? // 여러 날짜에 걸친 일정일 때
   done       Boolean           @default(false) // 할일 완료 여부
   memo       String?
+  color      String? // 직접 고른 캘린더 색상 (안 고르면 연결된 크리에이터 색상을 씀)
   creatorId  String? // 특정 크리에이터와 관련된 일정이면 연결
   creator    Creator?          @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   createdAt  DateTime          @default(now())

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { CREATOR_COLORS } from "@/lib/gonggu";
 
 export async function PATCH(
   req: NextRequest,
@@ -16,6 +17,12 @@ export async function PATCH(
   if ("endDate" in body) {
     patch.endDate =
       typeof body.endDate === "string" && body.endDate ? new Date(body.endDate) : null;
+  }
+  if ("color" in body) {
+    patch.color =
+      typeof body.color === "string" && (CREATOR_COLORS as readonly string[]).includes(body.color)
+        ? body.color
+        : null;
   }
 
   const event = await prisma.calendarEvent

@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { CREATOR_COLORS } from "@/lib/gonggu";
+
+function normalizeColor(value: unknown): string | null {
+  return typeof value === "string" && (CREATOR_COLORS as readonly string[]).includes(value)
+    ? value
+    : null;
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -38,6 +45,7 @@ export async function POST(req: NextRequest) {
           ? new Date(body.endDate)
           : null,
       memo: typeof body.memo === "string" ? body.memo.trim() || null : null,
+      color: normalizeColor(body.color),
       creatorId: typeof body.creatorId === "string" && body.creatorId ? body.creatorId : null,
     },
     include: { creator: { select: { id: true, name: true } } },
