@@ -1,26 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
-import { formatDate, formatWon, type CreatorView } from "@/lib/gonggu";
+import { formatDate, formatWon, type CreatorView, type ProductView } from "@/lib/gonggu";
+import DealForm, {
+  dealToForm,
+  emptyDealForm,
+  type DealFormValues,
+} from "../creators/[id]/DealForm";
 
 type Row = {
   id: string;
+  creatorId: string;
   creator: { id: string; name: string; handle: string | null };
+  productId: string | null;
   product: { id: string; name: string; brand: string | null } | null;
   productName: string | null;
   status: string;
   startDate: string | null;
   endDate: string | null;
+  unitsSold: number | null;
   revenue: number | null;
   commissionRate: number | null;
+  salesCommission: number | null;
+  contentFee: number | null;
   settlement: number | null;
+  agencyRate: number | null;
+  agencyFee: number | null;
   settleDueDate: string | null;
   settledAt: string | null;
   linkSent: boolean;
   taxReported: boolean;
   statementIssued: boolean;
   memo: string | null;
+  createdAt: string;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -67,9 +80,11 @@ function emptyForm() {
 export default function LedgerPage({
   initialRows,
   creators,
+  products,
 }: {
   initialRows: Row[];
   creators: CreatorView[];
+  products: ProductView[];
 }) {
   const [rows, setRows] = useState(initialRows);
   const [open, setOpen] = useState(false);
@@ -77,6 +92,49 @@ export default function LedgerPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<DealFormValues>(emptyDealForm());
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  function openEdit(row: Row) {
+    setOpen(false);
+    setEditingId(row.id);
+    setEditValues(dealToForm(row));
+    setEditError(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditError(null);
+  }
+
+  async function submitEdit() {
+    if (!editingId) return;
+    setEditSaving(true);
+    setEditError(null);
+    const res = await fetch(`/api/deals/${editingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editValues),
+    });
+    const data = await res.json().catch(() => null);
+    setEditSaving(false);
+    if (!res.ok) {
+      setEditError(data?.error ?? "저장하지 못했습니다.");
+      return;
+    }
+    setRows((prev) => prev.map((r) => (r.id === editingId ? { ...r, ...data } : r)));
+    setEditingId(null);
+  }
+
+  async function deleteRow(row: Row) {
+    if (!confirm(`'${row.creator.name}' 항목을 지울까요?`)) return;
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+    if (editingId === row.id) setEditingId(null);
+    await fetch(`/api/deals/${row.id}`, { method: "DELETE" });
+  }
 
   const set = (key: keyof ReturnType<typeof emptyForm>) => (value: string | boolean) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -350,47 +408,84 @@ export default function LedgerPage({
                 <th className="px-3 py-2.5 font-medium">지급액</th>
                 <th className="px-3 py-2.5 font-medium">정산</th>
                 <th className="px-3 py-2.5 font-medium">상태</th>
+                <th className="px-3 py-2.5 font-medium"></th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-3 py-2.5">
-                    <Link
-                      href={`/creators/${r.creator.id}`}
-                      className="font-semibold text-slate-900 hover:text-blue-600"
-                    >
-                      {r.creator.name}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2.5 text-slate-600">
-                    {r.product?.name ?? r.productName ?? "-"}
-                  </td>
-                  <td className="px-3 py-2.5 text-slate-500">
-                    {formatDate(r.startDate)}
-                    {r.endDate ? ` ~ ${formatDate(r.endDate)}` : ""}
-                  </td>
-                  <td className="px-3 py-2.5 text-slate-700">{formatWon(r.revenue)}</td>
-                  <td className="px-3 py-2.5 text-slate-700">{formatWon(r.settlement)}</td>
-                  <td className="px-3 py-2.5">
-                    {r.settledAt ? (
-                      <span className="text-green-700">완료 {formatDate(r.settledAt)}</span>
-                    ) : r.settleDueDate ? (
-                      <span className="text-slate-500">예정 {formatDate(r.settleDueDate)}</span>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <span
-                      className={`rounded px-1.5 py-0.5 text-[11px] ${
-                        STATUS_CLASS[r.status] ?? "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {STATUS_LABEL[r.status] ?? r.status}
-                    </span>
-                  </td>
-                </tr>
+                <Fragment key={r.id}>
+                  <tr className="border-b border-slate-100 last:border-0">
+                    <td className="px-3 py-2.5">
+                      <Link
+                        href={`/creators/${r.creator.id}`}
+                        className="font-semibold text-slate-900 hover:text-blue-600"
+                      >
+                        {r.creator.name}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2.5 text-slate-600">
+                      {r.product?.name ?? r.productName ?? "-"}
+                    </td>
+                    <td className="px-3 py-2.5 text-slate-500">
+                      {formatDate(r.startDate)}
+                      {r.endDate ? ` ~ ${formatDate(r.endDate)}` : ""}
+                    </td>
+                    <td className="px-3 py-2.5 text-slate-700">{formatWon(r.revenue)}</td>
+                    <td className="px-3 py-2.5 text-slate-700">{formatWon(r.settlement)}</td>
+                    <td className="px-3 py-2.5">
+                      {r.settledAt ? (
+                        <span className="text-green-700">완료 {formatDate(r.settledAt)}</span>
+                      ) : r.settleDueDate ? (
+                        <span className="text-slate-500">예정 {formatDate(r.settleDueDate)}</span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[11px] ${
+                          STATUS_CLASS[r.status] ?? "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {STATUS_LABEL[r.status] ?? r.status}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 whitespace-nowrap text-right text-xs">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          editingId === r.id ? cancelEdit() : openEdit(r)
+                        }
+                        className="mr-2 text-slate-500 hover:text-blue-600"
+                      >
+                        {editingId === r.id ? "닫기" : "수정"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteRow(r)}
+                        className="text-slate-400 hover:text-red-600"
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                  {editingId === r.id && (
+                    <tr className="border-b border-slate-100 last:border-0 bg-slate-50">
+                      <td colSpan={8} className="px-4 py-4">
+                        <DealForm
+                          values={editValues}
+                          products={products}
+                          onChange={setEditValues}
+                          onSubmit={submitEdit}
+                          onCancel={cancelEdit}
+                          submitLabel="수정 저장"
+                          saving={editSaving}
+                          error={editError}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
