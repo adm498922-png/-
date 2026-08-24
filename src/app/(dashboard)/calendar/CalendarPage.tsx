@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { CREATOR_COLORS, CREATOR_COLOR_SWATCH } from "@/lib/gonggu";
 
 type Item = {
   id: string;
@@ -13,6 +14,7 @@ type Item = {
   href?: string;
   memo?: string;
   editable?: boolean;
+  color?: string;
   colorClass: string;
   barClass: string;
 };
@@ -118,6 +120,7 @@ export default function CalendarPage() {
   const [title, setTitle] = useState("");
   const [memo, setMemo] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [color, setColor] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -125,6 +128,7 @@ export default function CalendarPage() {
   const [editMemo, setEditMemo] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
+  const [editColor, setEditColor] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
   // 할일은 오른쪽 "오늘 할일" 패널에서 직접 고친다(가로 배치 대신 세로 배치,
@@ -257,6 +261,7 @@ export default function CalendarPage() {
         date: selected,
         memo,
         endDate: endDate || null,
+        color: color || null,
       }),
     });
     setSaving(false);
@@ -264,6 +269,7 @@ export default function CalendarPage() {
     setTitle("");
     setMemo("");
     setEndDate("");
+    setColor("");
     setFormOpen(false);
     await refreshItems();
   }
@@ -280,6 +286,7 @@ export default function CalendarPage() {
     setEditMemo(item.memo ?? "");
     setEditDate(toKey(new Date(item.date)));
     setEditEndDate(item.endDate ? toKey(new Date(item.endDate)) : "");
+    setEditColor(item.color ?? "");
   }
 
   function cancelEdit() {
@@ -297,6 +304,7 @@ export default function CalendarPage() {
         memo: editMemo,
         date: editDate,
         endDate: editEndDate || null,
+        color: editColor || null,
       }),
     });
     setEditSaving(false);
@@ -661,6 +669,36 @@ export default function CalendarPage() {
                     />
                   </div>
                 )}
+                {kind === "EVENT" && (
+                  <div>
+                    <label className="mb-1 block text-[11px] text-slate-500">색상</label>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      {color && (
+                        <button
+                          type="button"
+                          onClick={() => setColor("")}
+                          title="색 없음"
+                          className="mr-1 flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-slate-300 text-[10px] text-slate-400 hover:border-slate-400"
+                        >
+                          ✕
+                        </button>
+                      )}
+                      {CREATOR_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setColor(c)}
+                          title={c}
+                          className={`h-6 w-6 rounded-full ${CREATOR_COLOR_SWATCH[c]} ${
+                            color === c
+                              ? "ring-2 ring-offset-2 ring-slate-400"
+                              : "opacity-70 hover:opacity-100"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <textarea
                   className={textareaClass}
                   rows={3}
@@ -718,6 +756,34 @@ export default function CalendarPage() {
                     onChange={(e) => setEditEndDate(e.target.value)}
                     min={editDate}
                   />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] text-slate-500">색상</label>
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    {editColor && (
+                      <button
+                        type="button"
+                        onClick={() => setEditColor("")}
+                        title="색 없음"
+                        className="mr-1 flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-slate-300 text-[10px] text-slate-400 hover:border-slate-400"
+                      >
+                        ✕
+                      </button>
+                    )}
+                    {CREATOR_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setEditColor(c)}
+                        title={c}
+                        className={`h-6 w-6 rounded-full ${CREATOR_COLOR_SWATCH[c]} ${
+                          editColor === c
+                            ? "ring-2 ring-offset-2 ring-slate-400"
+                            : "opacity-70 hover:opacity-100"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] text-slate-500">메모</label>
