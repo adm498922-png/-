@@ -8,6 +8,7 @@ import {
   type CreatorGrade,
 } from "@/lib/gonggu";
 import WeeklyRoutine from "./WeeklyRoutine";
+import SettlementNotes from "./SettlementNotes";
 
 function Bar({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
   const pct = total ? Math.round((value / total) * 100) : 0;
@@ -60,17 +61,21 @@ function buildRecentDmDays(sentAssignments: { sentAt: Date | string | null }[]) 
 }
 
 export default async function GongguDashboard() {
-  const [creators, activeCampaignCount, sentAssignments, routineItems] = await Promise.all([
-    prisma.creator.findMany({ select: { followers: true, status: true } }),
-    prisma.campaign.count({ where: { status: "ACTIVE" } }),
-    prisma.campaignAssignment.findMany({
-      where: { status: "SENT" },
-      select: { sentAt: true },
-    }),
-    prisma.routineItem.findMany({
-      orderBy: [{ weekday: "asc" }, { time: "asc" }, { createdAt: "asc" }],
-    }),
-  ]);
+  const [creators, activeCampaignCount, sentAssignments, routineItems, settlementNotes] =
+    await Promise.all([
+      prisma.creator.findMany({ select: { followers: true, status: true } }),
+      prisma.campaign.count({ where: { status: "ACTIVE" } }),
+      prisma.campaignAssignment.findMany({
+        where: { status: "SENT" },
+        select: { sentAt: true },
+      }),
+      prisma.routineItem.findMany({
+        orderBy: [{ weekday: "asc" }, { time: "asc" }, { createdAt: "asc" }],
+      }),
+      prisma.settlementNote.findMany({
+        orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+      }),
+    ]);
 
   const totalCreators = creators.length || 1;
 
@@ -129,7 +134,7 @@ export default async function GongguDashboard() {
         </div>
       </div>
 
-      <div className="mb-5 grid gap-4 lg:grid-cols-2">
+      <div className="mb-5 grid gap-4 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <h2 className="mb-4 font-semibold text-slate-900">등급 분포</h2>
           <div className="space-y-3.5">
@@ -161,6 +166,7 @@ export default async function GongguDashboard() {
             ))}
           </div>
         </div>
+        <SettlementNotes initialItems={settlementNotes} />
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-5">
