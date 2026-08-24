@@ -217,6 +217,16 @@ export default function CalendarPage() {
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  // 캘린더 칸에서 완료된 지난 할일을 눌렀을 때도(평소엔 위 목록에 안 보이는 항목이라도)
+  // 확인·수정할 수 있게, 지금 펼쳐서 보는 항목만 예외로 목록 맨 위에 끼워 넣는다.
+  const editingExtraTodo =
+    editingTodoId && !todosTodayAndOverdue.some((i) => i.id === editingTodoId)
+      ? items.find((i) => i.id === editingTodoId && i.source === "todo")
+      : undefined;
+  const visibleTodos = editingExtraTodo
+    ? [editingExtraTodo, ...todosTodayAndOverdue]
+    : todosTodayAndOverdue;
+
   async function toggleTodo(item: Item) {
     setItems((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, done: !i.done } : i))
@@ -836,11 +846,11 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {todosTodayAndOverdue.length === 0 ? (
+            {visibleTodos.length === 0 ? (
               <p className="text-xs text-slate-400">오늘·지난 할일이 없습니다.</p>
             ) : (
               <ul className="max-h-[70vh] space-y-2 overflow-y-auto pr-1">
-                {todosTodayAndOverdue.map((it) => {
+                {visibleTodos.map((it) => {
                   const itemKey = toKey(new Date(it.date));
                   const isOverdue = itemKey !== today;
                   return editingTodoId === it.id ? (
