@@ -103,12 +103,13 @@ const NAV_ITEMS = [
   { href: "/", label: "대시보드", short: "홈", Icon: DashboardIcon, group: "스레드 발행" },
   { href: "/compose", label: "글쓰기", short: "글쓰기", Icon: ComposeIcon, group: "스레드 발행" },
   { href: "/posts", label: "전체 글", short: "글목록", Icon: PostsIcon, group: "스레드 발행" },
+  // 자주 쓰는 일정·판매일보를 대시보드 바로 옆에 둔다
+  { href: "/calendar", label: "일정 · 할일", short: "일정", Icon: CalendarIcon, group: "공동구매" },
+  { href: "/ledger", label: "판매일보", short: "판매일보", Icon: LedgerIcon, group: "공동구매" },
   { href: "/creators", label: "크리에이터", short: "크리에이터", Icon: CreatorsIcon, group: "공동구매" },
   { href: "/products", label: "공구 상품", short: "상품", Icon: ProductsIcon, group: "공동구매" },
   { href: "/campaigns", label: "캠페인", short: "캠페인", Icon: CampaignIcon, group: "공동구매" },
   { href: "/dm-queue", label: "DM 발송", short: "DM 발송", Icon: DmQueueIcon, group: "공동구매" },
-  { href: "/calendar", label: "일정 · 할일", short: "일정", Icon: CalendarIcon, group: "공동구매" },
-  { href: "/ledger", label: "판매일보", short: "판매일보", Icon: LedgerIcon, group: "공동구매" },
   { href: "/settings", label: "연결 설정", short: "설정", Icon: ConnectionsIcon, group: "설정" },
 ];
 
