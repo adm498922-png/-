@@ -121,7 +121,7 @@ export default function SettlementNotes({
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-semibold text-slate-900">정산 메모</h2>
+        <h2 className="font-semibold text-slate-900">메모</h2>
         <button
           onClick={openAdd}
           className="text-xs text-slate-400 hover:text-blue-600"
