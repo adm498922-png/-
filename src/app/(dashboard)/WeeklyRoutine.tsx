@@ -22,6 +22,7 @@ export default function WeeklyRoutine({
   initialItems: RoutineItemView[];
 }) {
   const [items, setItems] = useState(initialItems);
+  const [expanded, setExpanded] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState({ time: "", title: "", memo: "" });
@@ -121,20 +122,20 @@ export default function WeeklyRoutine({
     setAddingWeekday(null);
   }
 
-  return (
-    <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4">
-      <h2 className="mb-3 font-semibold text-slate-900">나의 일주일 루틴</h2>
-      <div className="grid grid-cols-7 gap-2">
+  // 같은 요일 그리드를 작은 카드(대시보드)와 큰 화면(메모장처럼 확대)에서 함께 쓴다
+  function renderGrid(large: boolean) {
+    return (
+      <div className={`grid grid-cols-7 ${large ? "gap-3" : "gap-2"}`}>
         {WEEKDAYS.map((label, weekday) => (
           <div
             key={weekday}
-            className={`rounded-lg border p-2 ${
+            className={`rounded-lg border p-2 ${large ? "min-h-[55vh] p-3" : ""} ${
               weekday === today ? "border-blue-300 bg-blue-50/40" : "border-slate-200"
             }`}
           >
             <div className="mb-1.5 flex items-center justify-between">
               <span
-                className={`text-xs font-semibold ${
+                className={`font-semibold ${large ? "text-sm" : "text-xs"} ${
                   weekday === today ? "text-blue-600" : "text-slate-600"
                 }`}
               >
@@ -142,7 +143,7 @@ export default function WeeklyRoutine({
               </span>
               <button
                 onClick={() => openAdd(weekday)}
-                className="text-[11px] text-slate-400 hover:text-blue-600"
+                className={`text-slate-400 hover:text-blue-600 ${large ? "text-sm" : "text-[11px]"}`}
               >
                 ＋
               </button>
@@ -183,7 +184,7 @@ export default function WeeklyRoutine({
                     />
                     <textarea
                       className={textareaClass}
-                      rows={2}
+                      rows={large ? 5 : 2}
                       value={draft.memo}
                       onChange={(e) => updateDraft(it.id, { memo: e.target.value })}
                       placeholder="메모 (선택)"
@@ -200,14 +201,27 @@ export default function WeeklyRoutine({
                     key={it.id}
                     type="button"
                     onClick={() => openEdit(it)}
-                    className="block w-full truncate rounded-lg bg-slate-50 px-2 py-1.5 text-left hover:bg-slate-100"
+                    className={`block w-full rounded-lg bg-slate-50 px-2 py-1.5 text-left hover:bg-slate-100 ${
+                      large ? "" : "truncate"
+                    }`}
                   >
                     {it.time && (
-                      <span className="mr-1 text-[10px] font-semibold text-blue-600">
+                      <span
+                        className={`mr-1 font-semibold text-blue-600 ${
+                          large ? "text-xs" : "text-[10px]"
+                        }`}
+                      >
                         {it.time}
                       </span>
                     )}
-                    <span className="text-xs text-slate-700">{it.title}</span>
+                    <span className={`text-slate-700 ${large ? "text-sm" : "text-xs"}`}>
+                      {it.title}
+                    </span>
+                    {large && it.memo && (
+                      <span className="mt-1 block whitespace-pre-line break-words text-xs text-slate-500">
+                        {it.memo}
+                      </span>
+                    )}
                   </button>
                 )
               )}
@@ -231,7 +245,7 @@ export default function WeeklyRoutine({
                 />
                 <textarea
                   className={textareaClass}
-                  rows={2}
+                  rows={large ? 4 : 2}
                   value={newMemo}
                   onChange={(e) => setNewMemo(e.target.value)}
                   placeholder="메모 (선택)"
@@ -248,6 +262,46 @@ export default function WeeklyRoutine({
           </div>
         ))}
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900">나의 일주일 루틴</h2>
+          <button
+            onClick={() => setExpanded(true)}
+            className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs text-slate-600 hover:border-blue-300 hover:text-blue-600"
+          >
+            크게 보기
+          </button>
+        </div>
+        {renderGrid(false)}
+      </div>
+
+      {expanded && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/40 p-3 sm:p-6"
+          onClick={() => setExpanded(false)}
+        >
+          <div
+            className="max-h-[94vh] w-full max-w-7xl overflow-y-auto rounded-2xl bg-white p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">나의 일주일 루틴</h2>
+              <button
+                onClick={() => setExpanded(false)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900"
+              >
+                닫기
+              </button>
+            </div>
+            {renderGrid(true)}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
