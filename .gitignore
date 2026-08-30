@@ -43,3 +43,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 로컬 개발 중 업로드된 첨부 파일 (DB 옆 assets 폴더)
+/prisma/assets/
+/prisma/media/

@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
           ? new Date(body.endDate)
           : null,
       memo: typeof body.memo === "string" ? body.memo.trim() || null : null,
+      images: typeof body.images === "string" ? body.images.trim() || null : null,
       color: normalizeColor(body.color),
       creatorId: typeof body.creatorId === "string" && body.creatorId ? body.creatorId : null,
     },

@@ -25,6 +25,9 @@ export async function PATCH(
   if (typeof input.memo === "string") {
     patch.memo = input.memo.trim() || null;
   }
+  if (typeof input.images === "string") {
+    patch.images = input.images.trim() || null;
+  }
 
   const item = await prisma.routineItem.update({ where: { id }, data: patch });
   return NextResponse.json(item);

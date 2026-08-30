@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
     data: {
       memo,
       date: typeof input.date === "string" && input.date.trim() ? input.date.trim() : null,
+      images:
+        typeof input.images === "string" && input.images.trim() ? input.images.trim() : null,
     },
   });
   return NextResponse.json(item, { status: 201 });

@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
       title,
       time: typeof input.time === "string" && input.time.trim() ? input.time.trim() : null,
       memo: typeof input.memo === "string" && input.memo.trim() ? input.memo.trim() : null,
+      images:
+        typeof input.images === "string" && input.images.trim() ? input.images.trim() : null,
     },
   });
   return NextResponse.json(item, { status: 201 });

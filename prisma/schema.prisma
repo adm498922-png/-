@@ -20,6 +20,7 @@ model RoutineItem {
   time      String? // "06:00" 같은 시간 표시, 자유 입력이라 없어도 됨
   title     String
   memo      String?
+  images    String? // 첨부 사진 주소들, 쉼표로 구분
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -31,6 +32,7 @@ model SettlementNote {
   id        String   @id @default(cuid())
   date      String? // "YYYY-MM-DD", 날짜 없이 자유 메모도 가능
   memo      String
+  images    String? // 첨부 사진 주소들, 쉼표로 구분
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -314,6 +316,7 @@ model CalendarEvent {
   endDate    DateTime? // 여러 날짜에 걸친 일정일 때
   done       Boolean           @default(false) // 할일 완료 여부
   memo       String?
+  images     String? // 첨부 사진 주소들, 쉼표로 구분
   color      String? // 직접 고른 캘린더 색상 (안 고르면 연결된 크리에이터 색상을 씀)
   creatorId  String? // 특정 크리에이터와 관련된 일정이면 연결
   creator    Creator?          @relation(fields: [creatorId], references: [id], onDelete: SetNull)

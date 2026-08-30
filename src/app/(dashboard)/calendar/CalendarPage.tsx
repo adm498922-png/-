@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CREATOR_COLORS, CREATOR_COLOR_SWATCH } from "@/lib/gonggu";
+import ImageAttach, { joinImages, splitImages } from "../ImageAttach";
 
 type Item = {
   id: string;
@@ -13,6 +14,7 @@ type Item = {
   done?: boolean;
   href?: string;
   memo?: string;
+  images?: string;
   editable?: boolean;
   color?: string;
   colorClass: string;
@@ -121,6 +123,7 @@ export default function CalendarPage() {
   const [memo, setMemo] = useState("");
   const [endDate, setEndDate] = useState("");
   const [color, setColor] = useState("");
+  const [formImages, setFormImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -129,19 +132,26 @@ export default function CalendarPage() {
   const [editDate, setEditDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
   const [editColor, setEditColor] = useState("");
+  const [editImages, setEditImages] = useState<string[]>([]);
   const [editSaving, setEditSaving] = useState(false);
 
   // 할일은 오른쪽 "오늘 할일" 패널에서 직접 고친다(가로 배치 대신 세로 배치,
   // 아래쪽 대신 옆으로, 저장 버튼 없이 바로바로 저장).
   const todoPanelRef = useRef<HTMLDivElement | null>(null);
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
-  const [todoDraft, setTodoDraft] = useState({ title: "", date: "", memo: "" });
+  const [todoDraft, setTodoDraft] = useState({
+    title: "",
+    date: "",
+    memo: "",
+    images: [] as string[],
+  });
   const [todoSaveState, setTodoSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const todoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [todoAddOpen, setTodoAddOpen] = useState(false);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoMemo, setNewTodoMemo] = useState("");
+  const [newTodoImages, setNewTodoImages] = useState<string[]>([]);
   const [todoAddSaving, setTodoAddSaving] = useState(false);
 
   const gridStart = useMemo(() => {
@@ -260,6 +270,7 @@ export default function CalendarPage() {
         kind,
         date: selected,
         memo,
+        images: joinImages(formImages),
         endDate: endDate || null,
         color: color || null,
       }),
@@ -270,6 +281,7 @@ export default function CalendarPage() {
     setMemo("");
     setEndDate("");
     setColor("");
+    setFormImages([]);
     setFormOpen(false);
     await refreshItems();
   }
@@ -287,6 +299,7 @@ export default function CalendarPage() {
     setEditDate(toKey(new Date(item.date)));
     setEditEndDate(item.endDate ? toKey(new Date(item.endDate)) : "");
     setEditColor(item.color ?? "");
+    setEditImages(splitImages(item.images));
   }
 
   function cancelEdit() {
@@ -302,6 +315,7 @@ export default function CalendarPage() {
       body: JSON.stringify({
         title: editTitle,
         memo: editMemo,
+        images: joinImages(editImages),
         date: editDate,
         endDate: editEndDate || null,
         color: editColor || null,
@@ -320,7 +334,12 @@ export default function CalendarPage() {
     }
     setTodoAddOpen(false);
     setEditingTodoId(item.id);
-    setTodoDraft({ title: item.title, date: toKey(new Date(item.date)), memo: item.memo ?? "" });
+    setTodoDraft({
+      title: item.title,
+      date: toKey(new Date(item.date)),
+      memo: item.memo ?? "",
+      images: splitImages(item.images),
+    });
     setTodoSaveState("idle");
     requestAnimationFrame(() => {
       todoPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -338,21 +357,32 @@ export default function CalendarPage() {
 
   async function flushTodoSave(
     id: string,
-    draft: { title: string; date: string; memo: string }
+    draft: { title: string; date: string; memo: string; images: string[] }
   ) {
     if (!draft.title.trim()) return;
     setTodoSaveState("saving");
     const res = await fetch(`/api/calendar/events/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: draft.title, date: draft.date, memo: draft.memo }),
+      body: JSON.stringify({
+        title: draft.title,
+        date: draft.date,
+        memo: draft.memo,
+        images: joinImages(draft.images),
+      }),
     });
     if (res.ok) {
       setTodoSaveState("saved");
       setItems((prev) =>
         prev.map((i) =>
           i.id === id
-            ? { ...i, title: draft.title, date: keyToDate(draft.date).toISOString(), memo: draft.memo }
+            ? {
+                ...i,
+                title: draft.title,
+                date: keyToDate(draft.date).toISOString(),
+                memo: draft.memo,
+                images: joinImages(draft.images) || undefined,
+              }
             : i
         )
       );
@@ -362,7 +392,7 @@ export default function CalendarPage() {
   // 입력할 때마다 잠깐 멈추면(0.6초) 자동으로 저장 — 수정 저장 버튼 없이 바로바로 반영
   function updateTodoDraft(
     id: string,
-    patch: Partial<{ title: string; date: string; memo: string }>
+    patch: Partial<{ title: string; date: string; memo: string; images: string[] }>
   ) {
     const next = { ...todoDraft, ...patch };
     setTodoDraft(next);
@@ -375,6 +405,7 @@ export default function CalendarPage() {
     setEditingTodoId(null);
     setNewTodoTitle("");
     setNewTodoMemo("");
+    setNewTodoImages([]);
     setTodoAddOpen((v) => !v);
   }
 
@@ -384,12 +415,19 @@ export default function CalendarPage() {
     const res = await fetch("/api/calendar/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newTodoTitle, kind: "TODO", date: toKey(new Date()), memo: newTodoMemo }),
+      body: JSON.stringify({
+        title: newTodoTitle,
+        kind: "TODO",
+        date: toKey(new Date()),
+        memo: newTodoMemo,
+        images: joinImages(newTodoImages),
+      }),
     });
     setTodoAddSaving(false);
     if (!res.ok) return;
     setNewTodoTitle("");
     setNewTodoMemo("");
+    setNewTodoImages([]);
     setTodoAddOpen(false);
     await refreshItems();
   }
@@ -706,6 +744,7 @@ export default function CalendarPage() {
                   onChange={(e) => setMemo(e.target.value)}
                   placeholder="메모 (선택)"
                 />
+                <ImageAttach value={formImages} onChange={setFormImages} />
                 <button
                   onClick={submit}
                   disabled={saving || !title.trim()}
@@ -794,6 +833,10 @@ export default function CalendarPage() {
                     onChange={(e) => setEditMemo(e.target.value)}
                     placeholder="메모 (선택)"
                   />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] text-slate-500">사진</label>
+                  <ImageAttach value={editImages} onChange={setEditImages} />
                 </div>
                 <button
                   onClick={saveEdit}
@@ -902,6 +945,7 @@ export default function CalendarPage() {
                     placeholder="메모 (선택)"
                   />
                 </div>
+                <ImageAttach value={newTodoImages} onChange={setNewTodoImages} />
                 <button
                   onClick={submitTodo}
                   disabled={todoAddSaving || !newTodoTitle.trim()}
@@ -979,6 +1023,13 @@ export default function CalendarPage() {
                           placeholder="메모 (선택)"
                         />
                       </div>
+                      <div>
+                        <label className="mb-1 block text-[11px] text-slate-500">사진</label>
+                        <ImageAttach
+                          value={todoDraft.images}
+                          onChange={(next) => updateTodoDraft(it.id, { images: next })}
+                        />
+                      </div>
                       <button
                         onClick={() => deleteItem(it)}
                         className="text-xs text-slate-400 hover:text-red-500"
@@ -1020,6 +1071,19 @@ export default function CalendarPage() {
                         </p>
                         {it.memo && (
                           <p className="truncate text-[11px] text-slate-400">{it.memo}</p>
+                        )}
+                        {splitImages(it.images).length > 0 && (
+                          <span className="mt-1 flex flex-wrap gap-1">
+                            {splitImages(it.images).map((url) => (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img
+                                key={url}
+                                src={url}
+                                alt="첨부 사진"
+                                className="h-10 w-10 rounded-lg border border-slate-200 object-cover"
+                              />
+                            ))}
+                          </span>
                         )}
                       </button>
                       <button
