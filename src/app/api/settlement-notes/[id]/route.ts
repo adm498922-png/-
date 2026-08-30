@@ -19,6 +19,9 @@ export async function PATCH(
   if (typeof input.date === "string") {
     patch.date = input.date.trim() || null;
   }
+  if (typeof input.images === "string") {
+    patch.images = input.images.trim() || null;
+  }
 
   const item = await prisma.settlementNote.update({ where: { id }, data: patch });
   return NextResponse.json(item);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import ImageAttach, { joinImages, splitImages } from "./ImageAttach";
 
 type RoutineItemView = {
   id: string;
@@ -8,6 +9,7 @@ type RoutineItemView = {
   time: string | null;
   title: string;
   memo: string | null;
+  images: string | null;
 };
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -25,7 +27,12 @@ export default function WeeklyRoutine({
   const [expanded, setExpanded] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ time: "", title: "", memo: "" });
+  const [draft, setDraft] = useState({
+    time: "",
+    title: "",
+    memo: "",
+    images: [] as string[],
+  });
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -33,6 +40,7 @@ export default function WeeklyRoutine({
   const [newTime, setNewTime] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [newMemo, setNewMemo] = useState("");
+  const [newImages, setNewImages] = useState<string[]>([]);
   const [adding, setAdding] = useState(false);
 
   const today = new Date().getDay();
@@ -47,7 +55,12 @@ export default function WeeklyRoutine({
     if (saveTimer.current) clearTimeout(saveTimer.current);
     setAddingWeekday(null);
     setEditingId(item.id);
-    setDraft({ time: item.time ?? "", title: item.title, memo: item.memo ?? "" });
+    setDraft({
+      time: item.time ?? "",
+      title: item.title,
+      memo: item.memo ?? "",
+      images: splitImages(item.images),
+    });
     setSaveState("idle");
   }
 
@@ -60,20 +73,34 @@ export default function WeeklyRoutine({
     setEditingId(null);
   }
 
-  async function flushSave(id: string, d: { time: string; title: string; memo: string }) {
+  async function flushSave(
+    id: string,
+    d: { time: string; title: string; memo: string; images: string[] }
+  ) {
     if (!d.title.trim()) return;
     setSaveState("saving");
     const res = await fetch(`/api/routine/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: d.title, time: d.time, memo: d.memo }),
+      body: JSON.stringify({
+        title: d.title,
+        time: d.time,
+        memo: d.memo,
+        images: joinImages(d.images),
+      }),
     });
     if (res.ok) {
       setSaveState("saved");
       setItems((prev) =>
         prev.map((i) =>
           i.id === id
-            ? { ...i, title: d.title, time: d.time.trim() || null, memo: d.memo.trim() || null }
+            ? {
+                ...i,
+                title: d.title,
+                time: d.time.trim() || null,
+                memo: d.memo.trim() || null,
+                images: joinImages(d.images) || null,
+              }
             : i
         )
       );
@@ -81,7 +108,10 @@ export default function WeeklyRoutine({
   }
 
   // 입력을 멈추면 0.6초 뒤 자동 저장 — 별도 저장 버튼 없이 바로바로 반영
-  function updateDraft(id: string, patch: Partial<{ time: string; title: string; memo: string }>) {
+  function updateDraft(
+    id: string,
+    patch: Partial<{ time: string; title: string; memo: string; images: string[] }>
+  ) {
     const next = { ...draft, ...patch };
     setDraft(next);
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -101,6 +131,7 @@ export default function WeeklyRoutine({
     setNewTime("");
     setNewTitle("");
     setNewMemo("");
+    setNewImages([]);
     setAddingWeekday((w) => (w === weekday ? null : weekday));
   }
 
@@ -110,7 +141,13 @@ export default function WeeklyRoutine({
     const res = await fetch("/api/routine", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weekday, time: newTime, title: newTitle, memo: newMemo }),
+      body: JSON.stringify({
+        weekday,
+        time: newTime,
+        title: newTitle,
+        memo: newMemo,
+        images: joinImages(newImages),
+      }),
     });
     setAdding(false);
     if (!res.ok) return;
@@ -119,6 +156,7 @@ export default function WeeklyRoutine({
     setNewTime("");
     setNewTitle("");
     setNewMemo("");
+    setNewImages([]);
     setAddingWeekday(null);
   }
 
@@ -189,6 +227,11 @@ export default function WeeklyRoutine({
                       onChange={(e) => updateDraft(it.id, { memo: e.target.value })}
                       placeholder="메모 (선택)"
                     />
+                    <ImageAttach
+                      small={!large}
+                      value={draft.images}
+                      onChange={(next) => updateDraft(it.id, { images: next })}
+                    />
                     <button
                       onClick={() => deleteItem(it.id)}
                       className="text-[10px] text-slate-400 hover:text-red-500"
@@ -222,6 +265,22 @@ export default function WeeklyRoutine({
                         {it.memo}
                       </span>
                     )}
+                    {large && splitImages(it.images).length > 0 && (
+                      <span className="mt-1.5 flex flex-wrap gap-1">
+                        {splitImages(it.images).map((url) => (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            key={url}
+                            src={url}
+                            alt="첨부 사진"
+                            className="h-12 w-12 rounded-lg border border-slate-200 object-cover"
+                          />
+                        ))}
+                      </span>
+                    )}
+                    {!large && splitImages(it.images).length > 0 && (
+                      <span className="ml-1 text-[10px]">📷</span>
+                    )}
                   </button>
                 )
               )}
@@ -250,6 +309,7 @@ export default function WeeklyRoutine({
                   onChange={(e) => setNewMemo(e.target.value)}
                   placeholder="메모 (선택)"
                 />
+                <ImageAttach small={!large} value={newImages} onChange={setNewImages} />
                 <button
                   onClick={() => submitAdd(weekday)}
                   disabled={adding || !newTitle.trim()}

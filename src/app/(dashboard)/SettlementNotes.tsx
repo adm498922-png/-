@@ -1,11 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
+import ImageAttach, { joinImages, splitImages } from "./ImageAttach";
 
 type SettlementNoteView = {
   id: string;
   date: string | null;
   memo: string;
+  images: string | null;
 };
 
 const inputClass =
@@ -27,13 +29,14 @@ export default function SettlementNotes({
   const [items, setItems] = useState(initialItems);
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ date: "", memo: "" });
+  const [draft, setDraft] = useState({ date: "", memo: "", images: [] as string[] });
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [adding, setAdding] = useState(false);
   const [newDate, setNewDate] = useState("");
   const [newMemo, setNewMemo] = useState("");
+  const [newImages, setNewImages] = useState<string[]>([]);
   const [submittingAdd, setSubmittingAdd] = useState(false);
 
   const sorted = [...items].sort((a, b) => {
@@ -47,7 +50,7 @@ export default function SettlementNotes({
     if (saveTimer.current) clearTimeout(saveTimer.current);
     setAdding(false);
     setEditingId(item.id);
-    setDraft({ date: item.date ?? "", memo: item.memo });
+    setDraft({ date: item.date ?? "", memo: item.memo, images: splitImages(item.images) });
     setSaveState("idle");
   }
 
@@ -60,26 +63,33 @@ export default function SettlementNotes({
     setEditingId(null);
   }
 
-  async function flushSave(id: string, d: { date: string; memo: string }) {
+  async function flushSave(id: string, d: { date: string; memo: string; images: string[] }) {
     if (!d.memo.trim()) return;
     setSaveState("saving");
     const res = await fetch(`/api/settlement-notes/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: d.date, memo: d.memo }),
+      body: JSON.stringify({ date: d.date, memo: d.memo, images: joinImages(d.images) }),
     });
     if (res.ok) {
       setSaveState("saved");
       setItems((prev) =>
         prev.map((i) =>
-          i.id === id ? { ...i, date: d.date.trim() || null, memo: d.memo } : i
+          i.id === id
+            ? {
+                ...i,
+                date: d.date.trim() || null,
+                memo: d.memo,
+                images: joinImages(d.images) || null,
+              }
+            : i
         )
       );
     }
   }
 
   // 입력을 멈추면 0.6초 뒤 자동 저장 — 별도 저장 버튼 없이 바로바로 반영
-  function updateDraft(id: string, patch: Partial<{ date: string; memo: string }>) {
+  function updateDraft(id: string, patch: Partial<{ date: string; memo: string; images: string[] }>) {
     const next = { ...draft, ...patch };
     setDraft(next);
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -98,6 +108,7 @@ export default function SettlementNotes({
     setEditingId(null);
     setNewDate("");
     setNewMemo("");
+    setNewImages([]);
     setAdding((v) => !v);
   }
 
@@ -107,7 +118,7 @@ export default function SettlementNotes({
     const res = await fetch("/api/settlement-notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: newDate, memo: newMemo }),
+      body: JSON.stringify({ date: newDate, memo: newMemo, images: joinImages(newImages) }),
     });
     setSubmittingAdd(false);
     if (!res.ok) return;
@@ -115,6 +126,7 @@ export default function SettlementNotes({
     setItems((prev) => [...prev, created]);
     setNewDate("");
     setNewMemo("");
+    setNewImages([]);
     setAdding(false);
   }
 
@@ -146,6 +158,7 @@ export default function SettlementNotes({
             placeholder="예: OO 정산 입금 예정"
             autoFocus
           />
+          <ImageAttach small value={newImages} onChange={setNewImages} />
           <button
             onClick={submitAdd}
             disabled={submittingAdd || !newMemo.trim()}
@@ -190,6 +203,11 @@ export default function SettlementNotes({
                 value={draft.memo}
                 onChange={(e) => updateDraft(it.id, { memo: e.target.value })}
               />
+              <ImageAttach
+                small
+                value={draft.images}
+                onChange={(next) => updateDraft(it.id, { images: next })}
+              />
               <button
                 onClick={() => deleteItem(it.id)}
                 className="text-[10px] text-slate-400 hover:text-red-500"
@@ -212,6 +230,19 @@ export default function SettlementNotes({
               <span className="whitespace-pre-line break-words text-xs text-slate-700">
                 {it.memo}
               </span>
+              {splitImages(it.images).length > 0 && (
+                <span className="mt-1.5 flex flex-wrap gap-1">
+                  {splitImages(it.images).map((url) => (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      key={url}
+                      src={url}
+                      alt="첨부 사진"
+                      className="h-12 w-12 rounded-lg border border-slate-200 object-cover"
+                    />
+                  ))}
+                </span>
+              )}
             </button>
           )
         )}

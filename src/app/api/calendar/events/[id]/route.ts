@@ -13,6 +13,7 @@ export async function PATCH(
   if (typeof body.title === "string") patch.title = body.title.trim();
   if (typeof body.done === "boolean") patch.done = body.done;
   if (typeof body.memo === "string") patch.memo = body.memo.trim() || null;
+  if (typeof body.images === "string") patch.images = body.images.trim() || null;
   if (typeof body.date === "string") patch.date = new Date(body.date);
   if ("endDate" in body) {
     patch.endDate =

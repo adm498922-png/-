@@ -30,6 +30,7 @@ type CalItem = {
   done?: boolean;
   href?: string;
   memo?: string;
+  images?: string; // 첨부 사진 주소들(쉼표 구분)
   editable?: boolean; // 직접 수정 가능한 항목인지 (공구 기록에서 자동으로 뽑힌 건 여기서 못 고침)
   color?: string; // 직접 고른 색상 키 (수정 폼에서 그대로 보여주기 위함)
   colorClass: string; // 하루짜리 항목 칩 색
@@ -107,6 +108,7 @@ export async function GET(req: NextRequest) {
       endDate: sameDay ? undefined : e.endDate!.toISOString(),
       done: e.done,
       memo: e.memo ?? undefined,
+      images: e.images ?? undefined,
       editable: true,
       color: ownColorKey ?? undefined,
       colorClass: colorKey
