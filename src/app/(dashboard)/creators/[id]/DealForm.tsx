@@ -5,6 +5,7 @@ import {
   DEAL_STATUSES,
   DEAL_STATUS_LABEL,
   PRODUCT_STATUS_LABEL,
+  effectiveDealStatus,
   toDateInput,
   type DealView,
   type ProductView,
@@ -60,7 +61,8 @@ export function dealToForm(d: DealView): DealFormValues {
   return {
     productId: d.productId ?? "",
     productName: d.productName ?? "",
-    status: d.status,
+    // 수정 폼을 열 때도 날짜 기준으로 자동 계산된 상태를 보여준다
+    status: effectiveDealStatus(d),
     startDate: toDateInput(d.startDate),
     endDate: toDateInput(d.endDate),
     unitsSold: d.unitsSold === null ? "" : String(d.unitsSold),
@@ -148,7 +150,12 @@ export default function DealForm({
           </div>
         )}
         <div>
-          <label className={labelClass}>진행 상태</label>
+          <label className={labelClass}>
+            진행 상태
+            <span className="ml-1.5 text-slate-400">
+              시작일·종료일을 넣으면 날짜에 맞춰 자동으로 바뀌어요
+            </span>
+          </label>
           <select
             className={inputClass}
             value={values.status}

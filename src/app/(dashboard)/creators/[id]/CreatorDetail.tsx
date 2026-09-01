@@ -21,6 +21,7 @@ import {
   DEAL_STATUS_CLASS,
   DEAL_STATUS_LABEL,
   PLATFORM_LABEL,
+  effectiveDealStatus,
   engagementClass,
   formatDate,
   formatEngagement,
@@ -512,10 +513,10 @@ export default function CreatorDetail({
                   </span>
                   <span
                     className={`rounded px-1.5 py-0.5 text-[11px] ${
-                      DEAL_STATUS_CLASS[d.status] ?? "bg-slate-100 text-slate-600"
+                      DEAL_STATUS_CLASS[effectiveDealStatus(d)] ?? "bg-slate-100 text-slate-600"
                     }`}
                   >
-                    {DEAL_STATUS_LABEL[d.status] ?? d.status}
+                    {DEAL_STATUS_LABEL[effectiveDealStatus(d)] ?? d.status}
                   </span>
                   <span className="ml-auto flex gap-2 text-[11px] text-slate-500">
                     <button onClick={() => openEditDeal(d)} className="hover:text-slate-900">
