@@ -165,6 +165,32 @@ export const DEAL_STATUS_CLASS: Record<string, string> = {
   CANCELED: "bg-slate-100 text-slate-500",
 };
 
+/**
+ * 공구 기록의 상태를 날짜 기준으로 자동 계산한다 — 매번 손으로 바꿀 필요 없이
+ * 종료일이 지나면 "종료", 시작일이 되면 "진행중"으로 저절로 넘어간다.
+ * 손으로 고른 "취소"와 (날짜보다 먼저 닫은) "종료"는 그대로 존중한다.
+ */
+export function effectiveDealStatus(d: {
+  status: string;
+  startDate: string | Date | null;
+  endDate: string | Date | null;
+}): string {
+  if (d.status === "CANCELED" || d.status === "CLOSED") return d.status;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (d.endDate) {
+    const end = new Date(d.endDate);
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    if (endDay < today) return "CLOSED"; // 종료일 다음 날부터 종료
+  }
+  if (d.startDate) {
+    const start = new Date(d.startDate);
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    return startDay <= today ? "ONGOING" : "PLANNED";
+  }
+  return d.status;
+}
+
 export function formatWon(value: number | null | undefined): string {
   if (value === null || value === undefined) return "-";
   return value.toLocaleString("ko-KR") + "원";

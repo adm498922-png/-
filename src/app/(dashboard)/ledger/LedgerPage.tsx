@@ -2,7 +2,13 @@
 
 import { Fragment, useState } from "react";
 import Link from "next/link";
-import { formatDate, formatWon, type CreatorView, type ProductView } from "@/lib/gonggu";
+import {
+  effectiveDealStatus,
+  formatDate,
+  formatWon,
+  type CreatorView,
+  type ProductView,
+} from "@/lib/gonggu";
 import DealForm, {
   dealToForm,
   emptyDealForm,
@@ -444,10 +450,10 @@ export default function LedgerPage({
                     <td className="px-3 py-2.5">
                       <span
                         className={`rounded px-1.5 py-0.5 text-[11px] ${
-                          STATUS_CLASS[r.status] ?? "bg-slate-100 text-slate-500"
+                          STATUS_CLASS[effectiveDealStatus(r)] ?? "bg-slate-100 text-slate-500"
                         }`}
                       >
-                        {STATUS_LABEL[r.status] ?? r.status}
+                        {STATUS_LABEL[effectiveDealStatus(r)] ?? r.status}
                       </span>
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-right text-xs">
