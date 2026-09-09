@@ -30,7 +30,20 @@ export async function register() {
         console.error("판매일보 시트 자동 동기화 오류", e);
       }
     });
-    console.log("[공구 허브] 판매일보 구글 시트 자동 동기화 켜짐 (매시간)");
+    // 매일 아침 10시(한국 시간) 이메일 브리핑
+    const { sendDailyBriefing } = await import("@/lib/daily-briefing");
+    const { prisma } = await import("@/lib/prisma");
+    cron.schedule("0 10 * * *", async () => {
+      try {
+        const row = await prisma.settings.findUnique({ where: { id: "singleton" } });
+        if (!row?.briefingEnabled) return;
+        const result = await sendDailyBriefing();
+        if (!result.ok) console.error("아침 브리핑 발송 실패:", result.message);
+      } catch (e) {
+        console.error("아침 브리핑 오류", e);
+      }
+    });
+    console.log("[공구 허브] 판매일보 시트 동기화(매시간) · 아침 브리핑(10시) 켜짐");
     return;
   }
 

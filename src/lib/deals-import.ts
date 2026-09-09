@@ -19,6 +19,26 @@ type Matched = {
   duplicate: boolean;
 };
 
+/** 서버 시간대(한국) 기준 YYYY-MM-DD — toISOString은 UTC라 하루 밀릴 수 있어 쓰지 않는다 */
+export function localDateKey(d: Date | null): string {
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** 중복 판정용 열쇠: 셀러 + 시작일 + 상품이름(직접 적은 이름이 없으면 연결된 상품 이름) */
+export function dealDupKey(d: {
+  creatorId: string;
+  startDate: Date | null;
+  productName: string | null;
+  product?: { name: string } | null;
+}): string {
+  const product = d.productName ?? d.product?.name ?? "";
+  return `${d.creatorId}|${localDateKey(d.startDate)}|${keyOf(product)}`;
+}
+
 async function matchAll(rows: ImportRow[]): Promise<{
   matched: Matched[];
   newCreators: string[];
@@ -36,19 +56,15 @@ async function matchAll(rows: ImportRow[]): Promise<{
   const productByName = new Map(products.map((p) => [keyOf(p.name), p.id]));
 
   const existingDeals = await prisma.deal.findMany({
-    select: { creatorId: true, startDate: true, productId: true, productName: true },
+    select: {
+      creatorId: true,
+      startDate: true,
+      productId: true,
+      productName: true,
+      product: { select: { name: true } },
+    },
   });
-  const dealKey = (creatorId: string, start: string | null, product: string | null) =>
-    `${creatorId}|${start ?? ""}|${keyOf(product ?? "")}`;
-  const existing = new Set(
-    existingDeals.map((d) =>
-      dealKey(
-        d.creatorId,
-        d.startDate ? d.startDate.toISOString().slice(0, 10) : null,
-        d.productName
-      )
-    )
-  );
+  const existing = new Set(existingDeals.map((d) => dealDupKey(d)));
 
   const newCreators: string[] = [];
   const newProducts: string[] = [];
@@ -72,7 +88,13 @@ async function matchAll(rows: ImportRow[]): Promise<{
     }
 
     const duplicate = creatorId
-      ? existing.has(dealKey(creatorId, row.startDate, row.productName))
+      ? existing.has(
+          dealDupKey({
+            creatorId,
+            startDate: row.startDate ? new Date(row.startDate) : null,
+            productName: row.productName,
+          })
+        )
       : false;
 
     matched.push({ row, creatorId, productId, duplicate });

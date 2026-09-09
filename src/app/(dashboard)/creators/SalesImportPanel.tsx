@@ -63,6 +63,55 @@ export default function SalesImportPanel() {
       .catch(() => {});
   }, []);
 
+  // 중복 공구 기록 정리 (미리 몇 건인지 보여주고 확인받은 뒤 삭제)
+  const [deduping, setDeduping] = useState(false);
+  async function dedupe() {
+    setDeduping(true);
+    setError(null);
+    const preview = await fetch("/api/deals/dedupe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "preview" }),
+    })
+      .then((r) => r.json())
+      .catch(() => null);
+    if (!preview?.ok) {
+      setDeduping(false);
+      setError("중복을 확인하지 못했습니다.");
+      return;
+    }
+    if (preview.willDelete === 0) {
+      setDeduping(false);
+      setDone("중복된 공구 기록이 없습니다. 깨끗해요!");
+      return;
+    }
+    const list = preview.sample.join(", ");
+    if (
+      !confirm(
+        `중복된 공구 기록 ${preview.willDelete}건을 지울까요?\n(${list}${
+          preview.willDelete > preview.sample.length ? " 외" : ""
+        })\n내용이 더 알찬 쪽을 남기고 나머지를 지웁니다.`
+      )
+    ) {
+      setDeduping(false);
+      return;
+    }
+    const res = await fetch("/api/deals/dedupe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "commit" }),
+    })
+      .then((r) => r.json())
+      .catch(() => null);
+    setDeduping(false);
+    if (res?.ok) {
+      setDone(`중복 ${res.deleted}건을 정리했습니다.`);
+      router.refresh();
+    } else {
+      setError("중복 정리에 실패했습니다.");
+    }
+  }
+
   // 시트 주소 저장 + 바로 동기화 (url이 빈 문자열이면 연결 해제)
   async function syncSheet(urlToSave?: string) {
     setSheetBusy(true);
@@ -159,15 +208,26 @@ export default function SalesImportPanel() {
             기록으로 나뉘어 들어갑니다. 이미 있는 줄은 알아서 건너뜁니다.
           </p>
         </div>
-        <button
-          onClick={() => {
-            setOpen((v) => !v);
-            setDone(null);
-          }}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
-        >
-          {open ? "닫기" : "열기"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={dedupe}
+            disabled={deduping}
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-500 hover:border-red-300 hover:text-red-600 disabled:opacity-50"
+            title="같은 셀러·시작일·상품으로 두 번 들어간 기록을 하나로 정리"
+          >
+            {deduping ? "확인 중…" : "🧹 중복 기록 정리"}
+          </button>
+          <button
+            onClick={() => {
+              setOpen((v) => !v);
+              setDone(null);
+            }}
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
+          >
+            {open ? "닫기" : "열기"}
+          </button>
+        </div>
       </div>
 
       {done && (
