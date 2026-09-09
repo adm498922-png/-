@@ -72,6 +72,10 @@ export async function PATCH(
   assign("isBusiness", data.isBusiness);
   assign("platform", data.platform);
   assign("status", data.status);
+  // 상태가 실제로 바뀌면 "그 상태로 옮긴 시각"을 기록한다 (파이프라인 N일째 표시용)
+  if (data.status !== undefined && data.status !== existing.status) {
+    patch.statusChangedAt = new Date();
+  }
   if ("followers" in input) patch.followers = data.followers;
   if ("following" in input) patch.following = data.following;
   if ("feeKrw" in input) patch.feeKrw = data.feeKrw;
