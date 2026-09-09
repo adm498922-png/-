@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSettingsStatus } from "@/lib/settings";
 import { isGongguOnly } from "@/lib/app-mode";
 import SettingsForm from "./SettingsForm";
+import BriefingBox from "./BriefingBox";
 import AccountRow from "./AccountRow";
 import LinkGeneratorForm from "./LinkGeneratorForm";
 
@@ -103,6 +104,12 @@ export default async function SettingsPage({
         suggestedRedirectUri={suggestedRedirectUri}
         gongguOnly={gongguOnly}
       />
+
+      {gongguOnly && (
+        <div className="mt-8">
+          <BriefingBox />
+        </div>
+      )}
 
       {!gongguOnly && (
         <>

@@ -59,6 +59,11 @@ model Settings {
   salesSheetUrl       String?
   salesSheetSyncedAt  DateTime?
   salesSheetSyncNote  String? // 마지막 동기화 결과 한 줄
+  // 매일 아침 이메일 브리핑 (지메일 앱 비밀번호로 발송)
+  briefingEnabled     Boolean  @default(false)
+  briefingGmailUser   String? // 보내는 지메일 주소
+  briefingGmailPassEnc String? // 지메일 앱 비밀번호 (암호화)
+  briefingTo          String? // 받는 주소 (네이버 등 아무거나, 비우면 지메일로)
   // 공구 제안 DM 고정 틀
   dmTemplate          String?
   autoDailyPostEnabled Boolean @default(false)
