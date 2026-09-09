@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "공구 크리에이터 담기",
+  "name": "Y글로벌 담기",
   "version": "1.0.0",
   "description": "인스타그램 프로필 화면에 '담기' 버튼을 띄우고, 누르면 공구 허브 등록 화면이 정보가 채워진 채로 열립니다.",
   "permissions": ["storage"],

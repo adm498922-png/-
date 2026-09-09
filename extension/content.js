@@ -1,5 +1,5 @@
 /**
- * 인스타그램 프로필 화면에 "＋ 공구 허브에 담기" 버튼을 끼워 넣는다.
+ * 인스타그램 프로필 화면에 "＋ Y글로벌" 버튼을 끼워 넣는다.
  *
  * 누르면 지금 화면에 보이는 프로필 정보(이름·아이디·팔로워 수·소개글·프로필 사진)를
  * 모아서, 공구 허브의 크리에이터 등록 화면을 새 탭으로 연다.
@@ -103,7 +103,7 @@ async function handleClick(button) {
 
   setTimeout(() => {
     button.disabled = false;
-    button.textContent = "＋ 공구 허브에 담기";
+    button.textContent = "＋ Y글로벌";
   }, 1500);
 }
 
@@ -111,7 +111,7 @@ function makeButton() {
   const button = document.createElement("button");
   button.type = "button";
   button.className = BUTTON_CLASS;
-  button.textContent = "＋ 공구 허브에 담기";
+  button.textContent = "＋ Y글로벌";
   button.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
