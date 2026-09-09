@@ -112,3 +112,120 @@ export async function readXlsx(buffer: Buffer): Promise<XlsxContent> {
 
   return { text: lines.join("\n"), images };
 }
+
+// ── 판매일보 가져오기용: 표 모양을 그대로 살려서 읽기 ─────────────────────────
+// 위의 readXlsx는 글자만 훑기 때문에 빈 칸이 사라져 열이 밀린다. 판매일보처럼
+// "몇 번째 칸이 무엇인지"가 중요한 표는 칸 주소(A1, B1…)를 보고 자리를 지키며 읽고,
+// 엑셀이 숫자로 저장하는 날짜도 날짜 서식이면 YYYY-MM-DD 글자로 바꿔준다.
+
+/** 엑셀 날짜 일련번호(1900년 기준) → YYYY-MM-DD */
+function serialToDateString(serial: number): string {
+  // 25569 = 1970-01-01의 엑셀 일련번호
+  const d = new Date(Math.round((serial - 25569) * 86400000));
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** 셀 주소("BC12")에서 열 번호(0부터)를 얻는다 */
+function colIndexOf(ref: string): number {
+  let idx = 0;
+  for (const ch of ref) {
+    if (ch < "A" || ch > "Z") break;
+    idx = idx * 26 + (ch.charCodeAt(0) - 64);
+  }
+  return idx - 1;
+}
+
+/** 엑셀 기본 서식 번호 중 날짜/시간 서식들 */
+function isBuiltinDateFormat(id: number): boolean {
+  return (
+    (id >= 14 && id <= 22) ||
+    (id >= 27 && id <= 31) ||
+    (id >= 34 && id <= 36) ||
+    (id >= 45 && id <= 47) ||
+    (id >= 50 && id <= 58)
+  );
+}
+
+export async function readXlsxTable(buffer: Buffer): Promise<string> {
+  const zip = await JSZip.loadAsync(buffer);
+
+  const sharedStrings: string[] = [];
+  const sharedXml = await zip.file("xl/sharedStrings.xml")?.async("string");
+  if (sharedXml) {
+    for (const m of sharedXml.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)) {
+      sharedStrings.push(unescapeXml(m[1]));
+    }
+  }
+
+  // 서식 정보: 어떤 셀 스타일(s 속성)이 날짜 서식인지 미리 표를 만든다
+  const dateStyle: boolean[] = [];
+  const stylesXml = await zip.file("xl/styles.xml")?.async("string");
+  if (stylesXml) {
+    const customDateFmt = new Set<number>();
+    for (const m of stylesXml.matchAll(/<numFmt[^>]*numFmtId="(\d+)"[^>]*formatCode="([^"]*)"/g)) {
+      // 따옴표 안 글자·[색] 표시를 뺀 나머지에 y/m/d가 있으면 날짜 서식으로 본다
+      const code = m[2].replace(/&quot;[^&]*&quot;|"[^"]*"|\[[^\]]*\]/g, "");
+      if (/[ymd]/i.test(code)) customDateFmt.add(Number(m[1]));
+    }
+    const cellXfs = stylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/)?.[1] ?? "";
+    for (const m of cellXfs.matchAll(/<xf\b[^>]*>/g)) {
+      const id = Number(m[0].match(/numFmtId="(\d+)"/)?.[1] ?? "0");
+      dateStyle.push(isBuiltinDateFormat(id) || customDateFmt.has(id));
+    }
+  }
+
+  // 첫 번째 시트만 읽는다 (판매일보는 보통 첫 시트에 있다)
+  const sheetNames = Object.keys(zip.files)
+    .filter((n) => /^xl\/worksheets\/sheet\d+\.xml$/.test(n))
+    .sort();
+  const sheetXml = sheetNames[0]
+    ? await zip.file(sheetNames[0])?.async("string")
+    : null;
+  if (!sheetXml) return "";
+
+  const rows: string[] = [];
+  for (const rowMatch of sheetXml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)) {
+    const cells: string[] = [];
+    for (const cellMatch of rowMatch[1].matchAll(
+      /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g
+    )) {
+      const attrs = cellMatch[1];
+      const inner = cellMatch[2] ?? "";
+      const ref = attrs.match(/\br="([A-Z]+)\d+"/)?.[1];
+      const col = ref ? colIndexOf(ref) : cells.length;
+      const type = attrs.match(/\bt="([a-zA-Z]+)"/)?.[1];
+      const styleIdx = Number(attrs.match(/\bs="(\d+)"/)?.[1] ?? "-1");
+
+      let value = "";
+      const vMatch = inner.match(/<v>([\s\S]*?)<\/v>/);
+      if (type === "inlineStr") {
+        const tMatch = inner.match(/<t[^>]*>([\s\S]*?)<\/t>/);
+        value = tMatch ? unescapeXml(tMatch[1]) : "";
+      } else if (vMatch) {
+        value = unescapeXml(vMatch[1]);
+        if (type === "s") value = sharedStrings[Number(value)] ?? "";
+        else if (type !== "str" && type !== "b") {
+          // 숫자 셀: 날짜 서식이면 날짜 글자로 바꾼다
+          const num = Number(value);
+          if (
+            Number.isFinite(num) &&
+            num > 20000 &&
+            num < 80000 &&
+            dateStyle[styleIdx]
+          ) {
+            value = serialToDateString(num);
+          }
+        }
+      }
+      value = value.replace(/[\t\r\n]+/g, " ").trim();
+
+      while (cells.length < col) cells.push("");
+      cells[col] = value;
+    }
+    if (cells.some((c) => c !== "")) rows.push(cells.join("\t"));
+  }
+  return rows.join("\n");
+}
