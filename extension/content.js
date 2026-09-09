@@ -1,5 +1,5 @@
 /**
- * 인스타그램 프로필 화면에 "＋ Y글로벌" 버튼을 끼워 넣는다.
+ * 인스타그램 프로필 화면에 Y글로벌 금색 로고 아이콘 버튼을 끼워 넣는다.
  *
  * 누르면 지금 화면에 보이는 프로필 정보(이름·아이디·팔로워 수·소개글·프로필 사진)를
  * 모아서, 공구 허브의 크리에이터 등록 화면을 새 탭으로 연다.
@@ -9,6 +9,9 @@
  */
 
 const BUTTON_CLASS = "gonggu-hub-save-button";
+
+// 버튼에 쓰는 Y글로벌 금색 로고 (파일 없이 코드에 심어둔 이미지)
+const ICON_DATA_URI = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjdlMDhhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41IiBzdG9wLWNvbG9yPSIjZTZjMDRmIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2I4ODYwYiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiMxNzE3MWMiLz4KICA8Y2lyY2xlIGN4PSIzMiIgY3k9IjM3IiByPSIxNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8cGF0aCBkPSJNMTkgMTIgTDMyIDMwIE00NSAxMiBMMzIgMzAgTTMyIDMwIEwzMiA1NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjYuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=";
 
 // 프로필이 아닌 화면들. 주소의 첫 칸이 이 중 하나면 프로필이 아니다.
 const NOT_PROFILE = new Set([
@@ -98,12 +101,10 @@ async function handleClick(button) {
     `&paste=${encodeURIComponent(payload)}`;
 
   button.disabled = true;
-  button.textContent = "담는 중…";
   window.open(target, "_blank");
 
   setTimeout(() => {
     button.disabled = false;
-    button.textContent = "＋ Y글로벌";
   }, 1500);
 }
 
@@ -111,7 +112,11 @@ function makeButton() {
   const button = document.createElement("button");
   button.type = "button";
   button.className = BUTTON_CLASS;
-  button.textContent = "＋ Y글로벌";
+  button.title = "Y글로벌에 담기";
+  const icon = document.createElement("img");
+  icon.src = ICON_DATA_URI;
+  icon.alt = "Y글로벌에 담기";
+  button.appendChild(icon);
   button.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
