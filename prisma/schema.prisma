@@ -64,6 +64,9 @@ model Settings {
   briefingGmailUser   String? // 보내는 지메일 주소
   briefingGmailPassEnc String? // 지메일 앱 비밀번호 (암호화)
   briefingTo          String? // 받는 주소 (네이버 등 아무거나, 비우면 지메일로)
+  // 오늘 브리핑의 "오늘 온 메일" 읽기용 네이버 메일 (IMAP)
+  naverMailUser       String? // 네이버 아이디 또는 주소
+  naverMailPassEnc    String? // 네이버 비밀번호/애플리케이션 비밀번호 (암호화)
   // 공구 제안 DM 고정 틀
   dmTemplate          String?
   autoDailyPostEnabled Boolean @default(false)

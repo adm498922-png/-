@@ -16,6 +16,44 @@ export default function BriefingBox() {
   const [message, setMessage] = useState<string | null>(null);
   const [messageOk, setMessageOk] = useState(true);
 
+  // 네이버 메일 읽기 (오늘 브리핑의 "오늘 온 메일"용)
+  const [naverUser, setNaverUser] = useState("");
+  const [naverPassword, setNaverPassword] = useState("");
+  const [naverSaved, setNaverSaved] = useState(false);
+  const [naverBusy, setNaverBusy] = useState(false);
+  const [naverMessage, setNaverMessage] = useState<string | null>(null);
+
+  async function saveNaver(disconnect: boolean) {
+    setNaverBusy(true);
+    setNaverMessage(null);
+    const res = await fetch("/api/briefing/mail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        disconnect
+          ? { naverUser: "" }
+          : { naverUser, naverPassword }
+      ),
+    }).catch(() => null);
+    setNaverBusy(false);
+    if (!res?.ok) {
+      setNaverMessage("저장에 실패했습니다.");
+      return;
+    }
+    if (disconnect) {
+      setNaverSaved(false);
+      setNaverUser("");
+      setNaverPassword("");
+      setNaverMessage("연결을 해제했습니다.");
+      return;
+    }
+    setNaverSaved(true);
+    setNaverPassword("");
+    setNaverMessage(
+      "저장되었습니다. 대시보드의 '오늘 브리핑'에서 메일이 보이는지 확인해보세요."
+    );
+  }
+
   useEffect(() => {
     fetch("/api/briefing")
       .then((res) => (res.ok ? res.json() : null))
@@ -25,6 +63,8 @@ export default function BriefingBox() {
         setGmailUser(data.gmailUser ?? "");
         setPassSaved(data.passSaved);
         setTo(data.to ?? "");
+        setNaverUser(data.naverUser ?? "");
+        setNaverSaved(Boolean(data.naverSaved));
       })
       .catch(() => {});
   }, []);
@@ -155,6 +195,62 @@ export default function BriefingBox() {
           >
             지금 테스트로 한 통 보내보기
           </button>
+        </div>
+
+        {/* 오늘 브리핑에 메일함 보여주기 — 네이버 연결 */}
+        <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p className="text-xs font-semibold text-slate-700">
+            📧 대시보드 &lsquo;오늘 브리핑&rsquo;에 메일함 보여주기
+            {naverSaved && (
+              <span className="ml-1.5 rounded-full bg-green-500/15 px-2 py-0.5 text-[11px] font-medium text-green-700">
+                네이버 연결됨
+              </span>
+            )}
+          </p>
+          <p className="mt-1 text-[11px] text-slate-500">
+            지메일은 위 앱 비밀번호로 자동으로 읽어요. 네이버 메일도 같이 보려면:
+            네이버 메일(PC) → ⚙️ 환경설정 → <strong>POP3/IMAP 설정</strong> →{" "}
+            <strong>IMAP/SMTP 사용</strong>을 &lsquo;사용함&rsquo;으로 저장한 뒤 아래에
+            입력하세요. 네이버에 2단계 인증을 켜두셨다면 비밀번호 대신{" "}
+            <strong>애플리케이션 비밀번호</strong>(네이버 내정보 → 보안설정에서 발급)를
+            넣어야 해요.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              value={naverUser}
+              onChange={(e) => setNaverUser(e.target.value)}
+              placeholder="네이버 아이디"
+              className="w-40 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:border-green-500"
+            />
+            <input
+              type="password"
+              value={naverPassword}
+              onChange={(e) => setNaverPassword(e.target.value)}
+              placeholder={naverSaved ? "비밀번호 저장됨 — 바꿀 때만" : "네이버 비밀번호"}
+              className="w-44 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:border-green-500"
+            />
+            <button
+              type="button"
+              onClick={() => saveNaver(false)}
+              disabled={naverBusy || !naverUser.trim() || (!naverPassword.trim() && !naverSaved)}
+              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-500 disabled:bg-slate-200 disabled:text-slate-500"
+            >
+              {naverBusy ? "저장 중…" : "네이버 연결"}
+            </button>
+            {naverSaved && (
+              <button
+                type="button"
+                onClick={() => saveNaver(true)}
+                disabled={naverBusy}
+                className="text-xs text-slate-400 hover:text-red-500"
+              >
+                연결 해제
+              </button>
+            )}
+          </div>
+          {naverMessage && (
+            <p className="mt-1.5 text-[11px] text-slate-500">{naverMessage}</p>
+          )}
         </div>
       </div>
     </section>
