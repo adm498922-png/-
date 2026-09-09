@@ -55,6 +55,10 @@ model Settings {
   igAccessTokenEnc    String?
   // 판매일보 가져오기에서 마지막으로 쓴 제목 줄 (JSON 배열 문자열)
   salesSheetHeader    String?
+  // 판매일보 구글 시트 자동 동기화 (링크 공유된 시트를 매시간 읽어온다)
+  salesSheetUrl       String?
+  salesSheetSyncedAt  DateTime?
+  salesSheetSyncNote  String? // 마지막 동기화 결과 한 줄
   // 공구 제안 DM 고정 틀
   dmTemplate          String?
   autoDailyPostEnabled Boolean @default(false)

@@ -9,8 +9,28 @@ export async function register() {
   // 이 인메모리 스케줄러는 로컬 개발/자체 호스팅(예: PM2, Docker) 환경에서만 사용합니다.
   if (process.env.VERCEL) return;
   // 공동구매 전용 사이트에는 발행할 스레드 글도, 연결된 계정도 없다.
+  // 대신 판매일보 구글 시트 자동 동기화만 매시간 돌린다.
   if (process.env.APP_MODE === "gonggu") {
     console.log("[공구 허브] 공동구매 전용 모드 — 스레드 발행 스케줄러는 켜지 않습니다.");
+    const globalForGonggu = globalThis as unknown as {
+      __gongguSchedulerStarted?: boolean;
+    };
+    if (globalForGonggu.__gongguSchedulerStarted) return;
+    globalForGonggu.__gongguSchedulerStarted = true;
+
+    const cron = await import("node-cron");
+    const { syncSalesSheetOnce } = await import("@/lib/sales-sheet-sync");
+    const { getDecryptedSettings } = await import("@/lib/settings");
+    cron.schedule("7 * * * *", async () => {
+      try {
+        const settings = await getDecryptedSettings();
+        if (!settings.salesSheetUrl?.trim()) return; // 시트를 연결한 경우에만
+        await syncSalesSheetOnce();
+      } catch (e) {
+        console.error("판매일보 시트 자동 동기화 오류", e);
+      }
+    });
+    console.log("[공구 허브] 판매일보 구글 시트 자동 동기화 켜짐 (매시간)");
     return;
   }
 

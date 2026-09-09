@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatWon } from "@/lib/gonggu";
 
@@ -39,6 +39,57 @@ export default function SalesImportPanel() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // 구글 시트 자동 동기화 상태
+  const [sheetUrl, setSheetUrl] = useState("");
+  const [sheetConnected, setSheetConnected] = useState(false);
+  const [sheetSyncedAt, setSheetSyncedAt] = useState<string | null>(null);
+  const [sheetNote, setSheetNote] = useState<string | null>(null);
+  const [sheetBusy, setSheetBusy] = useState(false);
+  const [sheetError, setSheetError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/import/deals/sync-sheet")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        if (data.url) {
+          setSheetUrl(data.url);
+          setSheetConnected(true);
+        }
+        setSheetSyncedAt(data.syncedAt ?? null);
+        setSheetNote(data.note ?? null);
+      })
+      .catch(() => {});
+  }, []);
+
+  // 시트 주소 저장 + 바로 동기화 (url이 빈 문자열이면 연결 해제)
+  async function syncSheet(urlToSave?: string) {
+    setSheetBusy(true);
+    setSheetError(null);
+    const res = await fetch("/api/import/deals/sync-sheet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(urlToSave === undefined ? {} : { url: urlToSave }),
+    }).catch(() => null);
+    const data = await res?.json().catch(() => null);
+    setSheetBusy(false);
+    if (!res?.ok) {
+      setSheetError(data?.error ?? "동기화하지 못했습니다.");
+      return;
+    }
+    if (data.disconnected) {
+      setSheetConnected(false);
+      setSheetUrl("");
+      setSheetSyncedAt(null);
+      setSheetNote(null);
+      return;
+    }
+    setSheetConnected(Boolean(data.url));
+    setSheetSyncedAt(data.syncedAt ?? null);
+    setSheetNote(data.note ?? null);
+    if (data.ok) router.refresh();
+  }
 
   // 엑셀 파일을 올리면 표 텍스트로 바꿔 붙여넣기 칸에 채우고 바로 미리보기를 돌린다
   async function uploadXlsx(files: FileList | null) {
@@ -127,6 +178,75 @@ export default function SalesImportPanel() {
 
       {open && (
         <div className="mt-4 space-y-3">
+          <div className="rounded-lg border border-green-100 bg-green-50/50 px-3 py-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="min-w-0 flex-1 text-xs text-slate-600">
+                <strong className="text-slate-800">구글 시트 자동 연결:</strong>{" "}
+                {sheetConnected ? (
+                  <>
+                    연결됨 — 매시간 자동으로 새 줄을 가져옵니다.
+                    {sheetSyncedAt && (
+                      <span className="text-slate-400">
+                        {" "}
+                        (마지막 확인{" "}
+                        {new Date(sheetSyncedAt).toLocaleString("ko-KR", {
+                          month: "numeric",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                        )
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    시트 주소를 연결해두면 매시간 알아서 새 줄을 가져옵니다. 먼저 구글
+                    시트에서 <strong className="text-slate-800">공유</strong> 버튼 →{" "}
+                    <strong className="text-slate-800">
+                      &lsquo;링크가 있는 모든 사용자&rsquo;를 &lsquo;뷰어&rsquo;
+                    </strong>
+                    로 바꾼 뒤, 주소창의 링크를 붙여넣어주세요.
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                value={sheetUrl}
+                onChange={(e) => setSheetUrl(e.target.value)}
+                placeholder="https://docs.google.com/spreadsheets/d/…"
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:border-green-500"
+              />
+              <button
+                onClick={() => syncSheet(sheetUrl)}
+                disabled={sheetBusy || !sheetUrl.trim()}
+                className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-500 disabled:bg-slate-200 disabled:text-slate-500"
+              >
+                {sheetBusy ? "동기화 중…" : sheetConnected ? "지금 동기화" : "연결하고 가져오기"}
+              </button>
+              {sheetConnected && (
+                <button
+                  onClick={() => {
+                    if (confirm("구글 시트 자동 연결을 해제할까요?")) syncSheet("");
+                  }}
+                  disabled={sheetBusy}
+                  className="text-xs text-slate-400 hover:text-red-500"
+                >
+                  연결 해제
+                </button>
+              )}
+            </div>
+            {sheetNote && (
+              <p className="mt-1.5 text-xs text-slate-500">최근 결과: {sheetNote}</p>
+            )}
+            {sheetError && (
+              <p className="mt-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+                {sheetError}
+              </p>
+            )}
+          </div>
+
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5">
             <div className="min-w-0 flex-1 text-xs text-slate-600">
               <strong className="text-slate-800">가장 쉬운 방법:</strong> 판매일보 엑셀
