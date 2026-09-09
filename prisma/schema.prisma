@@ -185,6 +185,7 @@ model Creator {
   feeKrw         Int? // 진행비(원)
   commissionRate Float? // 수수료 %
   status         CreatorStatus @default(LEAD)
+  statusChangedAt DateTime? // 지금 상태로 옮긴 시각 (파이프라인 "N일째" 표시용)
   rating         Int? // 1~5, 내 평가
   isBusiness     Boolean? // 사업자 여부 (사업자면 3.3% 원천징수 없이 세금계산서)
   tags           String? // 쉼표로 구분

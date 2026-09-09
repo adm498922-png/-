@@ -42,6 +42,16 @@ function ConnectionsIcon({ active }: { active: boolean }) {
   );
 }
 
+function PipelineIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+      <rect x="3.5" y="4" width="4.6" height="13" rx="1.2" />
+      <rect x="9.7" y="4" width="4.6" height="9" rx="1.2" />
+      <rect x="15.9" y="4" width="4.6" height="16" rx="1.2" />
+    </svg>
+  );
+}
+
 function CreatorsIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
@@ -107,6 +117,7 @@ const NAV_ITEMS = [
   { href: "/calendar", label: "일정 · 할일", short: "일정", Icon: CalendarIcon, group: "공동구매" },
   { href: "/ledger", label: "판매일보", short: "판매일보", Icon: LedgerIcon, group: "공동구매" },
   { href: "/creators", label: "크리에이터", short: "크리에이터", Icon: CreatorsIcon, group: "공동구매" },
+  { href: "/pipeline", label: "파이프라인", short: "영업", Icon: PipelineIcon, group: "공동구매" },
   { href: "/products", label: "공구 상품", short: "상품", Icon: ProductsIcon, group: "공동구매" },
   { href: "/campaigns", label: "캠페인", short: "캠페인", Icon: CampaignIcon, group: "공동구매" },
   { href: "/dm-queue", label: "DM 발송", short: "DM 발송", Icon: DmQueueIcon, group: "공동구매" },
