@@ -11,6 +11,8 @@ export async function GET() {
     gmailUser: row?.briefingGmailUser ?? null,
     passSaved: Boolean(row?.briefingGmailPassEnc),
     to: row?.briefingTo ?? null,
+    naverUser: row?.naverMailUser ?? null,
+    naverSaved: Boolean(row?.naverMailPassEnc),
   });
 }
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatWon } from "@/lib/gonggu";
 import type { BriefingData } from "@/lib/daily-briefing";
+import type { MailAccountResult } from "@/lib/mail-inbox";
 
 /**
  * 대시보드 맨 위 "오늘 브리핑" — 아침 메일과 같은 내용을 화면에서 바로
@@ -16,15 +17,40 @@ function fmt(iso: string | null): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
+function fmtTime(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const sameDay =
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate();
+  const hm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return sameDay ? hm : `${fmt(iso)} ${hm}`;
+}
+
+const MAIL_LABEL: Record<string, string> = { gmail: "지메일", naver: "네이버" };
+const MAIL_LINK: Record<string, string> = {
+  gmail: "https://mail.google.com",
+  naver: "https://mail.naver.com",
+};
+
 export default function TodayBriefing() {
   const [data, setData] = useState<BriefingData | null>(null);
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
+  const [mail, setMail] = useState<MailAccountResult[] | null>(null);
+  const [mailLoading, setMailLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/briefing/today")
       .then((res) => (res.ok ? res.json() : null))
       .then((d) => d && setData(d))
       .catch(() => {});
+    // 메일함 읽기는 몇 초 걸릴 수 있어서 따로 불러온다
+    fetch("/api/briefing/mail")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => setMail(d?.accounts ?? []))
+      .catch(() => setMail([]))
+      .finally(() => setMailLoading(false));
   }, []);
 
   const markDone = (id: string) =>
@@ -236,6 +262,66 @@ export default function TodayBriefing() {
                   </ul>
                 </>
               )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 오늘 온 메일 — 지메일·네이버 메일함의 최근 24시간 메일 */}
+      {(mailLoading || (mail && mail.length > 0)) && (
+        <div className="mt-4 border-t border-amber-200/70 pt-3">
+          <p className="mb-1.5 text-xs font-semibold text-slate-500">📧 오늘 온 메일</p>
+          {mailLoading ? (
+            <p className="text-xs text-slate-400">메일함 확인 중…</p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {mail!.map((acc) => (
+                <div key={acc.kind}>
+                  <p className="mb-1 flex items-center gap-1.5 text-xs text-slate-600">
+                    <span className="font-semibold">{MAIL_LABEL[acc.kind]}</span>
+                    {acc.ok && acc.unreadCount > 0 && (
+                      <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                        안읽음 {acc.unreadCount}
+                      </span>
+                    )}
+                    <a
+                      href={MAIL_LINK[acc.kind]}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-auto text-[11px] text-slate-400 underline underline-offset-2 hover:text-blue-600"
+                    >
+                      메일함 열기
+                    </a>
+                  </p>
+                  {!acc.ok ? (
+                    <p className="text-[11px] text-red-600">{acc.error}</p>
+                  ) : acc.messages.length === 0 ? (
+                    <p className="text-[11px] text-slate-400">최근 24시간 새 메일 없음</p>
+                  ) : (
+                    <ul className="space-y-0.5">
+                      {acc.messages.map((m, i) => (
+                        <li key={i} className="flex items-baseline gap-2 text-xs">
+                          <span
+                            className={`min-w-0 flex-1 truncate ${
+                              m.unread ? "font-semibold text-slate-800" : "text-slate-500"
+                            }`}
+                            title={`${m.from} — ${m.subject}`}
+                          >
+                            {m.unread && <span className="mr-1 text-blue-500">●</span>}
+                            {m.subject}
+                            <span className="ml-1.5 font-normal text-slate-400">
+                              {m.from}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-[10px] text-slate-400">
+                            {fmtTime(m.date)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
