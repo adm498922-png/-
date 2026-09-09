@@ -27,6 +27,21 @@ export async function PATCH(
     include: { creator: true },
   });
 
+  // DM을 보냈으면 파이프라인도 자동으로 움직인다:
+  // 연락 시각을 기록하고, 아직 '후보'였던 크리에이터는 '컨택중'으로 옮긴다.
+  if (status === "SENT" && updated.creator) {
+    const now = new Date();
+    await prisma.creator.update({
+      where: { id: updated.creator.id },
+      data: {
+        lastContactAt: now,
+        ...(updated.creator.status === "LEAD"
+          ? { status: "CONTACTED", statusChangedAt: now }
+          : {}),
+      },
+    });
+  }
+
   return NextResponse.json(updated);
 }
 

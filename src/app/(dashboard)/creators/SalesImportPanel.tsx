@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatWon } from "@/lib/gonggu";
 
@@ -38,14 +38,40 @@ export default function SalesImportPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  async function run(mode: "preview" | "commit") {
+  // 엑셀 파일을 올리면 표 텍스트로 바꿔 붙여넣기 칸에 채우고 바로 미리보기를 돌린다
+  async function uploadXlsx(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    setDone(null);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/import/deals/xlsx-text", {
+      method: "POST",
+      body: form,
+    }).catch(() => null);
+    const data = await res?.json().catch(() => null);
+    setBusy(false);
+    if (fileRef.current) fileRef.current.value = "";
+    if (!res?.ok || !data?.text) {
+      setError(data?.error ?? "엑셀 파일을 읽지 못했습니다.");
+      return;
+    }
+    setText(data.text);
+    setPreview(null);
+    await run("preview", data.text);
+  }
+
+  async function run(mode: "preview" | "commit", overrideText?: string) {
     setBusy(true);
     setError(null);
     const res = await fetch("/api/import/deals", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, mode }),
+      body: JSON.stringify({ text: overrideText ?? text, mode }),
     });
     const data = await res.json().catch(() => null);
     setBusy(false);
@@ -78,7 +104,8 @@ export default function SalesImportPanel() {
         <div>
           <h2 className="font-semibold text-slate-900">판매일보 가져오기</h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            구글 시트에서 표를 복사해 붙여넣으면 셀러별 공구 기록으로 나뉘어 들어갑니다.
+            엑셀 파일(.xlsx)을 올리거나 구글 시트 표를 복사해 붙여넣으면 셀러별 공구
+            기록으로 나뉘어 들어갑니다. 이미 있는 줄은 알아서 건너뜁니다.
           </p>
         </div>
         <button
@@ -100,6 +127,27 @@ export default function SalesImportPanel() {
 
       {open && (
         <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5">
+            <div className="min-w-0 flex-1 text-xs text-slate-600">
+              <strong className="text-slate-800">가장 쉬운 방법:</strong> 판매일보 엑셀
+              파일을 그대로 올리세요. 새로 적은 줄만 자동으로 들어갑니다.
+            </div>
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={busy}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:bg-slate-200 disabled:text-slate-500"
+            >
+              {busy ? "읽는 중…" : "📄 엑셀 파일 올리기"}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".xlsx"
+              hidden
+              onChange={(e) => uploadXlsx(e.target.files)}
+            />
+          </div>
+
           <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
             <p className="mb-1.5">
               구글 시트에서{" "}

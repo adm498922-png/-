@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hidesGonggu } from "@/lib/app-mode";
 import LedgerPage from "./LedgerPage";
+import SalesImportPanel from "../creators/SalesImportPanel";
 import type { CreatorView, ProductView } from "@/lib/gonggu";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +24,13 @@ export default async function Page() {
   ]);
 
   return (
-    <LedgerPage
-      initialRows={JSON.parse(JSON.stringify(deals))}
-      creators={creators as unknown as CreatorView[]}
-      products={products as unknown as ProductView[]}
-    />
+    <div className="space-y-5">
+      <SalesImportPanel />
+      <LedgerPage
+        initialRows={JSON.parse(JSON.stringify(deals))}
+        creators={creators as unknown as CreatorView[]}
+        products={products as unknown as ProductView[]}
+      />
+    </div>
   );
 }
