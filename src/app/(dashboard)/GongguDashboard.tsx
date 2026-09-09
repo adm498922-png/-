@@ -9,6 +9,7 @@ import {
 } from "@/lib/gonggu";
 import WeeklyRoutine from "./WeeklyRoutine";
 import SettlementNotes from "./SettlementNotes";
+import TodayBriefing from "./TodayBriefing";
 
 function Bar({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
   const pct = total ? Math.round((value / total) * 100) : 0;
@@ -116,6 +117,8 @@ export default async function GongguDashboard() {
           </a>
         </div>
       </div>
+
+      <TodayBriefing />
 
       <WeeklyRoutine initialItems={routineItems} />
 
