@@ -18,6 +18,7 @@ export default async function PipelinePage() {
     category: c.category,
     tags: c.tags,
     contactType: c.contactType,
+    memo: c.memo,
     status: c.status,
     lastContactAt: c.lastContactAt?.toISOString() ?? null,
     statusChangedAt: c.statusChangedAt?.toISOString() ?? null,
