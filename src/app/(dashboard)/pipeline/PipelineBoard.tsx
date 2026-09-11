@@ -21,6 +21,7 @@ export type PipelineCreator = {
   category: string | null;
   tags: string | null;
   contactType: string | null;
+  memo: string | null;
   status: string;
   lastContactAt: string | null;
   statusChangedAt: string | null;
@@ -88,7 +89,7 @@ export default function PipelineBoard({
     const q = query.trim().toLowerCase();
     if (!q) return items;
     return items.filter((c) =>
-      [c.name, c.handle ?? "", c.category ?? "", c.tags ?? ""]
+      [c.name, c.handle ?? "", c.category ?? "", c.tags ?? "", c.memo ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(q)
@@ -299,6 +300,21 @@ export default function PipelineBoard({
                             </span>
                           )}
                         </div>
+
+                        {c.memo && (
+                          <p
+                            className="mt-1.5 whitespace-pre-wrap rounded bg-amber-50 px-1.5 py-1 text-[11px] leading-snug text-slate-600"
+                            style={{
+                              display: "-webkit-box",
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                            title={c.memo}
+                          >
+                            {c.memo}
+                          </p>
+                        )}
 
                         <div className="mt-2 flex items-center justify-between">
                           <span className="text-[10px] text-slate-400">

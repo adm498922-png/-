@@ -65,6 +65,10 @@ export default function CreatorDetail({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 메모만 빠르게 고치는 인라인 편집 — '수정' 전체 폼을 안 열어도 된다
+  const [memoEditing, setMemoEditing] = useState(false);
+  const [memoDraft, setMemoDraft] = useState("");
+
   const [dealFormOpen, setDealFormOpen] = useState(false);
   const [editingDealId, setEditingDealId] = useState<string | null>(null);
   const [dealForm, setDealForm] = useState<DealFormValues>(emptyDealForm);
@@ -457,7 +461,59 @@ export default function CreatorDetail({
             </InfoRow>
             <InfoRow label="태그">{creator.tags ?? "-"}</InfoRow>
             <InfoRow label="메모">
-              <span className="whitespace-pre-wrap">{creator.memo ?? "-"}</span>
+              {memoEditing ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={memoDraft}
+                    onChange={(e) => setMemoDraft(e.target.value)}
+                    rows={3}
+                    autoFocus
+                    placeholder="이 크리에이터에 대해 기억해둘 것"
+                    className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        const ok = await patchCreator({
+                          memo: memoDraft.trim() || null,
+                        });
+                        if (ok) setMemoEditing(false);
+                      }}
+                      disabled={saving}
+                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+                    >
+                      {saving ? "저장 중…" : "저장"}
+                    </button>
+                    <button
+                      onClick={() => setMemoEditing(false)}
+                      disabled={saving}
+                      className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setMemoDraft(creator.memo ?? "");
+                    setMemoEditing(true);
+                  }}
+                  className="group -mx-1.5 -my-1 w-full rounded-lg px-1.5 py-1 text-left hover:bg-blue-50"
+                  title="눌러서 바로 수정"
+                >
+                  <span className="whitespace-pre-wrap">
+                    {creator.memo ?? (
+                      <span className="text-slate-400">
+                        눌러서 메모를 남겨보세요
+                      </span>
+                    )}
+                  </span>
+                  <span className="ml-1.5 text-xs text-slate-400 opacity-0 group-hover:opacity-100">
+                    ✎ 수정
+                  </span>
+                </button>
+              )}
             </InfoRow>
           </div>
         )}
